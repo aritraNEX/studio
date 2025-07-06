@@ -2,7 +2,7 @@
 
 import { useState, useRef, useTransition } from "react";
 import Image from "next/image";
-import { Copy, Loader2, Upload, Wand2 } from "lucide-react";
+import { Copy, Loader2, Sparkles, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -104,17 +104,17 @@ export function TexioApp() {
   };
 
   return (
-    <Card className="w-full max-w-4xl shadow-2xl shadow-primary/10">
-      <CardHeader className="text-center">
-        <div className="mx-auto bg-primary text-primary-foreground rounded-lg p-3 w-fit mb-4">
-          <Wand2 className="h-8 w-8" />
+    <Card className="w-full max-w-4xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
+      <CardHeader className="text-center pt-8">
+        <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit mb-4 shadow-lg shadow-primary/30">
+          <Sparkles className="h-8 w-8" />
         </div>
-        <CardTitle className="text-3xl font-bold tracking-tight">Tex.io</CardTitle>
-        <CardDescription className="text-lg">
+        <CardTitle className="text-4xl font-bold tracking-tight">Tex.io</CardTitle>
+        <CardDescription className="text-lg text-muted-foreground/80">
           Upload an image to magically paraphrase its text.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid md:grid-cols-2 gap-8 items-start">
+      <CardContent className="grid md:grid-cols-2 gap-8 items-start p-8">
         <div className="flex flex-col gap-4">
           <Label htmlFor="image-upload" className="font-semibold text-md">
             Upload Image
@@ -133,8 +133,8 @@ export function TexioApp() {
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               className={cn(
-                "flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer transition-colors",
-                "border-border hover:border-primary/50 bg-background hover:bg-muted"
+                "group flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
+                "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
               )}
             >
               {imageDataUrl ? (
@@ -148,7 +148,7 @@ export function TexioApp() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
-                  <Upload className="w-10 h-10 mb-3 text-muted-foreground" />
+                  <Upload className="w-10 h-10 mb-3 text-muted-foreground transition-transform duration-300 group-hover:scale-110 group-hover:text-primary" />
                   <p className="mb-2 text-sm text-muted-foreground">
                     <span className="font-semibold text-primary">Click to upload</span> or drag and drop
                   </p>
@@ -168,7 +168,7 @@ export function TexioApp() {
               readOnly
               value={generatedText}
               placeholder={isPending ? "Generating your text..." : "Your paraphrased text will appear here..."}
-              className="h-64 resize-none pr-12 animate-in fade-in duration-500"
+              className="h-64 resize-none pr-12 animate-in fade-in duration-500 bg-background/50 focus-visible:ring-accent"
             />
             <Button
               variant="ghost"
@@ -183,17 +183,17 @@ export function TexioApp() {
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col items-center justify-center gap-4 pt-4">
+      <CardFooter className="flex flex-col items-center justify-center gap-4 pt-4 pb-8">
         <Button
           onClick={handleParaphrase}
           disabled={!imageDataUrl || isPending}
           size="lg"
-          className="w-full max-w-xs text-lg"
+          className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
         >
           {isPending ? (
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
           ) : (
-            <Wand2 className="mr-2 h-5 w-5" />
+            <Sparkles className="mr-2 h-5 w-5" />
           )}
           {isPending ? "Paraphrasing..." : "Paraphrase"}
         </Button>
