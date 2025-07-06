@@ -235,7 +235,7 @@ export function TexioApp() {
               value={generatedText}
               onChange={(e) => setGeneratedText(e.target.value)}
               placeholder={isPending ? "Generating..." : "Your result will appear here..."}
-              className="h-full min-h-48 resize-none pr-12 animate-in fade-in duration-500 bg-background/50 focus-visible:ring-accent"
+              className="h-full min-h-48 resize-y pr-12 bg-background focus-visible:ring-accent"
             />
             <Button
               variant="ghost"
