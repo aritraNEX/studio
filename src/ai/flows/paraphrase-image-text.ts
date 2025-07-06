@@ -36,9 +36,7 @@ const paraphraseImageTextPrompt = ai.definePrompt({
   name: 'paraphraseImageTextPrompt',
   input: {schema: ParaphraseImageTextInputSchema},
   output: {schema: ParaphraseImageTextOutputSchema},
-  prompt: `You are an AI expert in extracting text from images and paraphrasing it to be more descriptive and detailed while maintaining context and style.
-
-  Given the image with text content, extract the text and then paraphrase it, expanding on the original ideas and providing more details. Maintain the original context and style of the text.
+  prompt: `Extract all text from the image, in the correct sequence. Then, paraphrase the extracted text. The paraphrase should be a faithful representation of the original text. Do not add any new information or invent details. The output should be a fluent sentence that uses as many words from the image as possible, in order.
 
   Image: {{media url=photoDataUri}}
   `,
