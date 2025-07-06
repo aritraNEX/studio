@@ -43,7 +43,7 @@ const processImageTextPrompt = ai.definePrompt({
   name: 'processImageTextPrompt',
   input: {schema: promptInputSchema},
   output: {schema: ProcessImageTextOutputSchema},
-  prompt: `Extract all text from the image, in the correct sequence. Then, follow this instruction: '{{{instruction}}}'. Place the final result in the 'processedText' field. Do not add any extra commentary or explanation.
+  prompt: `Extract all text from the image, in the correct sequence, preserving the original structure like lists and line breaks. Then, follow this instruction: '{{{instruction}}}'. Place the final result in the 'processedText' field. Ensure the output formatting matches the original text's structure (e.g., lists, paragraphs). Do not add any extra commentary or explanation.
 
   Image: {{media url=photoDataUri}}`
 });
@@ -58,7 +58,7 @@ const processImageTextFlow = ai.defineFlow(
     let instruction = '';
     switch(input.operation) {
       case 'paraphrase':
-        instruction = `Paraphrase the extracted text. The new version should be a faithful representation of the original text, but rephrased to have a different structure and wording. Do not add any new information.`;
+        instruction = `Paraphrase the extracted text. The new version should be a faithful representation of the original text, but rephrased to have different wording. Crucially, preserve the original formatting, including line breaks, lists, and bullet points. Do not add any new information or merge distinct points into a single paragraph.`;
         break;
       case 'summarize':
         instruction = `Summarize the extracted text. Provide a concise summary that captures the main points.`;
@@ -67,7 +67,7 @@ const processImageTextFlow = ai.defineFlow(
         if (!input.targetLanguage) {
           throw new Error('Target language is required for translation.');
         }
-        instruction = `Translate the extracted text to ${input.targetLanguage}.`;
+        instruction = `Translate the extracted text to ${input.targetLanguage}. Preserve the original formatting like lists and line breaks.`;
         break;
       default:
         throw new Error('Invalid operation specified.');
