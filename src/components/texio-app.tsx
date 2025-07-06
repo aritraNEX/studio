@@ -197,10 +197,10 @@ export function TexioApp() {
         <div className="flex flex-col gap-4">
           <Label className="font-semibold text-md">Operation</Label>
           <Tabs defaultValue="paraphrase" onValueChange={handleOperationChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-primary/10">
-              <TabsTrigger value="paraphrase">Paraphrase</TabsTrigger>
-              <TabsTrigger value="summarize">Summarize</TabsTrigger>
-              <TabsTrigger value="translate">Translate</TabsTrigger>
+            <TabsList className="grid h-auto w-full grid-cols-3 items-center justify-center gap-1 rounded-full bg-muted p-1">
+              <TabsTrigger value="paraphrase" className="rounded-full py-2 text-sm data-[state=active]:shadow-sm">Paraphrase</TabsTrigger>
+              <TabsTrigger value="summarize" className="rounded-full py-2 text-sm data-[state=active]:shadow-sm">Summarize</TabsTrigger>
+              <TabsTrigger value="translate" className="rounded-full py-2 text-sm data-[state=active]:shadow-sm">Translate</TabsTrigger>
             </TabsList>
           </Tabs>
           
