@@ -58,7 +58,7 @@ const processImageTextFlow = ai.defineFlow(
     let instruction = '';
     switch(input.operation) {
       case 'paraphrase':
-        instruction = `Paraphrase the extracted text. The paraphrase should be a faithful representation of the original text. Do not add any new information or invent details. The output should be a fluent sentence that uses as many words from the image as possible, in order.`;
+        instruction = `Paraphrase the extracted text. The new version should be a faithful representation of the original text, but rephrased to have a different structure and wording. Do not add any new information.`;
         break;
       case 'summarize':
         instruction = `Summarize the extracted text. Provide a concise summary that captures the main points.`;
