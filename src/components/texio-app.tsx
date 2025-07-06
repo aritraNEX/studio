@@ -17,7 +17,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate';
@@ -121,8 +120,8 @@ export function TexioApp() {
     });
   };
 
-  const handleOperationChange = (value: string) => {
-    setOperation(value as Operation);
+  const handleOperationChange = (op: Operation) => {
+    setOperation(op);
     setGeneratedText("");
     setError(null);
   }
@@ -194,15 +193,23 @@ export function TexioApp() {
             </label>
           </div>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 h-full">
           <Label className="font-semibold text-md">Operation</Label>
-          <Tabs defaultValue="paraphrase" onValueChange={handleOperationChange} className="w-full">
-            <TabsList className="grid h-auto w-full grid-cols-3 items-center justify-center gap-1 rounded-full bg-muted p-1">
-              <TabsTrigger value="paraphrase" className="rounded-full py-2 text-sm data-[state=active]:shadow-sm">Paraphrase</TabsTrigger>
-              <TabsTrigger value="summarize" className="rounded-full py-2 text-sm data-[state=active]:shadow-sm">Summarize</TabsTrigger>
-              <TabsTrigger value="translate" className="rounded-full py-2 text-sm data-[state=active]:shadow-sm">Translate</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex w-full items-center gap-1 rounded-full bg-muted p-1">
+            {(['paraphrase', 'summarize', 'translate'] as Operation[]).map((op) => (
+              <Button
+                key={op}
+                variant="ghost"
+                className={cn(
+                  'w-full rounded-full py-2 text-sm h-auto transition-all',
+                  operation === op ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+                )}
+                onClick={() => handleOperationChange(op)}
+              >
+                {op.charAt(0).toUpperCase() + op.slice(1)}
+              </Button>
+            ))}
+          </div>
           
           {operation === 'translate' && (
             <div className="flex flex-col gap-2 animate-in fade-in duration-300">
@@ -225,8 +232,8 @@ export function TexioApp() {
           <div className="relative flex-grow">
             <Textarea
               id="output-text"
-              readOnly
               value={generatedText}
+              onChange={(e) => setGeneratedText(e.target.value)}
               placeholder={isPending ? "Generating..." : "Your result will appear here..."}
               className="h-full min-h-48 resize-none pr-12 animate-in fade-in duration-500 bg-background/50 focus-visible:ring-accent"
             />
