@@ -15,14 +15,20 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { paraphraseImageText } from "@/ai/flows/paraphrase-image-text";
+import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+
+type Operation = 'paraphrase' | 'summarize' | 'translate';
 
 export function TexioApp() {
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [generatedText, setGeneratedText] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [operation, setOperation] = useState<Operation>('paraphrase');
+  const [targetLanguage, setTargetLanguage] = useState<string>('Spanish');
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,24 +75,36 @@ export function TexioApp() {
     }
   };
 
-  const handleParaphrase = () => {
+  const handleProcess = () => {
     if (!imageDataUrl) return;
+    if (operation === 'translate' && !targetLanguage.trim()) {
+        toast({
+            title: "Language required",
+            description: "Please enter a target language for translation.",
+            variant: "destructive",
+        });
+        return;
+    }
 
     setError(null);
+    setGeneratedText("");
     startTransition(async () => {
       try {
-        const result = await paraphraseImageText({ photoDataUri: imageDataUrl });
-        if (result && result.paraphrasedText) {
-          setGeneratedText(result.paraphrasedText);
+        const result = await processImageText({ 
+            photoDataUri: imageDataUrl,
+            operation,
+            ...(operation === 'translate' ? { targetLanguage } : {})
+        });
+        if (result && result.processedText) {
+          setGeneratedText(result.processedText);
         } else {
-          throw new Error("The paraphrased text is empty.");
+          throw new Error("The processed text is empty.");
         }
       } catch (e) {
         console.error(e);
-        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
-        setError(`Failed to paraphrase text. Please try again.`);
+        setError(`Failed to ${operation} text. Please try again.`);
         toast({
-          title: "Paraphrasing Error",
+          title: `${operation.charAt(0).toUpperCase() + operation.slice(1)} Error`,
           description: `An error occurred. Please try another image.`,
           variant: "destructive",
         });
@@ -99,9 +117,27 @@ export function TexioApp() {
     navigator.clipboard.writeText(generatedText);
     toast({
       title: "Copied to clipboard!",
-      description: "The paraphrased text has been copied.",
+      description: "The result has been copied.",
     });
   };
+
+  const handleOperationChange = (value: string) => {
+    setOperation(value as Operation);
+    setGeneratedText("");
+    setError(null);
+  }
+
+  const buttonText = {
+      paraphrase: 'Paraphrase',
+      summarize: 'Summarize',
+      translate: 'Translate'
+  }[operation];
+
+  const buttonTextPending = {
+      paraphrase: 'Paraphrasing...',
+      summarize: 'Summarizing...',
+      translate: 'Translating...'
+  }[operation];
 
   return (
     <Card className="w-full max-w-4xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
@@ -111,7 +147,7 @@ export function TexioApp() {
         </div>
         <CardTitle className="text-4xl font-bold tracking-tight">Tex.io</CardTitle>
         <CardDescription className="text-lg text-muted-foreground/80">
-          Upload an image to magically paraphrase its text.
+          Upload an image to magically paraphrase, summarize, or translate its text.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid md:grid-cols-2 gap-8 items-start p-8">
@@ -133,7 +169,7 @@ export function TexioApp() {
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               className={cn(
-                "group flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
+                "group flex flex-col items-center justify-center w-full h-96 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
                 "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
               )}
             >
@@ -159,16 +195,40 @@ export function TexioApp() {
           </div>
         </div>
         <div className="flex flex-col gap-4">
+          <Label className="font-semibold text-md">Operation</Label>
+          <Tabs defaultValue="paraphrase" onValueChange={handleOperationChange} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 bg-primary/10">
+              <TabsTrigger value="paraphrase">Paraphrase</TabsTrigger>
+              <TabsTrigger value="summarize">Summarize</TabsTrigger>
+              <TabsTrigger value="translate">Translate</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
+          {operation === 'translate' && (
+            <div className="flex flex-col gap-2 animate-in fade-in duration-300">
+              <Label htmlFor="language-input" className="font-semibold text-md">
+                Translate to
+              </Label>
+              <Input 
+                id="language-input"
+                value={targetLanguage}
+                onChange={(e) => setTargetLanguage(e.target.value)}
+                placeholder="e.g., Spanish, French, Japanese"
+                className="bg-background/50 focus-visible:ring-accent"
+              />
+            </div>
+          )}
+
           <Label htmlFor="output-text" className="font-semibold text-md">
-            Paraphrased Text
+            Result
           </Label>
-          <div className="relative">
+          <div className="relative flex-grow">
             <Textarea
               id="output-text"
               readOnly
               value={generatedText}
-              placeholder={isPending ? "Generating your text..." : "Your paraphrased text will appear here..."}
-              className="h-64 resize-none pr-12 animate-in fade-in duration-500 bg-background/50 focus-visible:ring-accent"
+              placeholder={isPending ? "Generating..." : "Your result will appear here..."}
+              className="h-full min-h-48 resize-none pr-12 animate-in fade-in duration-500 bg-background/50 focus-visible:ring-accent"
             />
             <Button
               variant="ghost"
@@ -185,8 +245,8 @@ export function TexioApp() {
       </CardContent>
       <CardFooter className="flex flex-col items-center justify-center gap-4 pt-4 pb-8">
         <Button
-          onClick={handleParaphrase}
-          disabled={!imageDataUrl || isPending}
+          onClick={handleProcess}
+          disabled={!imageDataUrl || isPending || (operation === 'translate' && !targetLanguage.trim())}
           size="lg"
           className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
         >
@@ -195,7 +255,7 @@ export function TexioApp() {
           ) : (
             <Sparkles className="mr-2 h-5 w-5" />
           )}
-          {isPending ? "Paraphrasing..." : "Paraphrase"}
+          {isPending ? buttonTextPending : buttonText}
         </Button>
         {error && <p className="text-sm text-destructive text-center">{error}</p>}
       </CardFooter>
