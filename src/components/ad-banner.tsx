@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
 declare global {
@@ -11,24 +11,21 @@ declare global {
 
 const AdBanner = () => {
   const pathname = usePathname();
-  const adRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Check if the ad container has a width. If not, don't push the ad.
-    if (adRef.current && adRef.current.offsetWidth === 0) {
-      console.warn("Ad container has no width, skipping ad push.");
-      return;
-    }
+    const timeout = setTimeout(() => {
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (err) {
+        console.error("Ad push failed", err);
+      }
+    }, 150);
 
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch (err) {
-      console.error(err);
-    }
+    return () => clearTimeout(timeout);
   }, [pathname]);
 
   return (
-    <div ref={adRef} className="w-full text-center my-4 min-h-[100px] flex items-center justify-center">
+    <div className="w-full text-center my-4 min-h-[100px] flex items-center justify-center">
       <ins
         className="adsbygoogle"
         style={{ display: 'block' }}
