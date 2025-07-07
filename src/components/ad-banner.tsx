@@ -22,12 +22,13 @@ const AdBanner = ({ adSlot }: { adSlot: string }) => {
     }, 150);
 
     return () => clearTimeout(timeout);
-  }, [pathname]);
+  }, [pathname, adSlot]);
 
   return (
     <div className="w-full text-center my-4 min-h-[100px] flex items-center justify-center">
       <ins
         className="adsbygoogle"
+        key={adSlot}
         style={{ display: 'block' }}
         data-ad-client="ca-pub-1743205890050653"
         data-ad-slot={adSlot}
