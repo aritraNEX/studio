@@ -18,7 +18,6 @@ import { useToast } from "@/hooks/use-toast";
 import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import AdBanner from "./ad-banner";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate';
 
@@ -283,12 +282,6 @@ export function TexioApp() {
           {isPending ? buttonTextPending : buttonText}
         </Button>
         {error && <p className="text-sm text-destructive text-center">{error}</p>}
-        {isClient && (
-          <>
-            <AdBanner key="9791852196" adSlot="9791852196" />
-            <AdBanner key="8260946975" adSlot="8260946975" />
-          </>
-        )}
       </CardFooter>
     </Card>
   );
