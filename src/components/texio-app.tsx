@@ -35,27 +35,27 @@ const operationDetails: Record<Operation, { icon: React.ElementType; label: stri
   translate: { icon: Languages, label: 'Translate' },
 };
 
-const popularFonts = [
+const extraordinaryFonts = [
   "Poppins",
-  "Arial",
-  "Verdana",
-  "Helvetica",
-  "Tahoma",
-  "Trebuchet MS",
-  "Times New Roman",
-  "Georgia",
-  "Garamond",
-  "Courier New",
-  "Brush Script MT",
-  "Comic Sans MS",
-  "Impact",
-  "Lucida Console",
-  "Lucida Sans Unicode",
-  "Palatino Linotype",
-  "Book Antiqua",
-  "Gill Sans",
-  "Calibri",
-  "Cambria",
+  "Playfair Display",
+  "Montserrat",
+  "Raleway",
+  "Oswald",
+  "Lora",
+  "Merriweather",
+  "Cormorant Garamond",
+  "Nunito",
+  "Josefin Sans",
+  "Lobster",
+  "Pacifico",
+  "Caveat",
+  "Dancing Script",
+  "Anton",
+  "Bebas Neue",
+  "Indie Flower",
+  "Shadows Into Light",
+  "Ubuntu",
+  "Quattrocento",
 ];
 
 export function TexioApp() {
@@ -364,7 +364,7 @@ export function TexioApp() {
                   <SelectValue placeholder="Select a font" />
                 </SelectTrigger>
                 <SelectContent>
-                  {popularFonts.map((font) => (
+                  {extraordinaryFonts.map((font) => (
                     <SelectItem key={font} value={font} style={{ fontFamily: font }}>
                       {font}
                     </SelectItem>
