@@ -202,7 +202,7 @@ export function TexioApp() {
         </div>
         <div className="flex flex-col gap-4 h-full">
           <Label className="font-semibold text-md">Operation</Label>
-          <div className="flex w-full items-center gap-1 rounded-full bg-muted p-1">
+          <div className="grid grid-cols-3 items-center gap-2 rounded-xl bg-muted p-1">
             {(Object.keys(operationDetails) as Operation[]).map((op) => {
               const { icon: Icon, label } = operationDetails[op];
               return (
@@ -210,14 +210,14 @@ export function TexioApp() {
                 key={op}
                 variant="ghost"
                 className={cn(
-                  'w-full rounded-full py-2 text-sm h-auto transition-all',
+                  'w-full rounded-lg py-2.5 text-sm font-medium h-auto transition-all flex items-center gap-2',
                   operation === op 
-                    ? 'bg-background text-foreground shadow-sm font-semibold' 
+                    ? 'bg-background text-foreground shadow-sm' 
                     : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
                 )}
                 onClick={() => handleOperationChange(op)}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-5 w-5" />
                 <span>{label}</span>
               </Button>
             )})}
@@ -263,12 +263,6 @@ export function TexioApp() {
         </div>
       </CardContent>
       <CardFooter className="flex flex-col items-center justify-center gap-4 pt-4 pb-8">
-        <div className="w-full max-w-xs p-4 border border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground text-sm">
-          <p className="font-semibold text-xs mb-2 text-muted-foreground/70 uppercase tracking-wider">Advertisement</p>
-          <div className="w-full h-20 bg-muted/50 rounded-md flex items-center justify-center">
-            <p className="text-muted-foreground/80">Your Ad Here</p>
-          </div>
-        </div>
         <Button
           onClick={handleProcess}
           disabled={!imageDataUrl || isPending || (operation === 'translate' && !targetLanguage.trim())}
