@@ -2,7 +2,7 @@
 
 import { useState, useRef, useTransition } from "react";
 import Image from "next/image";
-import { Copy, Loader2, Sparkles, Upload } from "lucide-react";
+import { Copy, Loader2, Sparkles, Upload, Quote, BookText, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,6 +20,13 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate';
+
+const operationDetails: Record<Operation, { icon: React.ElementType; label: string }> = {
+  paraphrase: { icon: Quote, label: 'Paraphrase' },
+  summarize: { icon: BookText, label: 'Summarize' },
+  translate: { icon: Languages, label: 'Translate' },
+};
+
 
 export function TexioApp() {
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
@@ -196,19 +203,24 @@ export function TexioApp() {
         <div className="flex flex-col gap-4 h-full">
           <Label className="font-semibold text-md">Operation</Label>
           <div className="flex w-full items-center gap-1 rounded-full bg-muted p-1">
-            {(['paraphrase', 'summarize', 'translate'] as Operation[]).map((op) => (
+            {(Object.keys(operationDetails) as Operation[]).map((op) => {
+              const { icon: Icon, label } = operationDetails[op];
+              return (
               <Button
                 key={op}
                 variant="ghost"
                 className={cn(
                   'w-full rounded-full py-2 text-sm h-auto transition-all',
-                  operation === op ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+                  operation === op 
+                    ? 'bg-background text-foreground shadow-sm font-semibold' 
+                    : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
                 )}
                 onClick={() => handleOperationChange(op)}
               >
-                {op.charAt(0).toUpperCase() + op.slice(1)}
+                <Icon className="h-4 w-4" />
+                <span>{label}</span>
               </Button>
-            ))}
+            )})}
           </div>
           
           {operation === 'translate' && (
