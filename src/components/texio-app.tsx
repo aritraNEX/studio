@@ -278,7 +278,8 @@ export function TexioApp() {
           {isPending ? buttonTextPending : buttonText}
         </Button>
         {error && <p className="text-sm text-destructive text-center">{error}</p>}
-        <AdBanner />
+        <AdBanner adSlot="9791852196" />
+        <AdBanner adSlot="8260946975" />
       </CardFooter>
     </Card>
   );

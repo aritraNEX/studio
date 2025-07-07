@@ -9,7 +9,7 @@ declare global {
   }
 }
 
-const AdBanner = () => {
+const AdBanner = ({ adSlot }: { adSlot: string }) => {
   const pathname = usePathname();
 
   useEffect(() => {
@@ -30,7 +30,7 @@ const AdBanner = () => {
         className="adsbygoogle"
         style={{ display: 'block' }}
         data-ad-client="ca-pub-1743205890050653"
-        data-ad-slot="8260946975"
+        data-ad-slot={adSlot}
         data-ad-format="auto"
         data-full-width-responsive="true"
       ></ins>
