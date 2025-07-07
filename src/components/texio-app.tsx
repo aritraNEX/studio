@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import AdBanner from "./ad-banner";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate';
 
@@ -263,6 +264,7 @@ export function TexioApp() {
         </div>
       </CardContent>
       <CardFooter className="flex flex-col items-center justify-center gap-4 pt-4 pb-8">
+        <AdBanner />
         <Button
           onClick={handleProcess}
           disabled={!imageDataUrl || isPending || (operation === 'translate' && !targetLanguage.trim())}
