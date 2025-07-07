@@ -263,6 +263,12 @@ export function TexioApp() {
         </div>
       </CardContent>
       <CardFooter className="flex flex-col items-center justify-center gap-4 pt-4 pb-8">
+        <div className="w-full max-w-xs p-4 border border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground text-sm">
+          <p className="font-semibold text-xs mb-2 text-muted-foreground/70 uppercase tracking-wider">Advertisement</p>
+          <div className="w-full h-20 bg-muted/50 rounded-md flex items-center justify-center">
+            <p className="text-muted-foreground/80">Your Ad Here</p>
+          </div>
+        </div>
         <Button
           onClick={handleProcess}
           disabled={!imageDataUrl || isPending || (operation === 'translate' && !targetLanguage.trim())}
