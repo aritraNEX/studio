@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useRef, useTransition, useEffect } from "react";
 import Image from "next/image";
 import { Copy, Loader2, Sparkles, Upload, Quote, BookText, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,11 @@ export function TexioApp() {
   const [targetLanguage, setTargetLanguage] = useState<string>('Spanish');
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleImageUpload = (file: File) => {
     if (!file) return;
@@ -278,8 +283,12 @@ export function TexioApp() {
           {isPending ? buttonTextPending : buttonText}
         </Button>
         {error && <p className="text-sm text-destructive text-center">{error}</p>}
-        <AdBanner key="9791852196" adSlot="9791852196" />
-        <AdBanner key="8260946975" adSlot="8260946975" />
+        {isClient && (
+          <>
+            <AdBanner key="9791852196" adSlot="9791852196" />
+            <AdBanner key="8260946975" adSlot="8260946975" />
+          </>
+        )}
       </CardFooter>
     </Card>
   );

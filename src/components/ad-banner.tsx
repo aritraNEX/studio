@@ -13,6 +13,8 @@ const AdBanner = ({ adSlot }: { adSlot: string }) => {
   const pathname = usePathname();
 
   useEffect(() => {
+    // A small delay can help ensure the ad container is rendered and sized,
+    // preventing a race condition.
     const timeout = setTimeout(() => {
       try {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -28,7 +30,6 @@ const AdBanner = ({ adSlot }: { adSlot: string }) => {
     <div className="w-full text-center my-4 min-h-[100px] flex items-center justify-center">
       <ins
         className="adsbygoogle"
-        key={adSlot}
         style={{ display: 'block' }}
         data-ad-client="ca-pub-1743205890050653"
         data-ad-slot={adSlot}
