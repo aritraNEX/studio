@@ -19,6 +19,13 @@ import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import jsPDF from "jspdf";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate';
 
@@ -28,6 +35,28 @@ const operationDetails: Record<Operation, { icon: React.ElementType; label: stri
   translate: { icon: Languages, label: 'Translate' },
 };
 
+const popularFonts = [
+  "Poppins",
+  "Arial",
+  "Verdana",
+  "Helvetica",
+  "Tahoma",
+  "Trebuchet MS",
+  "Times New Roman",
+  "Georgia",
+  "Garamond",
+  "Courier New",
+  "Brush Script MT",
+  "Comic Sans MS",
+  "Impact",
+  "Lucida Console",
+  "Lucida Sans Unicode",
+  "Palatino Linotype",
+  "Book Antiqua",
+  "Gill Sans",
+  "Calibri",
+  "Cambria",
+];
 
 export function TexioApp() {
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
@@ -36,6 +65,7 @@ export function TexioApp() {
   const [isPending, startTransition] = useTransition();
   const [operation, setOperation] = useState<Operation>('paraphrase');
   const [targetLanguage, setTargetLanguage] = useState<string>('Spanish');
+  const [selectedFont, setSelectedFont] = useState<string>("Poppins");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isClient, setIsClient] = useState(false);
@@ -137,10 +167,17 @@ export function TexioApp() {
     if (!generatedText) return;
     
     const doc = new jsPDF();
-    doc.setFont('helvetica', 'normal');
     
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.text('Tex.io Result', 14, 22);
+    
+    try {
+      doc.setFont(selectedFont, 'normal');
+    } catch (e) {
+      console.warn(`jsPDF does not support font: ${selectedFont}. Falling back to helvetica.`);
+      doc.setFont('helvetica', 'normal');
+    }
     
     doc.setFontSize(12);
     const splitText = doc.splitTextToSize(generatedText, 180);
@@ -274,6 +311,7 @@ export function TexioApp() {
               onChange={(e) => setGeneratedText(e.target.value)}
               placeholder={isPending ? "Generating..." : "Your result will appear here..."}
               className="h-full min-h-48 resize-y pr-24 bg-background focus-visible:ring-accent"
+              style={{ fontFamily: selectedFont }}
             />
             <div className="absolute top-2 right-2 flex items-center">
               <Button
@@ -301,20 +339,43 @@ export function TexioApp() {
         </div>
       </CardContent>
       <CardFooter className="flex flex-col items-center justify-center gap-4 pt-4 pb-8">
-        <Button
-          onClick={handleProcess}
-          disabled={!imageDataUrl || isPending || (operation === 'translate' && !targetLanguage.trim())}
-          size="lg"
-          className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
-        >
-          {isPending ? (
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          ) : (
-            <Sparkles className="mr-2 h-5 w-5" />
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <Button
+            onClick={handleProcess}
+            disabled={!imageDataUrl || isPending || (operation === 'translate' && !targetLanguage.trim())}
+            size="lg"
+            className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 sm:w-auto"
+          >
+            {isPending ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              <Sparkles className="mr-2 h-5 w-5" />
+            )}
+            {isPending ? buttonTextPending : buttonText}
+          </Button>
+
+          {generatedText && (
+            <div className="flex items-center gap-2 animate-in fade-in duration-500">
+              <Label htmlFor="font-select" className="text-sm font-medium">
+                Font:
+              </Label>
+              <Select onValueChange={setSelectedFont} defaultValue={selectedFont}>
+                <SelectTrigger id="font-select" className="w-[180px] bg-background">
+                  <SelectValue placeholder="Select a font" />
+                </SelectTrigger>
+                <SelectContent>
+                  {popularFonts.map((font) => (
+                    <SelectItem key={font} value={font} style={{ fontFamily: font }}>
+                      {font}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
-          {isPending ? buttonTextPending : buttonText}
-        </Button>
-        {error && <p className="text-sm text-destructive text-center">{error}</p>}
+        </div>
+        
+        {error && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
       </CardFooter>
     </Card>
   );
