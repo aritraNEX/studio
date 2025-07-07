@@ -30,18 +30,18 @@ export function TexioApp() {
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
         <Tabs defaultValue="paraphrase" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mx-auto max-w-md h-auto p-1.5">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mx-auto max-w-md h-auto p-1.5">
             <TabsTrigger value="paraphrase" className="py-2.5">
-                <Quote className="h-5 w-5 sm:mr-2" />
-                <span className="hidden sm:inline">Paraphrase</span>
+                <Quote className="h-5 w-5 mr-2" />
+                <span>Paraphrase</span>
             </TabsTrigger>
             <TabsTrigger value="summarize" className="py-2.5">
-                <BookText className="h-5 w-5 sm:mr-2" />
-                <span className="hidden sm:inline">Summarize</span>
+                <BookText className="h-5 w-5 mr-2" />
+                <span>Summarize</span>
             </TabsTrigger>
             <TabsTrigger value="translate" className="py-2.5">
-                <Languages className="h-5 w-5 sm:mr-2" />
-                <span className="hidden sm:inline">Translate</span>
+                <Languages className="h-5 w-5 mr-2" />
+                <span>Translate</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="paraphrase" className="pt-6">
