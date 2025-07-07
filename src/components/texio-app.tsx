@@ -264,7 +264,6 @@ export function TexioApp() {
         </div>
       </CardContent>
       <CardFooter className="flex flex-col items-center justify-center gap-4 pt-4 pb-8">
-        <AdBanner />
         <Button
           onClick={handleProcess}
           disabled={!imageDataUrl || isPending || (operation === 'translate' && !targetLanguage.trim())}
@@ -279,6 +278,7 @@ export function TexioApp() {
           {isPending ? buttonTextPending : buttonText}
         </Button>
         {error && <p className="text-sm text-destructive text-center">{error}</p>}
+        <AdBanner />
       </CardFooter>
     </Card>
   );
