@@ -2,7 +2,7 @@
 
 import { useState, useRef, useTransition, useEffect } from "react";
 import Image from "next/image";
-import { Copy, Loader2, Sparkles, Upload, Quote, BookText, Languages } from "lucide-react";
+import { Copy, Loader2, Sparkles, Upload, Quote, BookText, Languages, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import jsPDF from "jspdf";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate';
 
@@ -129,6 +130,26 @@ export function TexioApp() {
     toast({
       title: "Copied to clipboard!",
       description: "The result has been copied.",
+    });
+  };
+
+  const handleDownloadPdf = () => {
+    if (!generatedText) return;
+    
+    const doc = new jsPDF();
+    doc.setFont('helvetica', 'normal');
+    
+    doc.setFontSize(18);
+    doc.text('Tex.io Result', 14, 22);
+    
+    doc.setFontSize(12);
+    const splitText = doc.splitTextToSize(generatedText, 180);
+    doc.text(splitText, 14, 32);
+
+    doc.save('texio-result.pdf');
+    toast({
+        title: "PDF Downloaded",
+        description: "Your result has been saved as a PDF.",
     });
   };
 
@@ -252,18 +273,30 @@ export function TexioApp() {
               value={generatedText}
               onChange={(e) => setGeneratedText(e.target.value)}
               placeholder={isPending ? "Generating..." : "Your result will appear here..."}
-              className="h-full min-h-48 resize-y pr-12 bg-background focus-visible:ring-accent"
+              className="h-full min-h-48 resize-y pr-24 bg-background focus-visible:ring-accent"
             />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
-              onClick={handleCopy}
-              disabled={!generatedText || isPending}
-              aria-label="Copy to clipboard"
-            >
-              <Copy className="h-5 w-5" />
-            </Button>
+            <div className="absolute top-2 right-2 flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={handleCopy}
+                disabled={!generatedText || isPending}
+                aria-label="Copy to clipboard"
+              >
+                <Copy className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={handleDownloadPdf}
+                disabled={!generatedText || isPending}
+                aria-label="Download as PDF"
+              >
+                <Download className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>
