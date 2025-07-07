@@ -58,7 +58,7 @@ const processImageTextFlow = ai.defineFlow(
     let instruction = '';
     switch(input.operation) {
       case 'paraphrase':
-        instruction = `Paraphrase the extracted text. The new version should be a faithful representation of the original text, but rephrased to have different wording. Crucially, preserve the original formatting, including line breaks, lists, and bullet points. Do not add any new information or merge distinct points into a single paragraph.`;
+        instruction = `First, identify and correct any grammatical errors, spelling mistakes, or factual inaccuracies in the extracted text. After correcting the text, then paraphrase it. The new version should be a faithful representation of the original text's meaning, but rephrased with different wording. Crucially, preserve the original formatting, including line breaks, lists, and bullet points. Do not add any new information or merge distinct points into a single paragraph.`;
         break;
       case 'summarize':
         instruction = `Summarize the extracted text. Provide a concise summary that captures the main points.`;
