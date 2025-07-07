@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 declare global {
   interface Window {
@@ -9,13 +10,15 @@ declare global {
 }
 
 const AdBanner = () => {
+  const pathname = usePathname();
+
   useEffect(() => {
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (err) {
-      console.error("Failed to push AdSense ad", err);
+      console.error(err);
     }
-  }, []);
+  }, [pathname]);
 
   return (
     <div className="w-full text-center my-4 min-h-[100px] flex items-center justify-center">
