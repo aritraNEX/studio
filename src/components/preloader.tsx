@@ -11,9 +11,9 @@ const icons = [
 
 const AnimatedIcon = ({ index }: { index: number }) => {
     const Icon = icons[index % icons.length];
-    const animationDuration = 4 + Math.random() * 4;
-    const animationDelay = Math.random() * 6;
-    const size = 24 + Math.random() * 40;
+    const animationDuration = 8 + Math.random() * 7; // 8s to 15s
+    const animationDelay = Math.random() * 10; // 0s to 10s
+    const size = 16 + Math.random() * 32; // 16px to 48px
     const leftPosition = Math.random() * 100;
 
     return (
@@ -26,7 +26,7 @@ const AnimatedIcon = ({ index }: { index: number }) => {
             }}
         >
             <Icon 
-                className="text-muted-foreground"
+                className="text-muted-foreground/70"
                 style={{
                     width: `${size}px`,
                     height: `${size}px`,
@@ -56,7 +56,7 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
       )}
     >
       <div className="absolute inset-0 w-full h-full">
-        {Array.from({ length: 40 }).map((_, index) => (
+        {Array.from({ length: 25 }).map((_, index) => (
             <AnimatedIcon key={index} index={index} />
         ))}
       </div>
