@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useRef, useTransition, useEffect } from "react";
 import Image from "next/image";
 import { Copy, Loader2, Sparkles, Upload, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import jsPDF from "jspdf";
+import * as pdfjsLib from "pdfjs-dist";
+import mammoth from "mammoth";
 import {
   Select,
   SelectContent,
@@ -50,6 +52,8 @@ interface OperationTabProps {
 
 export function OperationTab({ operation }: OperationTabProps) {
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+  const [extractedText, setExtractedText] = useState<string | null>(null);
+  const [isParsing, setIsParsing] = useState(false);
   const [generatedText, setGeneratedText] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -60,34 +64,85 @@ export function OperationTab({ operation }: OperationTabProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (file: File) => {
+  useEffect(() => {
+    try {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+    } catch (error) {
+      console.error("Failed to set pdf.js worker source", error);
+    }
+  }, []);
+
+  const handleFileUpload = (file: File) => {
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
+    setImageDataUrl(null);
+    setExtractedText(null);
+    setGeneratedText("");
+    setError(null);
+    setIsParsing(true);
+
+    const fileType = file.type;
+
+    if (fileType.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result;
+        if (typeof result === "string") {
+          setImageDataUrl(result);
+        }
+        setIsParsing(false);
+      };
+      reader.readAsDataURL(file);
+    } else if (fileType === 'application/pdf') {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const buffer = e.target?.result as ArrayBuffer;
+          const pdf = await pdfjsLib.getDocument(buffer).promise;
+          let text = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\\n';
+          }
+          setExtractedText(text);
+        } catch (error) {
+          console.error("Failed to parse PDF", error);
+          toast({ variant: 'destructive', title: 'Could not read PDF file.' });
+        } finally {
+          setIsParsing(false);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const buffer = e.target?.result as ArrayBuffer;
+          const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+          setExtractedText(result.value);
+        } catch (error) {
+          console.error("Failed to parse DOCX", error);
+          toast({ variant: 'destructive', title: 'Could not read DOCX file.' });
+        } finally {
+          setIsParsing(false);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
       toast({
-        title: "Invalid file type",
-        description: "Please upload an image file.",
+        title: "Unsupported file type",
+        description: "Please upload an image, PDF, or DOCX file.",
         variant: "destructive",
       });
-      return;
+      setIsParsing(false);
     }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result;
-      if (typeof result === "string") {
-        setImageDataUrl(result);
-        setGeneratedText("");
-        setError(null);
-      }
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      handleImageUpload(file);
+      handleFileUpload(file);
     }
   };
   
@@ -99,12 +154,12 @@ export function OperationTab({ operation }: OperationTabProps) {
     event.preventDefault();
     const file = event.dataTransfer.files?.[0];
     if (file) {
-        handleImageUpload(file);
+      handleFileUpload(file);
     }
   };
 
   const handleProcess = () => {
-    if (!imageDataUrl) return;
+    if (!imageDataUrl && !extractedText) return;
     
     const finalStyle = customStyle.trim() || targetStyle;
 
@@ -130,12 +185,13 @@ export function OperationTab({ operation }: OperationTabProps) {
     setGeneratedText("");
     startTransition(async () => {
       try {
-        const result = await processImageText({ 
-            photoDataUri: imageDataUrl,
+        const inputPayload = {
             operation,
             ...(operation === 'translate' ? { targetLanguage } : {}),
-            ...(operation === 'style' ? { targetStyle: finalStyle } : {})
-        });
+            ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
+            ...(imageDataUrl ? { photoDataUri: imageDataUrl } : { text: extractedText! })
+        };
+        const result = await processImageText(inputPayload);
         if (result && result.processedText) {
           setGeneratedText(result.processedText);
         } else {
@@ -166,16 +222,11 @@ export function OperationTab({ operation }: OperationTabProps) {
     if (!generatedText) return;
 
     const doc = new jsPDF();
-
-    // Use a standard font for reliable PDF generation
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.text(`Tex.io Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, 14, 22);
-
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
-    
-    // The splitTextToSize function will use the currently set font
     const splitText = doc.splitTextToSize(generatedText, 180);
     doc.text(splitText, 14, 32);
 
@@ -206,7 +257,7 @@ export function OperationTab({ operation }: OperationTabProps) {
     <div className="grid md:grid-cols-2 gap-8 items-start">
       <div className="flex flex-col gap-4">
         <Label htmlFor={`image-upload-${operation}`} className="font-semibold text-md">
-          Upload Image
+          Upload File
         </Label>
         <div className="relative">
           <input
@@ -215,7 +266,7 @@ export function OperationTab({ operation }: OperationTabProps) {
             ref={fileInputRef}
             onChange={handleFileChange}
             className="sr-only"
-            accept="image/*"
+            accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           />
           <label
             htmlFor={`image-upload-${operation}`}
@@ -226,22 +277,32 @@ export function OperationTab({ operation }: OperationTabProps) {
               "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
             )}
           >
-            {imageDataUrl ? (
+            {isParsing ? (
+               <div className="flex flex-col items-center justify-center text-center p-4">
+                <Loader2 className="w-10 h-10 mb-3 text-primary animate-spin" />
+                <p className="text-sm text-muted-foreground">Parsing your file...</p>
+              </div>
+            ) : imageDataUrl ? (
               <div className="relative w-full h-full p-2">
                 <Image
                   src={imageDataUrl}
-                  alt="Uploaded text"
+                  alt="Uploaded content"
                   fill
                   className="rounded-lg object-contain"
                 />
               </div>
+            ) : extractedText ? (
+                <div className="w-full h-full p-4 overflow-y-auto bg-background/30 rounded-lg">
+                    <h3 className="text-sm font-semibold text-foreground mb-2">Extracted Text Preview:</h3>
+                    <p className="text-xs text-muted-foreground whitespace-pre-wrap font-mono">{extractedText.substring(0, 1000)}{extractedText.length > 1000 && '...'}</p>
+                </div>
             ) : (
               <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
                 <Upload className="w-10 h-10 mb-3 text-muted-foreground transition-transform duration-300 group-hover:scale-110 group-hover:text-primary" />
                 <p className="mb-2 text-sm text-muted-foreground">
                   <span className="font-semibold text-primary">Click to upload</span> or drag and drop
                 </p>
-                <p className="text-xs text-muted-foreground">Any common image format</p>
+                <p className="text-xs text-muted-foreground">Image, PDF, or DOCX files</p>
               </div>
             )}
           </label>
@@ -341,7 +402,7 @@ export function OperationTab({ operation }: OperationTabProps) {
          <div className="flex flex-wrap items-center justify-center gap-4">
           <Button
             onClick={handleProcess}
-            disabled={!imageDataUrl || isPending || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
+            disabled={(!imageDataUrl && !extractedText) || isPending || isParsing || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
             className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 sm:w-auto"
           >
