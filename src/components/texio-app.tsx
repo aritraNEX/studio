@@ -15,6 +15,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { OperationTab } from "./operation-tab";
+import { AdBanner } from "./ad-banner";
 
 export function TexioApp() {
   return (
@@ -54,6 +55,11 @@ export function TexioApp() {
             <OperationTab operation="translate" />
           </TabsContent>
         </Tabs>
+        <div className="mt-8 space-y-6">
+            <AdBanner adClient="ca-pub-1743205890050653" adSlot="9791852196" />
+            <AdBanner adClient="ca-pub-1743205890050653" adSlot="8260946975" />
+            <AdBanner adClient="ca-pub-1743205890050653" adSlot="7457666036" />
+        </div>
       </CardContent>
     </Card>
   );

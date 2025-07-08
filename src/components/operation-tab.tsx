@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AdBanner } from "./ad-banner";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate';
 
@@ -150,21 +149,18 @@ export function OperationTab({ operation }: OperationTabProps) {
 
   const handleDownloadPdf = () => {
     if (!generatedText) return;
-    
+
     const doc = new jsPDF();
-    
+
+    // Use a standard font for reliable PDF generation
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.text(`Tex.io Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, 14, 22);
-    
-    try {
-      doc.setFont(selectedFont, 'normal');
-    } catch (e) {
-      console.warn(`jsPDF does not support font: ${selectedFont}. Falling back to helvetica.`);
-      doc.setFont('helvetica', 'normal');
-    }
-    
+
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
+    
+    // The splitTextToSize function will use the currently set font
     const splitText = doc.splitTextToSize(generatedText, 180);
     doc.text(splitText, 14, 32);
 
@@ -321,11 +317,6 @@ export function OperationTab({ operation }: OperationTabProps) {
           )}
         </div>
         {error && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
-      </div>
-      <div className="md:col-span-2 mt-6 space-y-6">
-        <AdBanner adClient="ca-pub-1743205890050653" adSlot="9791852196" />
-        <AdBanner adClient="ca-pub-1743205890050653" adSlot="8260946975" />
-        <AdBanner adClient="ca-pub-1743205890050653" adSlot="7457666036" />
       </div>
     </div>
   );
