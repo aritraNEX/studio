@@ -2,7 +2,7 @@
 /**
  * @fileOverview This file defines a Genkit flow for processing text extracted from an image.
  *
- * - processImageText - A function that accepts an image and performs an operation (paraphrase, summarize, translate) on the extracted text.
+ * - processImageText - A function that accepts an image and performs an operation (paraphrase, summarize, translate, style) on the extracted text.
  * - ProcessImageTextInput - The input type for the processImageText function.
  * - ProcessImageTextOutput - The return type for the processImageText function.
  */
@@ -16,15 +16,16 @@ const ProcessImageTextInputSchema = z.object({
     .describe(
       "A photo containing text, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
-  operation: z.enum(['paraphrase', 'summarize', 'translate']).describe('The operation to perform on the text.'),
+  operation: z.enum(['paraphrase', 'summarize', 'translate', 'style']).describe('The operation to perform on the text.'),
   targetLanguage: z.string().optional().describe('The target language for translation. Required if operation is "translate".'),
+  targetStyle: z.string().optional().describe('The target style for rewriting. Required if operation is "style".'),
 });
 export type ProcessImageTextInput = z.infer<typeof ProcessImageTextInputSchema>;
 
 const ProcessImageTextOutputSchema = z.object({
   processedText: z
     .string()
-    .describe('The processed text (paraphrased, summarized, or translated).'),
+    .describe('The processed text (paraphrased, summarized, translated, or styled).'),
 });
 export type ProcessImageTextOutput = z.infer<typeof ProcessImageTextOutputSchema>;
 
@@ -68,6 +69,12 @@ const processImageTextFlow = ai.defineFlow(
           throw new Error('Target language is required for translation.');
         }
         instruction = `Translate the extracted text to ${input.targetLanguage}. Preserve the original formatting like lists and line breaks.`;
+        break;
+      case 'style':
+        if (!input.targetStyle) {
+          throw new Error('Target style is required for rewriting.');
+        }
+        instruction = `Rewrite the extracted text to match the following style: "${input.targetStyle}". If the style mentions a famous author, adopt their distinct writing style, including their typical vocabulary, sentence structure, and tone. Preserve the original formatting, including line breaks, lists, and bullet points.`;
         break;
       default:
         throw new Error('Invalid operation specified.');

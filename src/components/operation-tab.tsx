@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type Operation = 'paraphrase' | 'summarize' | 'translate';
+type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style';
 
 const extraordinaryFonts = [
   "Poppins",
@@ -54,6 +54,8 @@ export function OperationTab({ operation }: OperationTabProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [targetLanguage, setTargetLanguage] = useState<string>('Spanish');
+  const [targetStyle, setTargetStyle] = useState<string>('Formal');
+  const [customStyle, setCustomStyle] = useState<string>('');
   const [selectedFont, setSelectedFont] = useState<string>("Poppins");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -103,6 +105,9 @@ export function OperationTab({ operation }: OperationTabProps) {
 
   const handleProcess = () => {
     if (!imageDataUrl) return;
+    
+    const finalStyle = customStyle.trim() || targetStyle;
+
     if (operation === 'translate' && !targetLanguage.trim()) {
         toast({
             title: "Language required",
@@ -112,6 +117,15 @@ export function OperationTab({ operation }: OperationTabProps) {
         return;
     }
 
+    if (operation === 'style' && !finalStyle) {
+      toast({
+          title: "Style required",
+          description: "Please select or enter a style for rewriting.",
+          variant: "destructive",
+      });
+      return;
+    }
+
     setError(null);
     setGeneratedText("");
     startTransition(async () => {
@@ -119,7 +133,8 @@ export function OperationTab({ operation }: OperationTabProps) {
         const result = await processImageText({ 
             photoDataUri: imageDataUrl,
             operation,
-            ...(operation === 'translate' ? { targetLanguage } : {})
+            ...(operation === 'translate' ? { targetLanguage } : {}),
+            ...(operation === 'style' ? { targetStyle: finalStyle } : {})
         });
         if (result && result.processedText) {
           setGeneratedText(result.processedText);
@@ -174,14 +189,18 @@ export function OperationTab({ operation }: OperationTabProps) {
   const buttonText = {
       paraphrase: 'Paraphrase',
       summarize: 'Summarize',
-      translate: 'Translate'
+      translate: 'Translate',
+      style: 'Apply Style'
   }[operation];
 
   const buttonTextPending = {
       paraphrase: 'Paraphrasing...',
       summarize: 'Summarizing...',
-      translate: 'Translating...'
+      translate: 'Translating...',
+      style: 'Applying Style...'
   }[operation];
+
+  const finalStyle = customStyle.trim() || targetStyle;
 
   return (
     <div className="grid md:grid-cols-2 gap-8 items-start">
@@ -244,6 +263,44 @@ export function OperationTab({ operation }: OperationTabProps) {
           </div>
         )}
 
+        {operation === 'style' && (
+          <div className="flex flex-col gap-4 animate-in fade-in duration-300">
+            <div className="flex flex-col gap-2">
+                <Label htmlFor={`style-select-${operation}`} className="font-semibold text-md">
+                Choose a Style
+                </Label>
+                <Select onValueChange={setTargetStyle} defaultValue={targetStyle} disabled={!!customStyle.trim()}>
+                    <SelectTrigger id={`style-select-${operation}`} className="bg-background/50 focus-visible:ring-accent">
+                    <SelectValue placeholder="Select a style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Formal">Formal</SelectItem>
+                        <SelectItem value="Casual">Casual</SelectItem>
+                        <SelectItem value="Confident">Confident</SelectItem>
+                        <SelectItem value="Poetic">Poetic</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="relative flex items-center justify-center">
+                <div className="flex-grow border-t border-muted-foreground/20"></div>
+                <span className="flex-shrink mx-2 text-xs text-muted-foreground">OR</span>
+                <div className="flex-grow border-t border-muted-foreground/20"></div>
+            </div>
+             <div className="flex flex-col gap-2">
+                <Label htmlFor={`custom-style-input-${operation}`} className="font-semibold text-md">
+                    Enter a Famous Author
+                </Label>
+                <Input 
+                    id={`custom-style-input-${operation}`}
+                    value={customStyle}
+                    onChange={(e) => setCustomStyle(e.target.value)}
+                    placeholder="e.g., William Shakespeare, Jane Austen"
+                    className="bg-background/50 focus-visible:ring-accent"
+                />
+            </div>
+          </div>
+        )}
+
         <Label htmlFor={`output-text-${operation}`} className="font-semibold text-md">
           Result
         </Label>
@@ -284,7 +341,7 @@ export function OperationTab({ operation }: OperationTabProps) {
          <div className="flex flex-wrap items-center justify-center gap-4">
           <Button
             onClick={handleProcess}
-            disabled={!imageDataUrl || isPending || (operation === 'translate' && !targetLanguage.trim())}
+            disabled={!imageDataUrl || isPending || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
             className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 sm:w-auto"
           >

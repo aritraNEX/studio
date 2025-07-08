@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, Quote, BookText, Languages, FileEdit } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -33,7 +33,7 @@ export function TexioApp() {
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
         <Tabs defaultValue="paraphrase" className="w-full">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-4 mx-auto max-w-xl h-auto p-1.5">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 mx-auto max-w-2xl h-auto p-1.5">
             <TabsTrigger value="paraphrase" className="py-2.5">
                 <Quote className="h-5 w-5 mr-2" />
                 <span>Paraphrase</span>
@@ -46,8 +46,12 @@ export function TexioApp() {
                 <Languages className="h-5 w-5 mr-2" />
                 <span>Translate</span>
             </TabsTrigger>
+            <TabsTrigger value="style" className="py-2.5">
+                <Palette className="h-5 w-5 mr-2" />
+                <span>Style</span>
+            </TabsTrigger>
             <TabsTrigger value="notepad" className="py-2.5">
-                <FileEdit className="h-5 w-5 mr-2" />
+                <Notebook className="h-5 w-5 mr-2" />
                 <span>Notepad</span>
             </TabsTrigger>
           </TabsList>
@@ -59,6 +63,9 @@ export function TexioApp() {
           </TabsContent>
           <TabsContent value="translate" className="pt-6">
             <OperationTab operation="translate" />
+          </TabsContent>
+          <TabsContent value="style" className="pt-6">
+            <OperationTab operation="style" />
           </TabsContent>
           <TabsContent value="notepad" className="pt-6">
             <NotepadTab />
