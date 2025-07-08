@@ -1,35 +1,51 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Sparkles, Quote, BookText, Languages, FileText, ScanText, ClipboardCopy, Type, Wand2, ArrowRightLeft, MessageSquareQuote, Pencil } from 'lucide-react';
+import { Sparkles, Quote, BookText, Languages, FileText, ScanText, ClipboardCopy, Type, WandSparkles, ArrowRightLeft, MessageSquareQuote, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const icons = [
   Sparkles, Quote, BookText, Languages, FileText, ScanText, 
-  ClipboardCopy, Type, Wand2, ArrowRightLeft, MessageSquareQuote, Pencil
+  ClipboardCopy, Type, WandSparkles, ArrowRightLeft, MessageSquareQuote, Pencil
 ];
 
 const AnimatedIcon = ({ index }: { index: number }) => {
     const Icon = icons[index % icons.length];
-    const animationDuration = 8 + Math.random() * 7; // 8s to 15s
-    const animationDelay = Math.random() * 10; // 0s to 10s
-    const size = 16 + Math.random() * 32; // 16px to 48px
-    const leftPosition = Math.random() * 100;
+    const [styleProps, setStyleProps] = useState<{
+        left: string;
+        animationDuration: string;
+        animationDelay: string;
+        size: string;
+    } | null>(null);
+
+    useEffect(() => {
+        setStyleProps({
+            left: `${Math.random() * 100}%`,
+            animationDuration: `${8 + Math.random() * 7}s`,
+            animationDelay: `${Math.random() * 10}s`,
+            size: `${16 + Math.random() * 32}px`,
+        });
+    }, []); // Empty dependency array ensures this runs only on the client
+
+    // Return null on the server and initial client render to prevent hydration mismatch
+    if (!styleProps) {
+        return null;
+    }
 
     return (
         <div 
             className="absolute bottom-0 animate-float-up"
             style={{ 
-                left: `${leftPosition}%`,
-                animationDuration: `${animationDuration}s`,
-                animationDelay: `${animationDelay}s`,
+                left: styleProps.left,
+                animationDuration: styleProps.animationDuration,
+                animationDelay: styleProps.animationDelay,
             }}
         >
             <Icon 
                 className="text-muted-foreground/70"
                 style={{
-                    width: `${size}px`,
-                    height: `${size}px`,
+                    width: styleProps.size,
+                    height: styleProps.size,
                 }}
             />
         </div>
