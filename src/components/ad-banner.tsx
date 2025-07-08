@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from 'react';
 
+declare global {
+  interface Window {
+    adsbygoogle: any[];
+  }
+}
+
 interface AdBannerProps {
   adSlot: string;
   adClient: string;

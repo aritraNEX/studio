@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -15,6 +16,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { OperationTab } from "./operation-tab";
+import { AdBanner } from "./ad-banner";
 
 export function TexioApp() {
   return (
@@ -55,6 +57,10 @@ export function TexioApp() {
           </TabsContent>
         </Tabs>
       </CardContent>
+      <CardFooter className="flex-col gap-4 px-4 sm:px-8 pb-4">
+        <AdBanner adClient="ca-pub-1743205890050653" adSlot="7457666036" />
+        <AdBanner adClient="ca-pub-1743205890050653" adSlot="7457666036" />
+      </CardFooter>
     </Card>
   );
 }
