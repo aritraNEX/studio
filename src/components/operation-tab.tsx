@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useTransition, useEffect } from "react";
+import { useState, useRef, useTransition } from "react";
 import Image from "next/image";
 import { Copy, Loader2, Sparkles, Upload, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AdBanner } from "./ad-banner";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate';
 
@@ -320,6 +321,10 @@ export function OperationTab({ operation }: OperationTabProps) {
           )}
         </div>
         {error && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
+      </div>
+      <div className="md:col-span-2 mt-6 space-y-6">
+        <AdBanner adClient="ca-pub-1743205890050653" adSlot="9791852196" />
+        <AdBanner adClient="ca-pub-1743205890050653" adSlot="8260946975" />
       </div>
     </div>
   );
