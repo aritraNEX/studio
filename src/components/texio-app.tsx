@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -18,6 +18,7 @@ import {
 import { OperationTab } from "./operation-tab";
 import { AdBanner } from "./ad-banner";
 import { NotepadTab } from "./notepad-tab";
+import { PlagiarismTab } from "./plagiarism-tab";
 
 export function TexioApp() {
   return (
@@ -33,7 +34,7 @@ export function TexioApp() {
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
         <Tabs defaultValue="paraphrase" className="w-full">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 mx-auto max-w-2xl h-auto p-1.5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 mx-auto max-w-3xl h-auto p-1.5">
             <TabsTrigger value="paraphrase" className="py-2.5">
                 <Quote className="h-5 w-5 mr-2" />
                 <span>Paraphrase</span>
@@ -49,6 +50,10 @@ export function TexioApp() {
             <TabsTrigger value="style" className="py-2.5">
                 <Palette className="h-5 w-5 mr-2" />
                 <span>Style</span>
+            </TabsTrigger>
+            <TabsTrigger value="plagiarism" className="py-2.5">
+                <ShieldCheck className="h-5 w-5 mr-2" />
+                <span>Plagiarism</span>
             </TabsTrigger>
             <TabsTrigger value="notepad" className="py-2.5">
                 <Notebook className="h-5 w-5 mr-2" />
@@ -66,6 +71,9 @@ export function TexioApp() {
           </TabsContent>
           <TabsContent value="style" className="pt-6">
             <OperationTab operation="style" />
+          </TabsContent>
+           <TabsContent value="plagiarism" className="pt-6">
+            <PlagiarismTab />
           </TabsContent>
           <TabsContent value="notepad" className="pt-6">
             <NotepadTab />
