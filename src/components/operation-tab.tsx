@@ -325,6 +325,7 @@ export function OperationTab({ operation }: OperationTabProps) {
       <div className="md:col-span-2 mt-6 space-y-6">
         <AdBanner adClient="ca-pub-1743205890050653" adSlot="9791852196" />
         <AdBanner adClient="ca-pub-1743205890050653" adSlot="8260946975" />
+        <AdBanner adClient="ca-pub-1743205890050653" adSlot="7457666036" />
       </div>
     </div>
   );
