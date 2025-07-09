@@ -69,6 +69,7 @@ export function OperationTab({ operation }: OperationTabProps) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const outputTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     try {
@@ -247,11 +248,23 @@ export function OperationTab({ operation }: OperationTabProps) {
 
   const handleListen = async () => {
     if (!generatedText) return;
+    
+    const textarea = outputTextareaRef.current;
+    let textToSpeak = generatedText;
+
+    if (textarea && textarea.selectionStart !== textarea.selectionEnd) {
+      textToSpeak = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+    }
+
+    if (!textToSpeak.trim()) {
+      return;
+    }
+
     setIsGeneratingSpeech(true);
     setAudioUrl(null);
     try {
         const result = await textToSpeech({
-            text: generatedText,
+            text: textToSpeak,
             voice: selectedVoice as any,
         });
         setAudioUrl(result.audioDataUri);
@@ -397,6 +410,7 @@ export function OperationTab({ operation }: OperationTabProps) {
         </Label>
         <div className="relative flex-grow min-h-[24rem]">
           <Textarea
+            ref={outputTextareaRef}
             id={`output-text-${operation}`}
             value={generatedText}
             onChange={(e) => setGeneratedText(e.target.value)}
