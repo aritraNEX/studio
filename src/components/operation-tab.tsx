@@ -2,12 +2,13 @@
 
 import { useState, useRef, useTransition, useEffect } from "react";
 import Image from "next/image";
-import { Copy, Loader2, Sparkles, Upload, Download } from "lucide-react";
+import { Copy, Loader2, Sparkles, Upload, Download, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { processImageText } from "@/ai/flows/paraphrase-image-text";
+import { textToSpeech } from "@/ai/flows/text-to-speech-flow";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import jsPDF from "jspdf";
@@ -46,6 +47,8 @@ const extraordinaryFonts = [
   "Quattrocento",
 ];
 
+const voices = ['Algenib', 'Achernar', 'Sirius', 'Arcturus', 'Antares'];
+
 interface OperationTabProps {
   operation: Operation;
 }
@@ -61,6 +64,9 @@ export function OperationTab({ operation }: OperationTabProps) {
   const [targetStyle, setTargetStyle] = useState<string>('Formal');
   const [customStyle, setCustomStyle] = useState<string>('');
   const [selectedFont, setSelectedFont] = useState<string>("Poppins");
+  const [selectedVoice, setSelectedVoice] = useState<string>(voices[0]);
+  const [isGeneratingSpeech, setIsGeneratingSpeech] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -80,6 +86,7 @@ export function OperationTab({ operation }: OperationTabProps) {
     setGeneratedText("");
     setError(null);
     setIsParsing(true);
+    setAudioUrl(null);
 
     const fileType = file.type;
 
@@ -183,6 +190,7 @@ export function OperationTab({ operation }: OperationTabProps) {
 
     setError(null);
     setGeneratedText("");
+    setAudioUrl(null);
     startTransition(async () => {
       try {
         const inputPayload = {
@@ -235,6 +243,28 @@ export function OperationTab({ operation }: OperationTabProps) {
         title: "PDF Downloaded",
         description: "Your result has been saved as a PDF.",
     });
+  };
+
+  const handleListen = async () => {
+    if (!generatedText) return;
+    setIsGeneratingSpeech(true);
+    setAudioUrl(null);
+    try {
+        const result = await textToSpeech({
+            text: generatedText,
+            voice: selectedVoice as any,
+        });
+        setAudioUrl(result.audioDataUri);
+    } catch (e) {
+        console.error("Failed to generate speech", e);
+        toast({
+            title: "Speech Generation Failed",
+            description: "Could not convert text to speech. Please try again.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsGeneratingSpeech(false);
+    }
   };
 
   const buttonText = {
@@ -397,6 +427,50 @@ export function OperationTab({ operation }: OperationTabProps) {
             </Button>
           </div>
         </div>
+        
+        {generatedText && (
+          <div className="flex flex-col gap-4 mt-4 p-4 border rounded-lg bg-muted/50 animate-in fade-in duration-500">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex-grow w-full flex items-center gap-2">
+                    <Label htmlFor={`voice-select-${operation}`} className="text-sm font-medium whitespace-nowrap">
+                        Voice:
+                    </Label>
+                    <Select onValueChange={setSelectedVoice} defaultValue={selectedVoice}>
+                        <SelectTrigger id={`voice-select-${operation}`} className="w-full bg-background">
+                        <SelectValue placeholder="Select a voice" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {voices.map((voice) => (
+                            <SelectItem key={voice} value={voice}>
+                            {voice}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <Button 
+                    onClick={handleListen} 
+                    disabled={isGeneratingSpeech} 
+                    className="w-full sm:w-auto"
+                >
+                    {isGeneratingSpeech ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    ) : (
+                    <Volume2 className="mr-2 h-5 w-5" />
+                    )}
+                    {isGeneratingSpeech ? 'Generating...' : 'Listen'}
+                </Button>
+            </div>
+            {audioUrl && (
+              <div className="mt-2 animate-in fade-in duration-500">
+                <audio controls autoPlay className="w-full h-10">
+                  <source src={audioUrl} type="audio/wav" />
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div className="md:col-span-2 flex flex-col items-center justify-center gap-4 py-4">
          <div className="flex flex-wrap items-center justify-center gap-4">
