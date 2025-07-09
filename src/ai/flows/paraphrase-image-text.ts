@@ -10,7 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const ProcessImageTextInputSchema = z.object({
+const BaseProcessImageTextInputSchema = z.object({
   photoDataUri: z
     .string()
     .describe(
@@ -20,7 +20,9 @@ const ProcessImageTextInputSchema = z.object({
   operation: z.enum(['paraphrase', 'summarize', 'translate', 'style']).describe('The operation to perform on the text.'),
   targetLanguage: z.string().optional().describe('The target language for translation. Required if operation is "translate".'),
   targetStyle: z.string().optional().describe('The target style for rewriting. Required if operation is "style".'),
-}).refine(data => data.photoDataUri || data.text, {
+});
+
+const ProcessImageTextInputSchema = BaseProcessImageTextInputSchema.refine(data => data.photoDataUri || data.text, {
     message: "Either photoDataUri or text must be provided."
 });
 
@@ -40,8 +42,8 @@ export async function processImageText(
 }
 
 const promptInputSchema = z.object({
-    photoDataUri: ProcessImageTextInputSchema.shape.photoDataUri,
-    text: ProcessImageTextInputSchema.shape.text,
+    photoDataUri: BaseProcessImageTextInputSchema.shape.photoDataUri,
+    text: BaseProcessImageTextInputSchema.shape.text,
     instruction: z.string()
 });
 
