@@ -63,6 +63,10 @@ const processImageTextFlow = ai.defineFlow(
     outputSchema: ProcessImageTextOutputSchema,
   },
   async (input) => {
+    if (input.text && !input.text.trim()) {
+        return { processedText: "" };
+    }
+    
     let instruction = '';
     switch(input.operation) {
       case 'paraphrase':
