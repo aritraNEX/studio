@@ -14,7 +14,7 @@ import wav from 'wav';
 
 const TextToSpeechInputSchema = z.object({
   text: z.string().describe('The text to be converted to speech.'),
-  voice: z.enum(['Algenib', 'Achernar', 'Sirius', 'Arcturus', 'Antares']).describe('The voice to use for the speech.'),
+  voice: z.enum(['Algenib', 'Achernar', 'Schedar', 'Umbriel', 'Zephyr']).describe('The voice to use for the speech.'),
 });
 export type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
 

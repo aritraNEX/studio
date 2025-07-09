@@ -47,7 +47,7 @@ const extraordinaryFonts = [
   "Quattrocento",
 ];
 
-const voices = ['Algenib', 'Achernar', 'Sirius', 'Arcturus', 'Antares'];
+const voices = ['Algenib', 'Achernar', 'Schedar', 'Umbriel', 'Zephyr'];
 
 interface OperationTabProps {
   operation: Operation;
