@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -23,17 +23,23 @@ import { PlagiarismTab } from "./plagiarism-tab";
 import { WorkspaceTab } from "./workspace-tab";
 import { WorkspaceProvider, useWorkspace } from "@/contexts/workspace-context";
 import { ResearchTab } from "./research-tab";
+import { TtsTab } from "./tts-tab";
 
-type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style';
+type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
 
 function TexioAppContent() {
   const [activeTab, setActiveTab] = useState("paraphrase");
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
 
   const handleSendTo = (text: string, operation: Operation) => {
-    setWorkspaceText(text);
-    setWorkspaceOperation(operation);
-    setActiveTab("workspace");
+    if (operation === 'tts') {
+        setWorkspaceText(text); // Pass text to workspace context for TTS tab to pick up
+        setActiveTab("tts");
+    } else {
+        setWorkspaceText(text);
+        setWorkspaceOperation(operation);
+        setActiveTab("workspace");
+    }
   };
 
   return (
@@ -49,7 +55,7 @@ function TexioAppContent() {
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 mx-auto max-w-4xl h-auto p-1.5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 mx-auto max-w-5xl h-auto p-1.5">
             <TabsTrigger value="paraphrase" className="py-2.5">
                 <Quote className="h-5 w-5 mr-2" />
                 <span>Paraphrase</span>
@@ -78,6 +84,10 @@ function TexioAppContent() {
                 <ShieldCheck className="h-5 w-5 mr-2" />
                 <span>Plagiarism</span>
             </TabsTrigger>
+             <TabsTrigger value="tts" className="py-2.5">
+                <AudioLines className="h-5 w-5 mr-2" />
+                <span>TTS</span>
+            </TabsTrigger>
             <TabsTrigger value="notepad" className="py-2.5">
                 <Notebook className="h-5 w-5 mr-2" />
                 <span>Notepad</span>
@@ -103,6 +113,9 @@ function TexioAppContent() {
           </TabsContent>
            <TabsContent value="plagiarism" className="pt-6">
             <PlagiarismTab />
+          </TabsContent>
+           <TabsContent value="tts" className="pt-6">
+            <TtsTab />
           </TabsContent>
           <TabsContent value="notepad" className="pt-6">
             <NotepadTab />

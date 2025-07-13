@@ -3,13 +3,12 @@
 
 import { useState, useRef, useTransition, useEffect } from "react";
 import Image from "next/image";
-import { Copy, Loader2, Sparkles, Upload, Download, Volume2, ChevronDown, CheckCircle, File as FileIcon, Trash2, Send } from "lucide-react";
+import { Copy, Loader2, Sparkles, Upload, Download, Volume2, ChevronDown, CheckCircle, File as FileIcon, Trash2, Send, AudioLines } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { processImageText } from "@/ai/flows/paraphrase-image-text";
-import { textToSpeech } from "@/ai/flows/text-to-speech-flow";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import jsPDF from "jspdf";
@@ -27,7 +26,7 @@ import { Card, CardContent } from "./ui/card";
 import { Progress } from "./ui/progress";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
-type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style';
+type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
 type FileStatus = 'pending' | 'parsing' | 'ready' | 'processing' | 'done' | 'error';
 
 interface ProcessedFile {
@@ -62,8 +61,7 @@ const extraordinaryFonts = [
   "Quattrocento",
 ];
 
-const voices = ['Algenib', 'Achernar', 'Schedar', 'Umbriel', 'Zephyr'];
-const allOperations: Operation[] = ['paraphrase', 'summarize', 'translate', 'style'];
+const allOperations: Operation[] = ['paraphrase', 'summarize', 'translate', 'style', 'tts'];
 
 interface OperationTabProps {
   operation: Operation;
@@ -88,9 +86,6 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
   const [targetStyle, setTargetStyle] = useState<string>('Formal');
   const [customStyle, setCustomStyle] = useState<string>('');
   const [selectedFont, setSelectedFont] = useState<string>("Poppins");
-  const [selectedVoice, setSelectedVoice] = useState<string>(voices[0]);
-  const [isGeneratingSpeech, setIsGeneratingSpeech] = useState(false);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const outputTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -169,7 +164,6 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
         setGeneratedText("");
         setError(null);
         setIsParsing(true);
-        setAudioUrl(null);
 
         const fileType = file.type;
 
@@ -276,7 +270,7 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
                     operation: 'summarize',
                     ...(isImage ? { photoDataUri: file.extractedText! } : { text: file.extractedText! })
                 };
-                const result = await processImageText(inputPayload);
+                const result = await processImageText(inputPayload as any);
                 if (result && result.processedText) {
                     setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'done', generatedText: result.processedText } : f));
                 } else {
@@ -353,7 +347,6 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
 
     setError(null);
     setGeneratedText("");
-    setAudioUrl(null);
     startTransition(async () => {
       try {
         const inputPayload = {
@@ -362,7 +355,7 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
             ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
             ...(imageDataUrl ? { photoDataUri: imageDataUrl } : { text: extractedText! })
         };
-        const result = await processImageText(inputPayload);
+        const result = await processImageText(inputPayload as any);
         if (result && result.processedText) {
           setGeneratedText(result.processedText);
         } else {
@@ -394,7 +387,6 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
 
     const doc = new jsPDF();
     
-    // Set a professional, universally supported font
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.text(`Tex.io Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, 14, 22);
@@ -412,53 +404,19 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
     });
   };
 
-  const handleListen = async () => {
-    if (operation === 'summarize' || !generatedText) return;
-    
-    const textarea = outputTextareaRef.current;
-    let textToSpeak = generatedText;
-
-    if (textarea && textarea.selectionStart !== textarea.selectionEnd) {
-      textToSpeak = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
-    }
-
-    if (!textToSpeak.trim()) {
-      return;
-    }
-
-    setIsGeneratingSpeech(true);
-    setAudioUrl(null);
-    try {
-        const result = await textToSpeech({
-            text: textToSpeak,
-            voice: selectedVoice as any,
-        });
-        setAudioUrl(result.audioDataUri);
-    } catch (e) {
-        console.error("Failed to generate speech", e);
-        toast({
-            title: "Speech Generation Failed",
-            description: "Could not convert text to speech. Please try again.",
-            variant: "destructive",
-        });
-    } finally {
-        setIsGeneratingSpeech(false);
-    }
-  };
-
   const buttonText = {
       paraphrase: 'Paraphrase',
       summarize: 'Summarize',
       translate: 'Translate',
       style: 'Apply Style'
-  }[operation];
+  }[operation as 'paraphrase' | 'summarize' | 'translate' | 'style'];
 
   const buttonTextPending = {
       paraphrase: 'Paraphrasing...',
       summarize: 'Summarizing...',
       translate: 'Translating...',
       style: 'Applying Style...'
-  }[operation];
+  }[operation as 'paraphrase' | 'summarize' | 'translate' | 'style'];
 
   const finalStyle = customStyle.trim() || targetStyle;
 
@@ -766,7 +724,7 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
                         <DropdownMenuContent align="end">
                             {allOperations.filter(op => op !== operation).map(op => (
                                 <DropdownMenuItem key={op} onClick={() => onSendTo(generatedText, op)}>
-                                    Send to {op.charAt(0).toUpperCase() + op.slice(1)}
+                                    Send to {op === 'tts' ? 'Text to Speech' : op.charAt(0).toUpperCase() + op.slice(1)}
                                 </DropdownMenuItem>
                             ))}
                         </DropdownMenuContent>
@@ -799,44 +757,14 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
         {generatedText && (
           <div className="flex flex-col gap-4 mt-4 p-4 border rounded-lg bg-muted/50 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="flex-grow w-full flex items-center gap-2">
-                    <Label htmlFor={`voice-select-${operation}`} className="text-sm font-medium whitespace-nowrap">
-                        Voice:
-                    </Label>
-                    <Select onValueChange={setSelectedVoice} defaultValue={selectedVoice}>
-                        <SelectTrigger id={`voice-select-${operation}`} className="w-full bg-background">
-                        <SelectValue placeholder="Select a voice" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        {voices.map((voice) => (
-                            <SelectItem key={voice} value={voice}>
-                            {voice}
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                </div>
                 <Button 
-                    onClick={handleListen} 
-                    disabled={isGeneratingSpeech} 
-                    className="w-full sm:w-auto"
+                    onClick={() => onSendTo(generatedText, 'tts')} 
+                    className="w-full"
                 >
-                    {isGeneratingSpeech ? (
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    ) : (
-                    <Volume2 className="mr-2 h-5 w-5" />
-                    )}
-                    {isGeneratingSpeech ? 'Generating...' : 'Listen'}
+                    <AudioLines className="mr-2 h-5 w-5" />
+                    Listen with Text-to-Speech
                 </Button>
             </div>
-            {audioUrl && (
-              <div className="mt-2 animate-in fade-in duration-500">
-                <audio controls autoPlay className="w-full h-10">
-                  <source src={audioUrl} type="audio/wav" />
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
-            )}
           </div>
         )}
       </div>
