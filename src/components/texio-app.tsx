@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2 } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -22,6 +22,7 @@ import { NotepadTab } from "./notepad-tab";
 import { PlagiarismTab } from "./plagiarism-tab";
 import { WorkspaceTab } from "./workspace-tab";
 import { WorkspaceProvider, useWorkspace } from "@/contexts/workspace-context";
+import { ResearchTab } from "./research-tab";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style';
 
@@ -48,7 +49,7 @@ function TexioAppContent() {
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-7 mx-auto max-w-4xl h-auto p-1.5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 mx-auto max-w-4xl h-auto p-1.5">
             <TabsTrigger value="paraphrase" className="py-2.5">
                 <Quote className="h-5 w-5 mr-2" />
                 <span>Paraphrase</span>
@@ -68,6 +69,10 @@ function TexioAppContent() {
              <TabsTrigger value="workspace" className="py-2.5">
                 <Wand2 className="h-5 w-5 mr-2" />
                 <span>Workspace</span>
+            </TabsTrigger>
+             <TabsTrigger value="research" className="py-2.5">
+                <GraduationCap className="h-5 w-5 mr-2" />
+                <span>Research</span>
             </TabsTrigger>
             <TabsTrigger value="plagiarism" className="py-2.5">
                 <ShieldCheck className="h-5 w-5 mr-2" />
@@ -92,6 +97,9 @@ function TexioAppContent() {
           </TabsContent>
           <TabsContent value="workspace" className="pt-6">
             <WorkspaceTab />
+          </TabsContent>
+          <TabsContent value="research" className="pt-6">
+            <ResearchTab />
           </TabsContent>
            <TabsContent value="plagiarism" className="pt-6">
             <PlagiarismTab />
