@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -12,40 +13,65 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function ThemeToggle() {
-  const [theme, setThemeState] = React.useState<"theme-light" | "dark" | "system">("system")
+  const [theme, setThemeState] = React.useState<"theme-light" | "dark" | "system">("system");
   const [isEyeProtectionOn, setEyeProtection] = React.useState(false);
 
   React.useEffect(() => {
-    const isDarkMode = document.documentElement.classList.contains("dark")
-    setThemeState(isDarkMode ? "dark" : "theme-light")
-  }, [])
+    try {
+      const savedTheme = localStorage.getItem("texio-theme") as "theme-light" | "dark" | "system" | null;
+      const savedEyeProtection = localStorage.getItem("texio-eye-protection") === "true";
+
+      if (savedTheme) {
+        setThemeState(savedTheme);
+      }
+      setEyeProtection(savedEyeProtection);
+    } catch (error) {
+        console.warn("Could not read theme settings from localStorage", error);
+    }
+  }, []);
+
+  const setTheme = (newTheme: "theme-light" | "dark" | "system") => {
+    setThemeState(newTheme);
+    try {
+        localStorage.setItem("texio-theme", newTheme);
+    } catch (error) {
+        console.warn("Could not save theme to localStorage", error);
+    }
+  }
+
+  const toggleEyeProtection = () => {
+    setEyeProtection(prev => {
+        const newState = !prev;
+        try {
+            localStorage.setItem("texio-eye-protection", String(newState));
+        } catch (error) {
+            console.warn("Could not save eye protection state to localStorage", error);
+        }
+        return newState;
+    });
+  }
 
   React.useEffect(() => {
     const isDark =
       theme === "dark" ||
       (theme === "system" &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches)
-    document.documentElement.classList[isDark ? "add" : "remove"]("dark")
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList[isDark ? "add" : "remove"]("dark");
 
+    const existingFilter = document.querySelector('.eye-protection-filter');
     if (isEyeProtectionOn) {
-        document.body.classList.add('eye-protection-active');
-        const filterDiv = document.createElement('div');
-        filterDiv.className = 'eye-protection-filter';
-        document.body.appendChild(filterDiv);
-        return () => {
-            document.body.classList.remove('eye-protection-active');
-            const existingFilter = document.querySelector('.eye-protection-filter');
-            if (existingFilter) {
-                document.body.removeChild(existingFilter);
-            }
-        };
+        if (!existingFilter) {
+            const filterDiv = document.createElement('div');
+            filterDiv.className = 'eye-protection-filter';
+            document.body.appendChild(filterDiv);
+        }
+    } else {
+        if (existingFilter) {
+            document.body.removeChild(existingFilter);
+        }
     }
+  }, [theme, isEyeProtectionOn]);
 
-  }, [theme, isEyeProtectionOn])
-
-  const toggleEyeProtection = () => {
-    setEyeProtection(!isEyeProtectionOn);
-  }
 
   return (
     <DropdownMenu>
@@ -57,13 +83,13 @@ export function ThemeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setThemeState("theme-light")}>
+        <DropdownMenuItem onClick={() => setTheme("theme-light")}>
           Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setThemeState("dark")}>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setThemeState("system")}>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
           System
         </DropdownMenuItem>
         <DropdownMenuSeparator />
