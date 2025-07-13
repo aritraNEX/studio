@@ -6,6 +6,19 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.eye-protection-filter {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #fefce8; /* pale yellow */
+  opacity: 0.3;
+  z-index: 9999;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
 @layer base {
   :root {
     --background: 220 20% 98%;
