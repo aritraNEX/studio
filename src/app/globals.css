@@ -12,8 +12,8 @@ body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: #fefce8; /* pale yellow */
-  opacity: 0.3;
+  background-color: #fde047; /* Deeper yellow */
+  opacity: 0.4;
   z-index: 9999;
   pointer-events: none;
   mix-blend-mode: multiply;
