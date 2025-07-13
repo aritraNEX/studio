@@ -449,8 +449,8 @@ export function OperationTab({ operation }: OperationTabProps) {
 
   if (operation === 'summarize') {
     const readyFilesCount = files.filter(f => f.status === 'ready').length;
-    const processedFilesCount = files.filter(f => f.status === 'done').length;
-    const progress = files.length > 0 ? (processedFilesCount / files.length) * 100 : 0;
+    const finishedFilesCount = files.filter(f => f.status === 'done' || f.status === 'error').length;
+    const progress = files.length > 0 ? (finishedFilesCount / files.length) * 100 : 0;
     
     return (
         <div className="grid md:grid-cols-2 gap-8 items-start">
@@ -562,12 +562,12 @@ export function OperationTab({ operation }: OperationTabProps) {
                     <div className="w-full max-w-md animate-in fade-in duration-300">
                         <div className="flex justify-between mb-1">
                              <span className="text-sm font-medium text-muted-foreground">Processing Progress</span>
-                             <span className="text-sm font-medium">{processedFilesCount} / {files.length} done</span>
+                             <span className="text-sm font-medium">{finishedFilesCount} / {files.length} done</span>
                         </div>
-                        <Progress value={progress} className="w-full" />
+                        <Progress value={progress} className="w-full h-2" />
                     </div>
                 )}
-                <div className="flex flex-wrap items-center justify-center gap-4">
+                <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
                     <Button
                         onClick={handleBatchProcess}
                         disabled={readyFilesCount === 0 || isBatchProcessing}
@@ -581,7 +581,7 @@ export function OperationTab({ operation }: OperationTabProps) {
                         )}
                         {isBatchProcessing ? "Summarizing..." : `Summarize All (${readyFilesCount})`}
                     </Button>
-                    {processedFilesCount > 0 && (
+                    {finishedFilesCount > 0 && (
                         <Button
                             onClick={handleDownloadAll}
                             variant="outline"
