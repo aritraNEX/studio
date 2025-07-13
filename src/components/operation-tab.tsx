@@ -3,7 +3,7 @@
 
 import { useState, useRef, useTransition, useEffect } from "react";
 import Image from "next/image";
-import { Copy, Loader2, Sparkles, Upload, Download, Volume2, ChevronDown, CheckCircle, File as FileIcon, Trash2, Send, AudioLines } from "lucide-react";
+import { Copy, Loader2, Sparkles, Upload, Download, Volume2, ChevronDown, CheckCircle, File as FileIcon, Trash2, Send, AudioLines, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -89,6 +89,12 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const outputTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const [appUrl, setAppUrl] = useState('');
+
+  useEffect(() => {
+    // This runs on the client and will capture the page URL
+    setAppUrl(window.location.href);
+  }, []);
 
   useEffect(() => {
     try {
@@ -404,6 +410,32 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
     });
   };
 
+  const handleShare = (platform: 'twitter' | 'facebook' | 'linkedin' | 'whatsapp' | 'email', text: string) => {
+    const encodedText = encodeURIComponent(text);
+    const encodedUrl = encodeURIComponent(appUrl);
+    const title = `Result from Tex.io - ${operation}`;
+
+    let url = '';
+    switch (platform) {
+      case 'twitter':
+        url = `https://twitter.com/intent/tweet?text=${encodedText}`;
+        break;
+      case 'facebook':
+        url = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`;
+        break;
+      case 'linkedin':
+        url = `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodeURIComponent(title)}&summary=${encodedText}`;
+        break;
+      case 'whatsapp':
+        url = `https://api.whatsapp.com/send?text=${encodedText}`;
+        break;
+      case 'email':
+        url = `mailto:?subject=${encodeURIComponent(title)}&body=${encodedText}`;
+        break;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   const buttonText = {
       paraphrase: 'Paraphrase',
       summarize: 'Summarize',
@@ -707,7 +739,7 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
                     value={generatedText}
                     onChange={(e) => setGeneratedText(e.target.value)}
                     placeholder={"Your result will appear here..."}
-                    className="h-full resize-y pr-24 bg-background focus-visible:ring-accent"
+                    className="h-full resize-y pr-36 bg-background focus-visible:ring-accent"
                     style={{ fontFamily: selectedFont }}
                 />
             )}
@@ -730,6 +762,26 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
                         </DropdownMenuContent>
                     </DropdownMenu>
                  )}
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-foreground"
+                            disabled={!generatedText || isPending}
+                            aria-label="Share result"
+                        >
+                            <Share2 className="h-5 w-5" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleShare('twitter', generatedText)}>Twitter</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleShare('facebook', generatedText)}>Facebook</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleShare('linkedin', generatedText)}>LinkedIn</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleShare('whatsapp', generatedText)}>WhatsApp</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleShare('email', generatedText)}>Email</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
                 <Button
                 variant="ghost"
                 size="icon"
