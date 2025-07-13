@@ -393,11 +393,15 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
     if (!textToDownload) return;
 
     const doc = new jsPDF();
+    
+    // Set a professional, universally supported font
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.text(`Tex.io Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, 14, 22);
+    
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
+    
     const splitText = doc.splitTextToSize(textToDownload, 180);
     doc.text(splitText, 14, 32);
 

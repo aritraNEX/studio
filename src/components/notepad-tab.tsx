@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -44,6 +45,8 @@ export function NotepadTab() {
     if (!notes) return;
 
     const doc = new jsPDF();
+    
+    // Set a professional, universally supported font
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.text("Tex.io Notepad", 14, 22);
