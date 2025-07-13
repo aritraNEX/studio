@@ -1,7 +1,9 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import Script from "next/script";
+import { WorkspaceProvider } from '@/contexts/workspace-context';
 
 export const metadata: Metadata = {
   title: 'Tex.io',
@@ -27,7 +29,9 @@ export default function RootLayout({
           crossOrigin="anonymous"
           strategy="lazyOnload"
         />
-        {children}
+        <WorkspaceProvider>
+            {children}
+        </WorkspaceProvider>
         <Toaster />
       </body>
     </html>

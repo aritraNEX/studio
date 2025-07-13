@@ -1,11 +1,12 @@
+
 "use client";
 
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2 } from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -19,10 +20,23 @@ import { OperationTab } from "./operation-tab";
 import { AdBanner } from "./ad-banner";
 import { NotepadTab } from "./notepad-tab";
 import { PlagiarismTab } from "./plagiarism-tab";
+import { WorkspaceTab } from "./workspace-tab";
+import { WorkspaceProvider, useWorkspace } from "@/contexts/workspace-context";
 
-export function TexioApp() {
+type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style';
+
+function TexioAppContent() {
+  const [activeTab, setActiveTab] = useState("paraphrase");
+  const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
+
+  const handleSendTo = (text: string, operation: Operation) => {
+    setWorkspaceText(text);
+    setWorkspaceOperation(operation);
+    setActiveTab("workspace");
+  };
+
   return (
-    <Card className="w-full max-w-5xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
+     <Card className="w-full max-w-5xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
       <CardHeader className="text-center pt-8">
         <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit mb-4 shadow-lg shadow-primary/30">
           <Sparkles className="h-8 w-8" />
@@ -33,8 +47,8 @@ export function TexioApp() {
         </CardDescription>
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
-        <Tabs defaultValue="paraphrase" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 mx-auto max-w-3xl h-auto p-1.5">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-7 mx-auto max-w-4xl h-auto p-1.5">
             <TabsTrigger value="paraphrase" className="py-2.5">
                 <Quote className="h-5 w-5 mr-2" />
                 <span>Paraphrase</span>
@@ -51,6 +65,10 @@ export function TexioApp() {
                 <Palette className="h-5 w-5 mr-2" />
                 <span>Style</span>
             </TabsTrigger>
+             <TabsTrigger value="workspace" className="py-2.5">
+                <Wand2 className="h-5 w-5 mr-2" />
+                <span>Workspace</span>
+            </TabsTrigger>
             <TabsTrigger value="plagiarism" className="py-2.5">
                 <ShieldCheck className="h-5 w-5 mr-2" />
                 <span>Plagiarism</span>
@@ -61,16 +79,19 @@ export function TexioApp() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="paraphrase" className="pt-6">
-            <OperationTab operation="paraphrase" />
+            <OperationTab operation="paraphrase" onSendTo={handleSendTo} />
           </TabsContent>
           <TabsContent value="summarize" className="pt-6">
-            <OperationTab operation="summarize" />
+            <OperationTab operation="summarize" onSendTo={handleSendTo} />
           </TabsContent>
           <TabsContent value="translate" className="pt-6">
-            <OperationTab operation="translate" />
+            <OperationTab operation="translate" onSendTo={handleSendTo} />
           </TabsContent>
           <TabsContent value="style" className="pt-6">
-            <OperationTab operation="style" />
+            <OperationTab operation="style" onSendTo={handleSendTo} />
+          </TabsContent>
+          <TabsContent value="workspace" className="pt-6">
+            <WorkspaceTab />
           </TabsContent>
            <TabsContent value="plagiarism" className="pt-6">
             <PlagiarismTab />
@@ -80,10 +101,15 @@ export function TexioApp() {
           </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex-col gap-4 px-4 sm:px-8 pb-4">
-        <AdBanner adClient="ca-pub-1743205890050653" adSlot="7457666036" />
-        <AdBanner adClient="ca-pub-1743205890050653" adSlot="7457666036" />
-      </CardFooter>
     </Card>
-  );
+  )
+}
+
+
+export function TexioApp() {
+  return (
+    <WorkspaceProvider>
+      <TexioAppContent />
+    </WorkspaceProvider>
+  )
 }

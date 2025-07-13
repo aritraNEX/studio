@@ -3,7 +3,7 @@
 
 import { useState, useRef, useTransition, useEffect } from "react";
 import Image from "next/image";
-import { Copy, Loader2, Sparkles, Upload, Download, Volume2, ChevronDown, CheckCircle, File as FileIcon, Trash2 } from "lucide-react";
+import { Copy, Loader2, Sparkles, Upload, Download, Volume2, ChevronDown, CheckCircle, File as FileIcon, Trash2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +25,7 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent } from "./ui/card";
 import { Progress } from "./ui/progress";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style';
 type FileStatus = 'pending' | 'parsing' | 'ready' | 'processing' | 'done' | 'error';
@@ -62,15 +63,18 @@ const extraordinaryFonts = [
 ];
 
 const voices = ['Algenib', 'Achernar', 'Schedar', 'Umbriel', 'Zephyr'];
+const allOperations: Operation[] = ['paraphrase', 'summarize', 'translate', 'style'];
 
 interface OperationTabProps {
   operation: Operation;
+  onSendTo: (text: string, operation: Operation) => void;
+  initialText?: string;
 }
 
-export function OperationTab({ operation }: OperationTabProps) {
+export function OperationTab({ operation, onSendTo, initialText }: OperationTabProps) {
   // Single file state
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
-  const [extractedText, setExtractedText] = useState<string | null>(null);
+  const [extractedText, setExtractedText] = useState<string | null>(initialText ?? null);
   const [isParsing, setIsParsing] = useState(false);
   const [generatedText, setGeneratedText] = useState<string>("");
   
@@ -98,6 +102,13 @@ export function OperationTab({ operation }: OperationTabProps) {
       console.error("Failed to set pdf.js worker source", error);
     }
   }, []);
+
+  useEffect(() => {
+      if (initialText) {
+          setExtractedText(initialText);
+          setGeneratedText("");
+      }
+  }, [initialText]);
 
    const parseFile = async (fileToParse: ProcessedFile): Promise<string> => {
         return new Promise((resolve, reject) => {
@@ -605,57 +616,64 @@ export function OperationTab({ operation }: OperationTabProps) {
     <div className="grid md:grid-cols-2 gap-8 items-start">
       <div className="flex flex-col gap-4">
         <Label htmlFor={`image-upload-${operation}`} className="font-semibold text-md">
-          Upload File
+          {initialText ? "Input Text" : "Upload File"}
         </Label>
-        <div className="relative">
-          <input
-            type="file"
-            id={`image-upload-${operation}`}
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="sr-only"
-            accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            multiple={operation === 'summarize'}
-          />
-          <label
-            htmlFor={`image-upload-${operation}`}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            className={cn(
-              "group flex flex-col items-center justify-center w-full h-96 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
-              "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
-            )}
-          >
-            {isParsing ? (
-               <div className="flex flex-col items-center justify-center text-center p-4">
-                <Loader2 className="w-10 h-10 mb-3 text-primary animate-spin" />
-                <p className="text-sm text-muted-foreground">Parsing your file...</p>
-              </div>
-            ) : imageDataUrl ? (
-              <div className="relative w-full h-full p-2">
-                <Image
-                  src={imageDataUrl}
-                  alt="Uploaded content"
-                  fill
-                  className="rounded-lg object-contain"
-                />
-              </div>
-            ) : extractedText ? (
-                <div className="w-full h-full p-4 overflow-y-auto bg-background/30 rounded-lg">
-                    <h3 className="text-sm font-semibold text-foreground mb-2">Extracted Text Preview:</h3>
-                    <p className="text-xs text-muted-foreground whitespace-pre-wrap font-mono">{extractedText.substring(0, 1000)}{extractedText.length > 1000 && '...'}</p>
+        
+        {initialText ? (
+             <div className="w-full h-96 p-4 overflow-y-auto bg-background/30 rounded-lg border">
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap font-mono">{initialText}</p>
+            </div>
+        ) : (
+            <div className="relative">
+            <input
+                type="file"
+                id={`image-upload-${operation}`}
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="sr-only"
+                accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                multiple={operation === 'summarize'}
+            />
+            <label
+                htmlFor={`image-upload-${operation}`}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                className={cn(
+                "group flex flex-col items-center justify-center w-full h-96 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
+                "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
+                )}
+            >
+                {isParsing ? (
+                <div className="flex flex-col items-center justify-center text-center p-4">
+                    <Loader2 className="w-10 h-10 mb-3 text-primary animate-spin" />
+                    <p className="text-sm text-muted-foreground">Parsing your file...</p>
                 </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
-                <Upload className="w-10 h-10 mb-3 text-muted-foreground transition-transform duration-300 group-hover:scale-110 group-hover:text-primary" />
-                <p className="mb-2 text-sm text-muted-foreground">
-                  <span className="font-semibold text-primary">Click to upload</span> or drag and drop
-                </p>
-                <p className="text-xs text-muted-foreground">Image, PDF, or DOCX files</p>
-              </div>
-            )}
-          </label>
-        </div>
+                ) : imageDataUrl ? (
+                <div className="relative w-full h-full p-2">
+                    <Image
+                    src={imageDataUrl}
+                    alt="Uploaded content"
+                    fill
+                    className="rounded-lg object-contain"
+                    />
+                </div>
+                ) : extractedText ? (
+                    <div className="w-full h-full p-4 overflow-y-auto bg-background/30 rounded-lg">
+                        <h3 className="text-sm font-semibold text-foreground mb-2">Extracted Text Preview:</h3>
+                        <p className="text-xs text-muted-foreground whitespace-pre-wrap font-mono">{extractedText.substring(0, 1000)}{extractedText.length > 1000 && '...'}</p>
+                    </div>
+                ) : (
+                <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
+                    <Upload className="w-10 h-10 mb-3 text-muted-foreground transition-transform duration-300 group-hover:scale-110 group-hover:text-primary" />
+                    <p className="mb-2 text-sm text-muted-foreground">
+                    <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-muted-foreground">Image, PDF, or DOCX files</p>
+                </div>
+                )}
+            </label>
+            </div>
+        )}
       </div>
       <div className="flex flex-col gap-4 h-full">
         {operation === 'translate' && (
@@ -734,6 +752,22 @@ export function OperationTab({ operation }: OperationTabProps) {
           
           {!isPending && (
             <div className="absolute top-2 right-2 flex items-center">
+                 {generatedText && onSendTo && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                                <Send className="h-5 w-5" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {allOperations.filter(op => op !== operation).map(op => (
+                                <DropdownMenuItem key={op} onClick={() => onSendTo(generatedText, op)}>
+                                    Send to {op.charAt(0).toUpperCase() + op.slice(1)}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                 )}
                 <Button
                 variant="ghost"
                 size="icon"
@@ -843,7 +877,3 @@ export function OperationTab({ operation }: OperationTabProps) {
     </div>
   );
 }
-
-    
-
-    

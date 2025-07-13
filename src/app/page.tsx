@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -5,6 +6,7 @@ import { TexioApp } from '@/components/texio-app';
 import Preloader from '@/components/preloader';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { WorkspaceProvider } from '@/contexts/workspace-context';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
