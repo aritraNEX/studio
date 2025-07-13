@@ -550,7 +550,9 @@ export function OperationTab({ operation }: OperationTabProps) {
                         </Accordion>
                     ) : (
                          <div className="h-full flex items-center justify-center text-center text-muted-foreground p-4 bg-muted/20 rounded-lg">
-                            <p>Your summaries will appear here after processing.</p>
+                            {isBatchProcessing && <p>Processing files...</p>}
+                            {!isBatchProcessing && files.length > 0 && <p>Finished processing. Your summaries are ready.</p>}
+                            {!isBatchProcessing && files.length === 0 && <p>Your summaries will appear here after processing.</p>}
                         </div>
                     )}
                 </div>
@@ -713,37 +715,47 @@ export function OperationTab({ operation }: OperationTabProps) {
           Result
         </Label>
         <div className="relative flex-grow min-h-[24rem]">
-          <Textarea
-            ref={outputTextareaRef}
-            id={`output-text-${operation}`}
-            value={generatedText}
-            onChange={(e) => setGeneratedText(e.target.value)}
-            placeholder={isPending ? "Generating..." : "Your result will appear here..."}
-            className="h-full resize-y pr-24 bg-background focus-visible:ring-accent"
-            style={{ fontFamily: selectedFont }}
-          />
-          <div className="absolute top-2 right-2 flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground"
-              onClick={() => handleCopy(generatedText)}
-              disabled={!generatedText || isPending}
-              aria-label="Copy to clipboard"
-            >
-              <Copy className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground"
-              onClick={() => handleDownloadPdf(generatedText, `texio-result-${operation}.pdf`)}
-              disabled={!generatedText || isPending}
-              aria-label="Download as PDF"
-            >
-              <Download className="h-5 w-5" />
-            </Button>
-          </div>
+            {isPending ? (
+                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted-foreground bg-background/50 rounded-lg">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                    <p className="font-semibold">Generating your result...</p>
+                </div>
+            ) : (
+                <Textarea
+                    ref={outputTextareaRef}
+                    id={`output-text-${operation}`}
+                    value={generatedText}
+                    onChange={(e) => setGeneratedText(e.target.value)}
+                    placeholder={"Your result will appear here..."}
+                    className="h-full resize-y pr-24 bg-background focus-visible:ring-accent"
+                    style={{ fontFamily: selectedFont }}
+                />
+            )}
+          
+          {!isPending && (
+            <div className="absolute top-2 right-2 flex items-center">
+                <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => handleCopy(generatedText)}
+                disabled={!generatedText || isPending}
+                aria-label="Copy to clipboard"
+                >
+                <Copy className="h-5 w-5" />
+                </Button>
+                <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => handleDownloadPdf(generatedText, `texio-result-${operation}.pdf`)}
+                disabled={!generatedText || isPending}
+                aria-label="Download as PDF"
+                >
+                <Download className="h-5 w-5" />
+                </Button>
+            </div>
+          )}
         </div>
         
         {generatedText && (
@@ -831,5 +843,7 @@ export function OperationTab({ operation }: OperationTabProps) {
     </div>
   );
 }
+
+    
 
     
