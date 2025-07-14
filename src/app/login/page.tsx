@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithPhoneNumber, sendPasswordResetEmail, type ConfirmationResult } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithPhoneNumber, sendPasswordResetEmail, RecaptchaVerifier, type ConfirmationResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +23,21 @@ export default function LoginPage() {
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  
+  // Set up reCAPTCHA verifier
+  useEffect(() => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': (response: any) => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        },
+        'expired-callback': () => {
+          // Response expired. Ask user to solve reCAPTCHA again.
+        }
+      });
+    }
+  }, []);
 
   const handleAuthAction = async (action: 'login' | 'signup') => {
     setIsPending(true);
@@ -82,7 +97,8 @@ export default function LoginPage() {
   const handlePhoneSignIn = async () => {
     setIsPending(true);
     try {
-        const result = await signInWithPhoneNumber(auth, phone, auth.currentUser as any);
+        const verifier = window.recaptchaVerifier;
+        const result = await signInWithPhoneNumber(auth, phone, verifier);
         setConfirmationResult(result);
         toast({ title: 'OTP Sent!', description: 'Please check your phone for the verification code.' });
     } catch (error: any) {
@@ -229,4 +245,9 @@ export default function LoginPage() {
       </Tabs>
     </div>
   );
+}
+declare global {
+  interface Window {
+    recaptchaVerifier: RecaptchaVerifier;
+  }
 }

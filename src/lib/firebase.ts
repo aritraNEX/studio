@@ -1,5 +1,5 @@
 
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
@@ -13,22 +13,21 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+auth.languageCode = 'it';
 
 // Initialize App Check on the client side only
 if (typeof window !== 'undefined') {
-  // Ensure this runs only in the browser
-  try {
-    initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!),
-      isTokenAutoRefreshEnabled: true
-    });
-  } catch (error) {
-    console.error("Failed to initialize App Check", error);
-  }
+    try {
+        const appCheck = initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!),
+            isTokenAutoRefreshEnabled: true
+        });
+    } catch (error) {
+        console.error("Failed to initialize App Check", error);
+    }
 }
 
-const auth = getAuth(app);
-auth.languageCode = 'it';
 
 export { app, auth };
