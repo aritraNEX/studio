@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail, type ConfirmationResult } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithPhoneNumber, sendPasswordResetEmail, type ConfirmationResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,14 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles } from 'lucide-react';
-import { FaGoogle, FaPhone } from 'react-icons/fa';
-
-// Add a declaration for the recaptchaVerifier on the window object
-declare global {
-  interface Window {
-    recaptchaVerifier?: RecaptchaVerifier;
-  }
-}
+import { FaGoogle } from 'react-icons/fa';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -30,22 +23,6 @@ export default function LoginPage() {
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const recaptchaContainerRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    // This effect ensures the RecaptchaVerifier is created when the component mounts
-    // and attaches it to the "Send OTP" button.
-    if (recaptchaContainerRef.current && !window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-        'size': 'invisible',
-        'callback': (response: any) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-          // The handlePhoneSignIn function is called directly by the button's onClick
-        },
-      });
-      window.recaptchaVerifier.render();
-    }
-  }, []);
 
   const handleAuthAction = async (action: 'login' | 'signup') => {
     setIsPending(true);
@@ -105,17 +82,11 @@ export default function LoginPage() {
   const handlePhoneSignIn = async () => {
     setIsPending(true);
     try {
-        const verifier = window.recaptchaVerifier;
-        if (!verifier) {
-          throw new Error("Recaptcha verifier not initialized.");
-        }
-        const result = await signInWithPhoneNumber(auth, phone, verifier);
+        const result = await signInWithPhoneNumber(auth, phone, auth.currentUser as any);
         setConfirmationResult(result);
         toast({ title: 'OTP Sent!', description: 'Please check your phone for the verification code.' });
     } catch (error: any) {
         console.error(error);
-        // Reset verifier on error
-        window.recaptchaVerifier?.clear();
         toast({ variant: 'destructive', title: 'Failed to send OTP', description: error.message });
     } finally {
         setIsPending(false);
@@ -139,6 +110,8 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4">
+       {/* This invisible div is required by Firebase App Check for the reCAPTCHA */}
+      <div id="recaptcha-container"></div>
       <Tabs defaultValue="login" className="w-full max-w-sm">
         <div className="text-center mb-6">
             <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit mb-4 shadow-lg shadow-primary/30">
@@ -202,7 +175,7 @@ export default function LoginPage() {
             </CardContent>
             <CardFooter>
               {!confirmationResult ? (
-                <Button ref={recaptchaContainerRef} onClick={handlePhoneSignIn} className="w-full" disabled={isPending || !phone}>
+                <Button onClick={handlePhoneSignIn} className="w-full" disabled={isPending || !phone}>
                   {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Send OTP
                 </Button>
