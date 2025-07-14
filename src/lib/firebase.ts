@@ -19,7 +19,7 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 if (typeof window !== 'undefined') {
   // Ensure this runs only in the browser
   try {
-    const appCheck = initializeAppCheck(app, {
+    initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!),
       isTokenAutoRefreshEnabled: true
     });
@@ -29,5 +29,6 @@ if (typeof window !== 'undefined') {
 }
 
 const auth = getAuth(app);
+auth.languageCode = 'it';
 
 export { app, auth };
