@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -16,11 +15,14 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
+    // Wait for auth state to be determined
     if (!authLoading && !user) {
       router.push('/login');
     }
   }, [user, authLoading, router]);
-
+  
+  // While authentication is loading or if there's no user yet (and we're about to redirect)
+  // show a loading spinner.
   if (authLoading || !user) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
@@ -29,6 +31,7 @@ export default function Home() {
     );
   }
 
+  // If we have a user, render the app
   return (
     <>
       <Preloader onAnimationComplete={() => setAppLoading(false)} />
