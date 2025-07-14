@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader2, ServerCrash, Home } from 'lucide-react';
 import { OperationTab } from '@/components/operation-tab';
@@ -17,10 +17,12 @@ type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
 interface WorkspaceData {
   text: string;
   operation: Operation;
+  ownerId: string;
 }
 
 function SharedWorkspacePageContent() {
   const { id } = useParams();
+  const workspaceId = id as string;
   const router = useRouter();
   const [data, setData] = useState<WorkspaceData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,48 +30,56 @@ function SharedWorkspacePageContent() {
   
   const { user, loading: authLoading } = useAuth();
   
-  const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
+  // This context is for the main app, not the shared page, so we don't use it here.
+  // const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
 
 
   useEffect(() => {
-    if (authLoading) return; // Wait for user auth status
+    if (!workspaceId) return;
 
-    const fetchWorkspace = async () => {
-      try {
-        const docRef = doc(db, 'workspaces', id as string);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const workspaceData = docSnap.data() as any;
-          setData({
-            text: workspaceData.text,
-            operation: workspaceData.operation,
-          });
-        } else {
-          setError('Workspace not found. This link may be invalid or the workspace may have been deleted.');
-        }
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load the workspace. Please try again later.');
-      } finally {
-        setLoading(false);
+    const docRef = doc(db, 'workspaces', workspaceId);
+    
+    // Set up a real-time listener
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const workspaceData = docSnap.data() as any;
+        setData({
+          text: workspaceData.text,
+          operation: workspaceData.operation,
+          ownerId: workspaceData.ownerId,
+        });
+        setError(null);
+      } else {
+        setError('Workspace not found. This link may be invalid or the workspace may have been deleted.');
       }
-    };
+      setLoading(false);
+    }, (err) => {
+      console.error(err);
+      setError('Failed to load the workspace. Please try again later.');
+      setLoading(false);
+    });
 
-    if (id) {
-      fetchWorkspace();
-    }
-  }, [id, authLoading, user]);
+    // Clean up the listener when the component unmounts
+    return () => unsubscribe();
+  }, [workspaceId]);
 
-  const handleSendTo = (text: string, operation: Operation) => {
-    // If a user is logged in, they can chain operations
-    if (user) {
-        setWorkspaceText(text);
-        setWorkspaceOperation(operation);
-        setData({text, operation}); // Update local state to reflect the change
-    } else {
-    // If not logged in, redirect to login
+  const handleSendTo = async (text: string, operation: Operation) => {
+    if (!user) {
+      // If not logged in, redirect to login, as they can't make changes.
       router.push('/login');
+      return;
+    }
+    
+    // Update the document in Firestore, which will trigger the onSnapshot listener for all clients.
+    try {
+        const docRef = doc(db, 'workspaces', workspaceId);
+        await updateDoc(docRef, {
+            text: text,
+            operation: operation,
+        });
+    } catch (err) {
+        console.error("Failed to update workspace:", err);
+        // Optionally show a toast error here
     }
   };
 
@@ -107,15 +117,15 @@ function SharedWorkspacePageContent() {
       <main className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4 sm:p-8">
           <Card className="w-full max-w-5xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
               <CardHeader className="text-center">
-                  <CardTitle className="text-3xl font-bold tracking-tight">Shared Workspace</CardTitle>
+                  <CardTitle className="text-3xl font-bold tracking-tight">Collaborative Workspace</CardTitle>
                   <CardDescription className="text-lg text-muted-foreground/80">
-                    You are viewing a shared workspace.
-                    {user ? " You can continue to chain operations." : " Sign in to interact."}
+                    You are viewing a shared workspace. Changes are reflected in real-time.
+                    {!user && " Sign in to collaborate."}
                   </CardDescription>
               </CardHeader>
               <CardContent className="p-4 sm:p-8 pt-2">
                  <OperationTab
-                    key={`${data.operation}-${data.text.substring(0, 10)}`}
+                    key={`${workspaceId}-${data.operation}-${data.text.substring(0, 10)}`}
                     operation={data.operation}
                     initialText={data.text}
                     onSendTo={handleSendTo}
@@ -138,4 +148,3 @@ export default function SharedWorkspacePage() {
         </AuthProvider>
     )
 }
-
