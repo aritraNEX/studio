@@ -98,7 +98,9 @@ export default function LoginPage() {
     setIsPending(true);
     try {
         const verifier = window.recaptchaVerifier;
-        const result = await signInWithPhoneNumber(auth, phone, verifier);
+        // Ensure phone number is in E.164 format
+        const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+        const result = await signInWithPhoneNumber(auth, formattedPhone, verifier);
         setConfirmationResult(result);
         toast({ title: 'OTP Sent!', description: 'Please check your phone for the verification code.' });
     } catch (error: any) {
