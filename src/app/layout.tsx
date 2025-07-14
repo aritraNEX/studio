@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import Script from "next/script";
 import { WorkspaceProvider } from '@/contexts/workspace-context';
+import { AuthProvider } from '@/contexts/auth-context';
 
 export const metadata: Metadata = {
   title: 'Tex.io',
@@ -29,9 +30,11 @@ export default function RootLayout({
           crossOrigin="anonymous"
           strategy="lazyOnload"
         />
-        <WorkspaceProvider>
-            {children}
-        </WorkspaceProvider>
+        <AuthProvider>
+          <WorkspaceProvider>
+              {children}
+          </WorkspaceProvider>
+        </AuthProvider>
         <Toaster />
       </body>
     </html>
