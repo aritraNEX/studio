@@ -15,7 +15,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize App Check
+// Initialize App Check on the client side only
 if (typeof window !== 'undefined') {
   // Ensure this runs only in the browser
   try {
