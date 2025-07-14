@@ -1,0 +1,22 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rules for the 'workspaces' collection
+    match /workspaces/{workspaceId} {
+      // Anyone can read a workspace if they have the link.
+      allow read: if true;
+
+      // Any authenticated user can create a workspace.
+      // We also ensure the ownerId in the document matches the user's ID.
+      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+
+      // Any authenticated user can update a workspace for real-time collaboration.
+      allow update: if request.auth != null;
+
+      // Only the owner of the workspace can delete it.
+      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+    }
+  }
+}
