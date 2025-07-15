@@ -13,11 +13,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles } from 'lucide-react';
 import { FaGoogle } from 'react-icons/fa';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const countryCodes = [
+    { name: 'United States', code: '+1', flag: '🇺🇸' },
+    { name: 'India', code: '+91', flag: '🇮🇳' },
+    { name: 'United Kingdom', code: '+44', flag: '🇬🇧' },
+    { name: 'Canada', code: '+1', flag: '🇨🇦' },
+    { name: 'Australia', code: '+61', flag: '🇦🇺' },
+    { name: 'Germany', code: '+49', flag: '🇩🇪' },
+    { name: 'France', code: '+33', flag: '🇫🇷' },
+    { name: 'Japan', code: '+81', flag: '🇯🇵' },
+    { name: 'Brazil', code: '+55', flag: '🇧🇷' },
+    { name: 'South Africa', code: '+27', flag: '🇿🇦' },
+];
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState(countryCodes[0].code);
   const [otp, setOtp] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -98,8 +114,7 @@ export default function LoginPage() {
     setIsPending(true);
     try {
         const verifier = window.recaptchaVerifier;
-        // Ensure phone number is in E.164 format
-        const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+        const formattedPhone = `${countryCode}${phone}`;
         const result = await signInWithPhoneNumber(auth, formattedPhone, verifier);
         setConfirmationResult(result);
         toast({ title: 'OTP Sent!', description: 'Please check your phone for the verification code.' });
@@ -181,8 +196,22 @@ export default function LoginPage() {
             <CardContent className="space-y-4">
               {!confirmationResult ? (
                 <div className="space-y-2">
-                  <Label htmlFor="phone-number">Phone Number</Label>
-                  <Input id="phone-number" type="tel" placeholder="+1 555-555-5555" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                    <Label>Phone Number</Label>
+                    <div className="flex gap-2">
+                        <Select value={countryCode} onValueChange={setCountryCode}>
+                            <SelectTrigger className="w-[100px]">
+                                <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {countryCodes.map(country => (
+                                    <SelectItem key={country.name} value={country.code}>
+                                        {country.flag} {country.code}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Input id="phone-number" type="tel" placeholder="555-555-5555" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))} required />
+                    </div>
                 </div>
               ) : (
                 <div className="space-y-2">
