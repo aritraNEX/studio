@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Captions, Rows3 } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Captions, Rows3, FunctionSquare } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -26,6 +26,7 @@ import { TtsTab } from "./tts-tab";
 import { TranscriptionTab } from "./transcription-tab";
 import { CaptionGeneratorTab } from "./caption-generator-tab";
 import { BatchSummaryTab } from "./batch-summary-tab";
+import { FormulaTab } from "./formula-tab";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
 
@@ -82,6 +83,10 @@ export function TexioApp({ projectId }: TexioAppProps) {
                 <Palette className="h-5 w-5 mr-2" />
                 <span>Style</span>
             </TabsTrigger>
+            <TabsTrigger value="formula" className="py-2.5">
+                <FunctionSquare className="h-5 w-5 mr-2" />
+                <span>Formula</span>
+            </TabsTrigger>
             <TabsTrigger value="transcription" className="py-2.5">
                 <FileText className="h-5 w-5 mr-2" />
                 <span>Transcription</span>
@@ -125,6 +130,9 @@ export function TexioApp({ projectId }: TexioAppProps) {
           </TabsContent>
           <TabsContent value="style" className="pt-6">
             <OperationTab operation="style" onSendTo={handleSendTo} projectId={projectId} />
+          </TabsContent>
+          <TabsContent value="formula" className="pt-6">
+            <FormulaTab />
           </TabsContent>
           <TabsContent value="transcription" className="pt-6">
             <TranscriptionTab />
