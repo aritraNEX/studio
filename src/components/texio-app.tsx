@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Captions } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -25,6 +25,7 @@ import { WorkspaceProvider, useWorkspace } from "@/contexts/workspace-context";
 import { ResearchTab } from "./research-tab";
 import { TtsTab } from "./tts-tab";
 import { TranscriptionTab } from "./transcription-tab";
+import { CaptionGeneratorTab } from "./caption-generator-tab";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
 
@@ -56,7 +57,7 @@ function TexioAppContent() {
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-10 mx-auto max-w-6xl h-auto p-1.5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-11 mx-auto max-w-6xl h-auto p-1.5">
             <TabsTrigger value="paraphrase" className="py-2.5">
                 <Quote className="h-5 w-5 mr-2" />
                 <span>Paraphrase</span>
@@ -76,6 +77,10 @@ function TexioAppContent() {
             <TabsTrigger value="transcription" className="py-2.5">
                 <FileText className="h-5 w-5 mr-2" />
                 <span>Transcription</span>
+            </TabsTrigger>
+            <TabsTrigger value="captions" className="py-2.5">
+                <Captions className="h-5 w-5 mr-2" />
+                <span>Captions</span>
             </TabsTrigger>
              <TabsTrigger value="workspace" className="py-2.5">
                 <Wand2 className="h-5 w-5 mr-2" />
@@ -112,6 +117,9 @@ function TexioAppContent() {
           </TabsContent>
           <TabsContent value="transcription" className="pt-6">
             <TranscriptionTab />
+          </TabsContent>
+           <TabsContent value="captions" className="pt-6">
+            <CaptionGeneratorTab />
           </TabsContent>
           <TabsContent value="workspace" className="pt-6">
             <WorkspaceTab />
