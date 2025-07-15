@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, Subtitles } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -24,6 +24,7 @@ import { WorkspaceTab } from "./workspace-tab";
 import { WorkspaceProvider, useWorkspace } from "@/contexts/workspace-context";
 import { ResearchTab } from "./research-tab";
 import { TtsTab } from "./tts-tab";
+import { SubtitleTab } from "./subtitle-tab";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
 
@@ -55,7 +56,7 @@ function TexioAppContent() {
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 mx-auto max-w-5xl h-auto p-1.5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-10 mx-auto max-w-6xl h-auto p-1.5">
             <TabsTrigger value="paraphrase" className="py-2.5">
                 <Quote className="h-5 w-5 mr-2" />
                 <span>Paraphrase</span>
@@ -71,6 +72,10 @@ function TexioAppContent() {
             <TabsTrigger value="style" className="py-2.5">
                 <Palette className="h-5 w-5 mr-2" />
                 <span>Style</span>
+            </TabsTrigger>
+            <TabsTrigger value="subtitles" className="py-2.5">
+                <Subtitles className="h-5 w-5 mr-2" />
+                <span>Subtitles</span>
             </TabsTrigger>
              <TabsTrigger value="workspace" className="py-2.5">
                 <Wand2 className="h-5 w-5 mr-2" />
@@ -104,6 +109,9 @@ function TexioAppContent() {
           </TabsContent>
           <TabsContent value="style" className="pt-6">
             <OperationTab operation="style" onSendTo={handleSendTo} />
+          </TabsContent>
+          <TabsContent value="subtitles" className="pt-6">
+            <SubtitleTab />
           </TabsContent>
           <TabsContent value="workspace" className="pt-6">
             <WorkspaceTab />
