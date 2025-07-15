@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Project {
   id: string;
@@ -53,6 +54,7 @@ export default function DashboardPage() {
         setLoadingProjects(false);
       }, (error) => {
         console.error("Error fetching projects: ", error);
+        toast({ variant: 'destructive', title: 'Could not load projects.', description: 'Please check your connection and try again.'});
         setLoadingProjects(false);
       });
 
@@ -67,6 +69,23 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  const renderProjectCardSkeleton = () => (
+      <Card className="flex flex-col">
+          <CardHeader>
+              <Skeleton className="h-6 w-2/4 mb-2" />
+              <Skeleton className="h-4 w-1/4" />
+          </CardHeader>
+          <CardContent className="flex-grow space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+          </CardContent>
+          <CardFooter>
+              <Skeleton className="h-10 w-full" />
+          </CardFooter>
+      </Card>
+  )
 
   return (
     <div className="min-h-screen bg-muted/40">
@@ -101,20 +120,17 @@ export default function DashboardPage() {
 
         {loadingProjects ? (
              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {[...Array(3)].map((_, i) => (
-                    <Card key={i} className="flex flex-col">
-                        <CardHeader><Loader2 className="h-8 w-8 animate-spin text-primary"/></CardHeader>
-                        <CardContent><p>Loading projects...</p></CardContent>
-                    </Card>
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i}>{renderProjectCardSkeleton()}</div>
                 ))}
             </div>
         ) : projects.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => (
-              <Card key={project.id} className="flex flex-col transition-transform hover:scale-105 hover:shadow-lg">
+              <Card key={project.id} className="flex flex-col transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-lg hover:shadow-primary/10">
                 <CardHeader>
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-xl capitalize truncate">{project.operation}</CardTitle>
+                    <CardTitle className="text-xl capitalize truncate">{project.operation || "Project"}</CardTitle>
                     {project.createdAt && (
                        <Badge variant="secondary">
                             {formatDistanceToNow(project.createdAt.toDate(), { addSuffix: true })}
@@ -139,12 +155,12 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : (
-           <div className="text-center py-20 bg-background rounded-lg border-2 border-dashed">
-                <h3 className="text-2xl font-semibold">No Projects Yet</h3>
-                <p className="text-muted-foreground mt-2">Create your first project in the editor.</p>
+           <div className="text-center py-20 bg-background rounded-lg border-2 border-dashed border-muted">
+                <h3 className="text-2xl font-semibold">Your Workspace is Empty</h3>
+                <p className="text-muted-foreground mt-2 max-w-md mx-auto">It looks like you don't have any projects yet. Start by creating your first piece of content in the editor.</p>
                 <Link href="/editor" className="mt-6 inline-block">
-                    <Button>
-                         <PlusCircle className="mr-2 h-4 w-4" /> Start a New Project
+                    <Button size="lg">
+                         <PlusCircle className="mr-2 h-4 w-4" /> Start Your First Project
                     </Button>
                 </Link>
             </div>
