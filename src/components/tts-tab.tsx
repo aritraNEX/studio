@@ -102,16 +102,8 @@ export function TtsTab() {
                         </div>
                     )}
                     {!isPending && !audioUrl && (
-                         <div className="text-center text-muted-foreground p-4 flex flex-col items-center justify-center">
-                            <Image
-                                src="https://placehold.co/300x200.png"
-                                alt="Audio Illustration"
-                                width={300}
-                                height={200}
-                                className="mb-4 rounded-lg"
-                                data-ai-hint="sound waves"
-                            />
-                            <p className="font-semibold">Your audio will appear here.</p>
+                         <div className="text-center text-muted-foreground p-4">
+                            <p>Your audio will appear here.</p>
                         </div>
                     )}
                     {!isPending && audioUrl && (

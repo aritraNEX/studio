@@ -87,16 +87,8 @@ export function PlagiarismTab() {
                         </div>
                     )}
                     {!isPending && !result && (
-                         <div className="text-center text-muted-foreground p-4 flex flex-col items-center justify-center">
-                            <Image 
-                                src="https://placehold.co/300x200.png"
-                                alt="Plagiarism Check Illustration"
-                                width={300}
-                                height={200}
-                                className="mb-4 rounded-lg"
-                                data-ai-hint="analysis document"
-                            />
-                            <p className="font-semibold">Your plagiarism report will appear here.</p>
+                         <div className="text-center text-muted-foreground p-4">
+                            <p>Your plagiarism report will appear here.</p>
                         </div>
                     )}
                     {!isPending && result && (

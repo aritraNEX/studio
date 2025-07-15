@@ -74,14 +74,7 @@ export function WorkspaceTab() {
   if (!workspaceOperation) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40rem] text-center text-muted-foreground p-8 bg-muted/20 rounded-lg">
-        <Image
-            src="https://placehold.co/300x200.png"
-            alt="Workspace Illustration"
-            width={300}
-            height={200}
-            className="mb-6 rounded-lg"
-            data-ai-hint="team collaboration"
-        />
+        <Wand2 className="h-16 w-16 text-primary mb-6" />
         <h2 className="text-2xl font-semibold text-foreground mb-2">Welcome to the Workspace</h2>
         <p className="max-w-md">
           This is your area for chained operations. To get started, go to another tab like "Paraphrase", process some text, and then use the "Send to..." button in the result box.
