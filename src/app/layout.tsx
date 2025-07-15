@@ -3,7 +3,6 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import Script from "next/script";
-import { WorkspaceProvider } from '@/contexts/workspace-context';
 import { AuthProvider } from '@/contexts/auth-context';
 import { ABTestProvider } from '@/contexts/ab-test-context';
 
@@ -33,9 +32,7 @@ export default function RootLayout({
         />
         <AuthProvider>
           <ABTestProvider>
-            <WorkspaceProvider>
-                {children}
-            </WorkspaceProvider>
+            {children}
           </ABTestProvider>
         </AuthProvider>
         <Toaster />

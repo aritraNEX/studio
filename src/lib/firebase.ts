@@ -18,8 +18,6 @@ const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : get
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-auth.languageCode = 'it';
-
 // Initialize App Check on the client side only
 if (typeof window !== 'undefined') {
     try {

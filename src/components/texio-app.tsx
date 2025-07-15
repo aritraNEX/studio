@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Captions, Rows3 } from "lucide-react";
 import {
   Card,
@@ -20,7 +20,7 @@ import { OperationTab } from "./operation-tab";
 import { NotepadTab } from "./notepad-tab";
 import { PlagiarismTab } from "./plagiarism-tab";
 import { WorkspaceTab } from "./workspace-tab";
-import { WorkspaceProvider, useWorkspace } from "@/contexts/workspace-context";
+import { useWorkspace } from "@/contexts/workspace-context";
 import { ResearchTab } from "./research-tab";
 import { TtsTab } from "./tts-tab";
 import { TranscriptionTab } from "./transcription-tab";
@@ -29,13 +29,17 @@ import { BatchSummaryTab } from "./batch-summary-tab";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
 
-function TexioAppContent() {
+interface TexioAppProps {
+  projectId?: string | null;
+}
+
+export function TexioApp({ projectId }: TexioAppProps) {
   const [activeTab, setActiveTab] = useState("paraphrase");
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
 
   const handleSendTo = (text: string, operation: Operation) => {
     if (operation === 'tts') {
-        setWorkspaceText(text); // Pass text to workspace context for TTS tab to pick up
+        setWorkspaceText(text);
         setActiveTab("tts");
     } else {
         setWorkspaceText(text);
@@ -50,9 +54,9 @@ function TexioAppContent() {
         <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit mb-4 shadow-lg shadow-primary/30">
           <Sparkles className="h-8 w-8" />
         </div>
-        <CardTitle className="text-4xl font-bold tracking-tight">Tex.io</CardTitle>
+        <CardTitle className="text-4xl font-bold tracking-tight">Tex.io Editor</CardTitle>
         <CardDescription className="text-lg text-muted-foreground/80">
-          Upload an image to magically paraphrase, summarize, or translate its text.
+          Your all-in-one AI-powered text and media toolkit.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
@@ -108,19 +112,19 @@ function TexioAppContent() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="paraphrase" className="pt-6">
-            <OperationTab operation="paraphrase" onSendTo={handleSendTo} />
+            <OperationTab operation="paraphrase" onSendTo={handleSendTo} projectId={projectId} />
           </TabsContent>
           <TabsContent value="summarize" className="pt-6">
-            <OperationTab operation="summarize" onSendTo={handleSendTo} />
+            <OperationTab operation="summarize" onSendTo={handleSendTo} projectId={projectId} />
           </TabsContent>
           <TabsContent value="batch-summary" className="pt-6">
             <BatchSummaryTab />
           </TabsContent>
           <TabsContent value="translate" className="pt-6">
-            <OperationTab operation="translate" onSendTo={handleSendTo} />
+            <OperationTab operation="translate" onSendTo={handleSendTo} projectId={projectId} />
           </TabsContent>
           <TabsContent value="style" className="pt-6">
-            <OperationTab operation="style" onSendTo={handleSendTo} />
+            <OperationTab operation="style" onSendTo={handleSendTo} projectId={projectId} />
           </TabsContent>
           <TabsContent value="transcription" className="pt-6">
             <TranscriptionTab />
@@ -146,13 +150,5 @@ function TexioAppContent() {
         </Tabs>
       </CardContent>
     </Card>
-  );
-}
-
-export function TexioApp() {
-  return (
-    <WorkspaceProvider>
-      <TexioAppContent />
-    </WorkspaceProvider>
   );
 }

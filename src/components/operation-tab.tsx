@@ -23,30 +23,18 @@ import {
 } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { useABTest } from "@/contexts/ab-test-context";
+import { useAuth } from "@/contexts/auth-context";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { useWorkspace } from "@/contexts/workspace-context";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
 
 const extraordinaryFonts = [
-  "Poppins",
-  "Playfair Display",
-  "Montserrat",
-  "Raleway",
-  "Oswald",
-  "Lora",
-  "Merriweather",
-  "Cormorant Garamond",
-  "Nunito",
-  "Josefin Sans",
-  "Lobster",
-  "Pacifico",
-  "Caveat",
-  "Dancing Script",
-  "Anton",
-  "Bebas Neue",
-  "Indie Flower",
-  "Shadows Into Light",
-  "Ubuntu",
-  "Quattrocento",
+  "Poppins", "Playfair Display", "Montserrat", "Raleway", "Oswald", "Lora",
+  "Merriweather", "Cormorant Garamond", "Nunito", "Josefin Sans", "Lobster",
+  "Pacifico", "Caveat", "Dancing Script", "Anton", "Bebas Neue", "Indie Flower",
+  "Shadows Into Light", "Ubuntu", "Quattrocento",
 ];
 
 const allOperations: Operation[] = ['paraphrase', 'summarize', 'translate', 'style', 'tts'];
@@ -55,9 +43,10 @@ interface OperationTabProps {
   operation: Operation;
   onSendTo: (text: string, operation: Operation) => void;
   initialText?: string;
+  projectId?: string | null;
 }
 
-export function OperationTab({ operation, onSendTo, initialText }: OperationTabProps) {
+export function OperationTab({ operation, onSendTo, initialText, projectId }: OperationTabProps) {
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [extractedText, setExtractedText] = useState<string | null>(initialText ?? null);
   const [isParsing, setIsParsing] = useState(false);
@@ -73,12 +62,11 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
   const outputTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [appUrl, setAppUrl] = useState('');
   const { group } = useABTest();
+  const { user } = useAuth();
+  const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
 
   useEffect(() => {
     setAppUrl(window.location.href);
-  }, []);
-
-  useEffect(() => {
     try {
       pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
     } catch (error) {
@@ -87,11 +75,49 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
   }, []);
 
   useEffect(() => {
+    if (projectId && user) {
+      const fetchProject = async () => {
+        const docRef = doc(db, `users/${user.uid}/projects`, projectId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const projectData = docSnap.data();
+          setWorkspaceText(projectData.inputText);
+          setWorkspaceOperation(projectData.operation);
+          setGeneratedText(projectData.outputText);
+          // Pre-fill the correct tab based on operation
+          if (projectData.operation === operation) {
+            setExtractedText(projectData.inputText);
+            setGeneratedText(projectData.outputText);
+          }
+        } else {
+          toast({ variant: 'destructive', title: 'Project not found.' });
+        }
+      };
+      fetchProject();
+    }
+  }, [projectId, user, operation, setWorkspaceText, setWorkspaceOperation, toast]);
+
+  useEffect(() => {
       if (initialText) {
           setExtractedText(initialText);
           setGeneratedText("");
       }
   }, [initialText]);
+
+  const handleSaveProject = async (inputText: string, outputText: string, projectOperation: string) => {
+    if (!user) return;
+    try {
+      await addDoc(collection(db, `users/${user.uid}/projects`), {
+        inputText,
+        outputText,
+        operation: projectOperation,
+        createdAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error saving project: ", error);
+      toast({ variant: 'destructive', title: 'Could not save project.' });
+    }
+  };
 
   const handleFileUpload = (file: File) => {
     if (!file) return;
@@ -182,7 +208,8 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
   };
 
   const handleProcess = () => {
-    if (!imageDataUrl && !extractedText?.trim()) {
+    const currentInput = imageDataUrl || extractedText;
+    if (!currentInput || (typeof currentInput === 'string' && !currentInput.trim())) {
         toast({
             variant: 'destructive',
             title: 'No content to process',
@@ -224,6 +251,7 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
         const result = await processImageText(inputPayload as any);
         if (result && result.processedText) {
           setGeneratedText(result.processedText);
+          await handleSaveProject(extractedText || 'Image Input', result.processedText, operation);
         } else {
           throw new Error("The processed text is empty.");
         }
