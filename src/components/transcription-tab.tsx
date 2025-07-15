@@ -2,17 +2,17 @@
 "use client";
 
 import { useState, useRef, useTransition, useEffect } from "react";
-import { Upload, Loader2, Sparkles, Download, Subtitles, Languages } from "lucide-react";
+import { Upload, Loader2, Sparkles, Download, FileText, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { generateSubtitles } from "@/ai/flows/subtitle-flow";
+import { generateTranscription } from "@/ai/flows/transcription-flow";
 import { Badge } from "./ui/badge";
 
-export function SubtitleTab() {
+export function TranscriptionTab() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoDataUri, setVideoDataUri] = useState<string | null>(null);
   const [vttContent, setVttContent] = useState<string | null>(null);
@@ -103,7 +103,7 @@ export function SubtitleTab() {
 
     startTransition(async () => {
       try {
-        const result = await generateSubtitles({
+        const result = await generateTranscription({
           videoDataUri,
           targetLanguage: targetLanguage.trim() || undefined,
         });
@@ -111,18 +111,18 @@ export function SubtitleTab() {
           setVttContent(result.vtt);
           setDetectedLanguage(result.detectedLanguage);
           toast({
-            title: "Subtitles generated!",
+            title: "Transcription generated!",
             description: `Language: ${result.detectedLanguage}${targetLanguage ? ` | Translated to: ${targetLanguage}` : ''}`,
           });
         } else {
-          throw new Error("The model returned empty subtitles.");
+          throw new Error("The model returned empty transcription.");
         }
       } catch (e) {
         console.error(e);
         toast({
           variant: "destructive",
           title: "Generation Failed",
-          description: "Could not generate subtitles for this video.",
+          description: "Could not generate transcription for this video.",
         });
       }
     });
@@ -134,7 +134,7 @@ export function SubtitleTab() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "subtitles.vtt";
+    a.download = "transcription.vtt";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -182,8 +182,8 @@ export function SubtitleTab() {
       </div>
       <div className="flex flex-col gap-4 h-full">
         <div className="flex items-center justify-between">
-            <Label htmlFor="subtitle-output" className="font-semibold text-md">
-                Generated Subtitles (.vtt)
+            <Label htmlFor="transcription-output" className="font-semibold text-md">
+                Generated Transcription (.vtt)
             </Label>
             {detectedLanguage && <Badge variant="secondary">Detected: {detectedLanguage}</Badge>}
         </div>
@@ -191,14 +191,14 @@ export function SubtitleTab() {
           {isPending ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted-foreground bg-background/50 rounded-lg">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              <p className="font-semibold">Generating subtitles...</p>
+              <p className="font-semibold">Generating transcription...</p>
               <p className="text-sm text-center">This may take a moment for longer videos.</p>
             </div>
           ) : (
             <Textarea
-              id="subtitle-output"
+              id="transcription-output"
               readOnly
-              value={vttContent ?? "Your subtitles will appear here..."}
+              value={vttContent ?? "Your transcription will appear here..."}
               className="h-full resize-y pr-12 bg-background/30 font-mono text-xs"
             />
           )}
@@ -237,7 +237,7 @@ export function SubtitleTab() {
                 className="w-full sm:w-auto text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
             >
                 {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
-                {isPending ? "Generating..." : "Generate Subtitles"}
+                {isPending ? "Generating..." : "Generate Transcription"}
             </Button>
          </div>
       </div>

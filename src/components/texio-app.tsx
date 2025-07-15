@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, Subtitles } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -24,7 +24,7 @@ import { WorkspaceTab } from "./workspace-tab";
 import { WorkspaceProvider, useWorkspace } from "@/contexts/workspace-context";
 import { ResearchTab } from "./research-tab";
 import { TtsTab } from "./tts-tab";
-import { SubtitleTab } from "./subtitle-tab";
+import { TranscriptionTab } from "./transcription-tab";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
 
@@ -73,9 +73,9 @@ function TexioAppContent() {
                 <Palette className="h-5 w-5 mr-2" />
                 <span>Style</span>
             </TabsTrigger>
-            <TabsTrigger value="subtitles" className="py-2.5">
-                <Subtitles className="h-5 w-5 mr-2" />
-                <span>Subtitles</span>
+            <TabsTrigger value="transcription" className="py-2.5">
+                <FileText className="h-5 w-5 mr-2" />
+                <span>Transcription</span>
             </TabsTrigger>
              <TabsTrigger value="workspace" className="py-2.5">
                 <Wand2 className="h-5 w-5 mr-2" />
@@ -110,8 +110,8 @@ function TexioAppContent() {
           <TabsContent value="style" className="pt-6">
             <OperationTab operation="style" onSendTo={handleSendTo} />
           </TabsContent>
-          <TabsContent value="subtitles" className="pt-6">
-            <SubtitleTab />
+          <TabsContent value="transcription" className="pt-6">
+            <TranscriptionTab />
           </TabsContent>
           <TabsContent value="workspace" className="pt-6">
             <WorkspaceTab />
