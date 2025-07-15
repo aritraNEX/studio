@@ -1,20 +1,24 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // A user can only read/write/list their own projects.
+    match /users/{userId}/projects/{projectId} {
+      allow read, write: if request.auth.uid == userId;
+    }
     
-    // Shared workspaces can be read by anyone with the link, 
-    // but only created/updated by the authenticated owner.
-    match /workspaces/{workspaceId} {
-      allow read: if true;
-      allow create, update: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+    // Allow a user to list the projects that belong to them.
+    match /users/{userId}/projects {
+       allow list: if request.auth.uid == userId;
     }
 
-    // A user can read and write to their own 'projects' subcollection.
-    // This allows them to save and load their own work from the dashboard.
-    match /users/{userId}/projects/{projectId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // A user can create a workspace.
+    // Anyone can read a workspace to allow for sharing.
+    // Only the owner can update a workspace.
+    match /workspaces/{workspaceId} {
+      allow create: if request.auth.uid != null;
+      allow read: if true;
+      allow update: if request.auth.uid == resource.data.ownerId;
     }
   }
 }
