@@ -66,7 +66,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
 
   useEffect(() => {
-    setAppUrl(window.location.href);
+    setAppUrl(window.location.origin); // Use origin instead of href
     try {
       pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
     } catch (error) {
