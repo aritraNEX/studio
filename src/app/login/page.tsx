@@ -42,6 +42,7 @@ export default function LoginPage() {
   
   // Set up reCAPTCHA verifier
   useEffect(() => {
+    // This check is to prevent re-initializing the verifier on every render.
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
@@ -96,6 +97,8 @@ export default function LoginPage() {
     setIsPending(true);
     const provider = new GoogleAuthProvider();
     try {
+        // This forces the sign-in pop-up to use a trusted domain
+        auth.languageCode = 'en'; 
         await signInWithPopup(auth, provider);
         toast({ title: 'Successfully signed in with Google!' });
         router.push('/');
