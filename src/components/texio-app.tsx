@@ -17,7 +17,6 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { OperationTab } from "./operation-tab";
-import { AdBanner } from "./ad-banner";
 import { NotepadTab } from "./notepad-tab";
 import { PlagiarismTab } from "./plagiarism-tab";
 import { WorkspaceTab } from "./workspace-tab";
@@ -94,7 +93,7 @@ function TexioAppContent() {
              <TabsTrigger value="research" className="py-2.5">
                 <GraduationCap className="h-5 w-5 mr-2" />
                 <span>Research</span>
-            </TapsTrigger>
+            </TabsTrigger>
             <TabsTrigger value="plagiarism" className="py-2.5">
                 <ShieldCheck className="h-5 w-5 mr-2" />
                 <span>Plagiarism</span>
@@ -149,7 +148,6 @@ function TexioAppContent() {
     </Card>
   );
 }
-
 
 export function TexioApp() {
   return (
