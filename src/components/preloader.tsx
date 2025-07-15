@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -58,8 +59,8 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
   useEffect(() => {
     const timer = setTimeout(() => {
       setShow(false);
-      setTimeout(onAnimationComplete, 1000); 
-    }, 5000);
+      setTimeout(onAnimationComplete, 700); 
+    }, 1500); // Reduced delay from 5000ms to 1500ms
 
     return () => clearTimeout(timer);
   }, [onAnimationComplete]);
