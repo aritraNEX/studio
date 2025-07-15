@@ -42,6 +42,7 @@ const parseVTT = (vttContent: string): VttCue[] => {
             if (timeLine && textLine) {
                  const [start, end] = timeLine.split(' --> ');
                  const parseTime = (timeStr: string) => {
+                     if (!timeStr) return 0;
                      const parts = timeStr.split(':');
                      if (parts.length < 3) return 0;
                      const secondsParts = parts[2].split('.');
