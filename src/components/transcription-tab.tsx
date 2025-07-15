@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useTransition, useEffect } from "react";
-import { Upload, Loader2, Sparkles, Download, FileText, Languages } from "lucide-react";
+import { Upload, Loader2, Sparkles, Download, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,52 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { generateTranscription } from "@/ai/flows/transcription-flow";
 import { Badge } from "./ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface VttCue {
+  startTime: number;
+  endTime: number;
+  text: string;
+}
+
+type CaptionStyle = 'none' | 'minimal' | 'cinematic' | 'highlight';
+
+// A simple VTT parser
+const parseVTT = (vttContent: string): VttCue[] => {
+    if (!vttContent || !vttContent.startsWith('WEBVTT')) return [];
+    
+    const lines = vttContent.split('\n');
+    const cues: VttCue[] = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+        if (lines[i].includes('-->')) {
+            const timeLine = lines[i];
+            const textLine = lines[i + 1];
+
+            if (timeLine && textLine) {
+                 const [start, end] = timeLine.split(' --> ');
+                 const parseTime = (timeStr: string) => {
+                     const parts = timeStr.split(':');
+                     const secondsParts = parts[2].split('.');
+                     return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(secondsParts[0]) + parseInt(secondsParts[1]) / 1000;
+                 }
+                 cues.push({
+                     startTime: parseTime(start),
+                     endTime: parseTime(end),
+                     text: textLine,
+                 });
+                 i++; // Skip the text line as it's processed
+            }
+        }
+    }
+    return cues;
+}
 
 export function TranscriptionTab() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -23,33 +69,28 @@ export function TranscriptionTab() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
-    if (videoRef.current && vttContent) {
-      // Create a Blob from the VTT content
-      const blob = new Blob([vttContent], { type: 'text/vtt' });
-      const trackUrl = URL.createObjectURL(blob);
-      
-      // Remove any existing track elements
-      const existingTrack = videoRef.current.querySelector('track');
-      if (existingTrack) {
-        existingTrack.remove();
-      }
+  // New state for styled captions
+  const [parsedCues, setParsedCues] = useState<VttCue[]>([]);
+  const [activeCue, setActiveCue] = useState<VttCue | null>(null);
+  const [captionStyle, setCaptionStyle] = useState<CaptionStyle>('none');
 
-      // Add a new track element
-      const track = document.createElement('track');
-      track.kind = 'subtitles';
-      track.label = 'English'; // You can make this dynamic
-      track.srclang = 'en';
-      track.src = trackUrl;
-      track.default = true;
-      videoRef.current.appendChild(track);
-      
-      // Clean up the object URL when the component unmounts or vttContent changes
-      return () => {
-        URL.revokeObjectURL(trackUrl);
-      };
+
+  useEffect(() => {
+    if (vttContent) {
+        setParsedCues(parseVTT(vttContent));
+    } else {
+        setParsedCues([]);
     }
   }, [vttContent]);
+
+  const handleTimeUpdate = () => {
+    if (!videoRef.current || parsedCues.length === 0) return;
+    
+    const currentTime = videoRef.current.currentTime;
+    const currentCue = parsedCues.find(cue => currentTime >= cue.startTime && currentTime <= cue.endTime);
+    
+    setActiveCue(currentCue || null);
+  }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -67,10 +108,13 @@ export function TranscriptionTab() {
       });
       return;
     }
-
-    setVideoUrl(URL.createObjectURL(file));
+    
+    // Reset state for new upload
     setVttContent(null);
+    setActiveCue(null);
+    setParsedCues([]);
     setDetectedLanguage(null);
+    setVideoUrl(URL.createObjectURL(file));
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -140,6 +184,13 @@ export function TranscriptionTab() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+  
+  const captionStyleClasses: Record<CaptionStyle, string> = {
+    none: 'hidden',
+    minimal: 'bottom-4 text-white bg-black/50 px-2 py-1 text-lg font-sans',
+    cinematic: 'bottom-12 text-white text-2xl font-serif tracking-wider text-shadow-lg',
+    highlight: 'bottom-5 text-black bg-yellow-400 px-3 py-1.5 text-xl font-bold uppercase font-sans'
+  };
 
   return (
     <div className="grid md:grid-cols-2 gap-8 items-start">
@@ -147,38 +198,57 @@ export function TranscriptionTab() {
         <Label htmlFor="video-upload" className="font-semibold text-md">
           Upload Video
         </Label>
-        <input
-          type="file"
-          id="video-upload"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="sr-only"
-          accept="video/*"
-        />
-        <label
-          htmlFor="video-upload"
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          className={cn(
-            "group flex flex-col items-center justify-center w-full h-96 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
-            "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
-          )}
-        >
-          {videoUrl ? (
-            <video ref={videoRef} key={videoUrl} controls className="w-full h-full object-contain rounded-lg">
-              <source src={videoUrl} />
-              Your browser does not support the video tag.
-            </video>
-          ) : (
-            <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
-              <Upload className="w-10 h-10 mb-3 text-muted-foreground transition-transform duration-300 group-hover:scale-110 group-hover:text-primary" />
-              <p className="mb-2 text-sm text-muted-foreground">
-                <span className="font-semibold text-primary">Click to upload</span> or drag and drop a video
-              </p>
-              <p className="text-xs text-muted-foreground">MP4, WebM, etc.</p>
-            </div>
-          )}
-        </label>
+        <div className="relative">
+             <input
+                type="file"
+                id="video-upload"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="sr-only"
+                accept="video/*"
+             />
+             <label
+                htmlFor="video-upload"
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                className={cn(
+                    "group relative flex flex-col items-center justify-center w-full h-96 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
+                    "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground overflow-hidden"
+                )}
+             >
+            {videoUrl ? (
+                <>
+                <video 
+                    ref={videoRef} 
+                    key={videoUrl} 
+                    controls 
+                    className="w-full h-full object-contain rounded-lg"
+                    onTimeUpdate={handleTimeUpdate}
+                >
+                    <source src={videoUrl} />
+                    Your browser does not support the video tag.
+                </video>
+                {activeCue && captionStyle !== 'none' && (
+                    <div className={cn(
+                        "absolute left-1/2 -translate-x-1/2 rounded-lg pointer-events-none text-center transition-opacity duration-200",
+                        activeCue ? 'opacity-100' : 'opacity-0',
+                        captionStyleClasses[captionStyle]
+                    )}>
+                        {activeCue.text}
+                    </div>
+                )}
+                </>
+            ) : (
+                <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
+                <Upload className="w-10 h-10 mb-3 text-muted-foreground transition-transform duration-300 group-hover:scale-110 group-hover:text-primary" />
+                <p className="mb-2 text-sm text-muted-foreground">
+                    <span className="font-semibold text-primary">Click to upload</span> or drag and drop a video
+                </p>
+                <p className="text-xs text-muted-foreground">MP4, WebM, etc.</p>
+                </div>
+            )}
+            </label>
+        </div>
       </div>
       <div className="flex flex-col gap-4 h-full">
         <div className="flex items-center justify-between">
@@ -216,6 +286,24 @@ export function TranscriptionTab() {
             </div>
           )}
         </div>
+        
+        {vttContent && (
+            <div className="flex flex-col gap-2 mt-2 animate-in fade-in duration-300">
+                <Label htmlFor="caption-style">Caption Style</Label>
+                <Select onValueChange={(value) => setCaptionStyle(value as CaptionStyle)} defaultValue="none" disabled={isPending}>
+                    <SelectTrigger id="caption-style" className="bg-background/50 focus-visible:ring-accent">
+                        <SelectValue placeholder="Select a caption style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        <SelectItem value="minimal">Minimal</SelectItem>
+                        <SelectItem value="cinematic">Cinematic</SelectItem>
+                        <SelectItem value="highlight">Highlight</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        )}
+
       </div>
       <div className="md:col-span-2 flex flex-col items-center justify-center gap-4 py-4">
          <div className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-lg">
@@ -244,3 +332,5 @@ export function TranscriptionTab() {
     </div>
   );
 }
+
+    
