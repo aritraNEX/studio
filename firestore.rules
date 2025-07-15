@@ -1,24 +1,32 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // A user can only read/write/list their own projects.
-    match /users/{userId}/projects/{projectId} {
-      allow read, write: if request.auth.uid == userId;
-    }
     
-    // Allow a user to list the projects that belong to them.
-    match /users/{userId}/projects {
-       allow list: if request.auth.uid == userId;
+    // Allow public read for shared workspaces
+    match /workspaces/{workspaceId} {
+      allow read;
+      allow update: if request.auth != null;
     }
 
-    // A user can create a workspace.
-    // Anyone can read a workspace to allow for sharing.
-    // Only the owner can update a workspace.
-    match /workspaces/{workspaceId} {
-      allow create: if request.auth.uid != null;
-      allow read: if true;
-      allow update: if request.auth.uid == resource.data.ownerId;
+    // Projects can be created by any authenticated user
+    match /projects/{projectId} {
+      // Allow create if the user is logged in and the new document's userId matches their own.
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Allow read and update only by the user who owns the project.
+      allow read, update: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      // Prevent deletion for now to avoid accidental data loss.
+      allow delete: if false;
+    }
+    
+    // This rule allows a user to query the 'projects' collection,
+    // but ONLY if their query includes `where('userId', '==', request.auth.uid)`.
+    // This is crucial for the dashboard page to work correctly and securely.
+    match /projects/{projectId} {
+       allow list: if request.auth != null && request.query.resource.data.userId == request.auth.uid;
     }
   }
 }

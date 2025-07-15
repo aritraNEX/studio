@@ -19,6 +19,7 @@ interface Project {
   operation: string;
   outputText: string;
   createdAt: Timestamp;
+  userId: string;
 }
 
 export default function DashboardPage() {
@@ -35,8 +36,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
+      setLoadingProjects(true);
+      const projectsCol = collection(db, 'projects');
       const q = query(
-        collection(db, `users/${user.uid}/projects`),
+        projectsCol,
+        where('userId', '==', user.uid),
         orderBy('createdAt', 'desc')
       );
 
@@ -111,9 +115,11 @@ export default function DashboardPage() {
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <CardTitle className="text-xl capitalize truncate">{project.operation}</CardTitle>
-                    <Badge variant="secondary">
-                        {formatDistanceToNow(project.createdAt.toDate(), { addSuffix: true })}
-                    </Badge>
+                    {project.createdAt && (
+                       <Badge variant="secondary">
+                            {formatDistanceToNow(project.createdAt.toDate(), { addSuffix: true })}
+                        </Badge>
+                    )}
                   </div>
                   <CardDescription>Generated content</CardDescription>
                 </CardHeader>

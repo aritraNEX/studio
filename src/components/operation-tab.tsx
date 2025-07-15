@@ -77,10 +77,14 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   useEffect(() => {
     if (projectId && user) {
       const fetchProject = async () => {
-        const docRef = doc(db, `users/${user.uid}/projects`, projectId);
+        const docRef = doc(db, 'projects', projectId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const projectData = docSnap.data();
+          if (projectData.userId !== user.uid) {
+             toast({ variant: 'destructive', title: 'Access Denied', description: "You don't have permission to view this project." });
+             return;
+          }
           setWorkspaceText(projectData.inputText);
           setWorkspaceOperation(projectData.operation);
           setGeneratedText(projectData.outputText);
@@ -107,12 +111,14 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const handleSaveProject = async (inputText: string, outputText: string, projectOperation: string) => {
     if (!user) return;
     try {
-      await addDoc(collection(db, `users/${user.uid}/projects`), {
+      await addDoc(collection(db, 'projects'), {
+        userId: user.uid,
         inputText,
         outputText,
         operation: projectOperation,
         createdAt: serverTimestamp(),
       });
+      toast({title: "Project Saved!", description: "Your work has been saved to your dashboard."})
     } catch (error) {
       console.error("Error saving project: ", error);
       toast({ variant: 'destructive', title: 'Could not save project.' });
