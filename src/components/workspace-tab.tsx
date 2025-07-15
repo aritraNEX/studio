@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { OperationTab } from "./operation-tab";
 import { Wand2, Share2, Loader2, Copy } from "lucide-react";
@@ -73,7 +74,14 @@ export function WorkspaceTab() {
   if (!workspaceOperation) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40rem] text-center text-muted-foreground p-8 bg-muted/20 rounded-lg">
-        <Wand2 className="h-16 w-16 mx-auto mb-6 text-primary/50" />
+        <Image
+            src="https://placehold.co/300x200.png"
+            alt="Workspace Illustration"
+            width={300}
+            height={200}
+            className="mb-6 rounded-lg"
+            data-ai-hint="team collaboration"
+        />
         <h2 className="text-2xl font-semibold text-foreground mb-2">Welcome to the Workspace</h2>
         <p className="max-w-md">
           This is your area for chained operations. To get started, go to another tab like "Paraphrase", process some text, and then use the "Send to..." button in the result box.

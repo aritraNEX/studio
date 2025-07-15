@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
+import Image from "next/image";
 import { AudioLines, Loader2, Sparkles, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -101,9 +102,16 @@ export function TtsTab() {
                         </div>
                     )}
                     {!isPending && !audioUrl && (
-                         <div className="text-center text-muted-foreground p-4">
-                            <AudioLines className="h-12 w-12 mx-auto mb-4 text-primary/50" />
-                            <p>Your audio will appear here.</p>
+                         <div className="text-center text-muted-foreground p-4 flex flex-col items-center justify-center">
+                            <Image
+                                src="https://placehold.co/300x200.png"
+                                alt="Audio Illustration"
+                                width={300}
+                                height={200}
+                                className="mb-4 rounded-lg"
+                                data-ai-hint="sound waves"
+                            />
+                            <p className="font-semibold">Your audio will appear here.</p>
                         </div>
                     )}
                     {!isPending && audioUrl && (

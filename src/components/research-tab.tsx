@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Image from "next/image";
 import { GraduationCap, Loader2, Sparkles, Copy, FileText, BookCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -91,9 +92,16 @@ export function ResearchTab() {
                         </div>
                     )}
                     {!isPending && !result && (
-                         <div className="text-center text-muted-foreground p-4">
-                            <GraduationCap className="h-12 w-12 mx-auto mb-4 text-primary/50" />
-                            <p>Your research report and citations will appear here.</p>
+                         <div className="text-center text-muted-foreground p-4 flex flex-col items-center justify-center">
+                            <Image
+                                src="https://placehold.co/300x200.png"
+                                alt="Research Illustration"
+                                width={300}
+                                height={200}
+                                className="mb-4 rounded-lg"
+                                data-ai-hint="research books"
+                            />
+                            <p className="font-semibold">Your research report and citations will appear here.</p>
                         </div>
                     )}
                     {!isPending && result && (

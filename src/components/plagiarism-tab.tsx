@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useState, useTransition } from "react";
+import Image from "next/image";
 import { ShieldCheck, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -85,9 +87,16 @@ export function PlagiarismTab() {
                         </div>
                     )}
                     {!isPending && !result && (
-                         <div className="text-center text-muted-foreground p-4">
-                            <ShieldCheck className="h-12 w-12 mx-auto mb-4 text-primary/50" />
-                            <p>Your plagiarism report will appear here.</p>
+                         <div className="text-center text-muted-foreground p-4 flex flex-col items-center justify-center">
+                            <Image 
+                                src="https://placehold.co/300x200.png"
+                                alt="Plagiarism Check Illustration"
+                                width={300}
+                                height={200}
+                                className="mb-4 rounded-lg"
+                                data-ai-hint="analysis document"
+                            />
+                            <p className="font-semibold">Your plagiarism report will appear here.</p>
                         </div>
                     )}
                     {!isPending && result && (
