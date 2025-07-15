@@ -25,6 +25,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Card, CardContent } from "./ui/card";
 import { Progress } from "./ui/progress";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { useABTest } from "@/contexts/ab-test-context";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
 type FileStatus = 'pending' | 'parsing' | 'ready' | 'processing' | 'done' | 'error';
@@ -90,6 +91,7 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
   const fileInputRef = useRef<HTMLInputElement>(null);
   const outputTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [appUrl, setAppUrl] = useState('');
+  const { group } = useABTest();
 
   useEffect(() => {
     // This runs on the client and will capture the page URL
@@ -435,8 +437,10 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
     }
     window.open(url, '_blank', 'noopener,noreferrer');
   };
+  
+  const isButtonBVariant = group === 'B';
 
-  const buttonText = {
+  const buttonText = isButtonBVariant ? "Generate Now" : {
       paraphrase: 'Paraphrase',
       summarize: 'Summarize',
       translate: 'Translate',
@@ -826,7 +830,13 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
             onClick={handleProcess}
             disabled={(!imageDataUrl && !extractedText) || isPending || isParsing || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
-            className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 sm:w-auto"
+            variant={isButtonBVariant ? "outline" : "default"}
+            className={cn(
+              "w-full max-w-xs text-lg font-semibold transition-all duration-300 hover:scale-105 sm:w-auto",
+              isButtonBVariant 
+                ? "border-2 border-primary text-primary hover:text-primary hover:bg-primary/10" 
+                : "shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40"
+            )}
           >
             {isPending ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />

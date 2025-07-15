@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import Script from "next/script";
 import { WorkspaceProvider } from '@/contexts/workspace-context';
 import { AuthProvider } from '@/contexts/auth-context';
+import { ABTestProvider } from '@/contexts/ab-test-context';
 
 export const metadata: Metadata = {
   title: 'Tex.io',
@@ -31,9 +32,11 @@ export default function RootLayout({
           strategy="lazyOnload"
         />
         <AuthProvider>
-          <WorkspaceProvider>
-              {children}
-          </WorkspaceProvider>
+          <ABTestProvider>
+            <WorkspaceProvider>
+                {children}
+            </WorkspaceProvider>
+          </ABTestProvider>
         </AuthProvider>
         <Toaster />
       </body>
