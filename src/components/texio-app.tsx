@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Captions } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Captions, Rows3 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -26,6 +26,7 @@ import { ResearchTab } from "./research-tab";
 import { TtsTab } from "./tts-tab";
 import { TranscriptionTab } from "./transcription-tab";
 import { CaptionGeneratorTab } from "./caption-generator-tab";
+import { BatchSummaryTab } from "./batch-summary-tab";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
 
@@ -57,7 +58,7 @@ function TexioAppContent() {
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-11 mx-auto max-w-6xl h-auto p-1.5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 mx-auto max-w-7xl h-auto p-1.5">
             <TabsTrigger value="paraphrase" className="py-2.5">
                 <Quote className="h-5 w-5 mr-2" />
                 <span>Paraphrase</span>
@@ -65,6 +66,10 @@ function TexioAppContent() {
             <TabsTrigger value="summarize" className="py-2.5">
                 <BookText className="h-5 w-5 mr-2" />
                 <span>Summarize</span>
+            </TabsTrigger>
+             <TabsTrigger value="batch-summary" className="py-2.5">
+                <Rows3 className="h-5 w-5 mr-2" />
+                <span>Batch Summary</span>
             </TabsTrigger>
             <TabsTrigger value="translate" className="py-2.5">
                 <Languages className="h-5 w-5 mr-2" />
@@ -89,7 +94,7 @@ function TexioAppContent() {
              <TabsTrigger value="research" className="py-2.5">
                 <GraduationCap className="h-5 w-5 mr-2" />
                 <span>Research</span>
-            </TabsTrigger>
+            </TapsTrigger>
             <TabsTrigger value="plagiarism" className="py-2.5">
                 <ShieldCheck className="h-5 w-5 mr-2" />
                 <span>Plagiarism</span>
@@ -108,6 +113,9 @@ function TexioAppContent() {
           </TabsContent>
           <TabsContent value="summarize" className="pt-6">
             <OperationTab operation="summarize" onSendTo={handleSendTo} />
+          </TabsContent>
+          <TabsContent value="batch-summary" className="pt-6">
+            <BatchSummaryTab />
           </TabsContent>
           <TabsContent value="translate" className="pt-6">
             <OperationTab operation="translate" onSendTo={handleSendTo} />
@@ -139,7 +147,7 @@ function TexioAppContent() {
         </Tabs>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 
@@ -148,5 +156,5 @@ export function TexioApp() {
     <WorkspaceProvider>
       <TexioAppContent />
     </WorkspaceProvider>
-  )
+  );
 }

@@ -3,7 +3,7 @@
 
 import { useState, useRef, useTransition, useEffect } from "react";
 import Image from "next/image";
-import { Copy, Loader2, Sparkles, Upload, Download, Volume2, ChevronDown, CheckCircle, File as FileIcon, Trash2, Send, AudioLines, Share2 } from "lucide-react";
+import { Copy, Loader2, Sparkles, Upload, Download, ChevronDown, Send, AudioLines, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,23 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Card, CardContent } from "./ui/card";
-import { Progress } from "./ui/progress";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { useABTest } from "@/contexts/ab-test-context";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
-type FileStatus = 'pending' | 'parsing' | 'ready' | 'processing' | 'done' | 'error';
-
-interface ProcessedFile {
-    id: string;
-    file: File;
-    status: FileStatus;
-    extractedText?: string;
-    generatedText?: string;
-    error?: string;
-}
 
 const extraordinaryFonts = [
   "Poppins",
@@ -71,16 +58,10 @@ interface OperationTabProps {
 }
 
 export function OperationTab({ operation, onSendTo, initialText }: OperationTabProps) {
-  // Single file state
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [extractedText, setExtractedText] = useState<string | null>(initialText ?? null);
   const [isParsing, setIsParsing] = useState(false);
   const [generatedText, setGeneratedText] = useState<string>("");
-  
-  // Batch processing state
-  const [files, setFiles] = useState<ProcessedFile[]>([]);
-  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
-  
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [targetLanguage, setTargetLanguage] = useState<string>('Spanish');
@@ -94,7 +75,6 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
   const { group } = useABTest();
 
   useEffect(() => {
-    // This runs on the client and will capture the page URL
     setAppUrl(window.location.href);
   }, []);
 
@@ -113,141 +93,79 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
       }
   }, [initialText]);
 
-   const parseFile = async (fileToParse: ProcessedFile): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const { file } = fileToParse;
-            const fileType = file.type;
-            const reader = new FileReader();
+  const handleFileUpload = (file: File) => {
+    if (!file) return;
 
-            reader.onerror = () => {
-                reader.abort();
-                reject(new DOMException("Problem parsing input file."));
-            };
-            
-            reader.onload = async (e) => {
-                try {
-                    const buffer = e.target?.result as ArrayBuffer;
-                    let text = '';
-                    if (fileType.startsWith("image/")) {
-                       // For batch, we just pass the data URL which is handled by the flow
-                       const readerForDataUrl = new FileReader();
-                       readerForDataUrl.onload = (e) => resolve(e.target?.result as string);
-                       readerForDataUrl.readAsDataURL(file);
-                       return;
-                    } else if (fileType === 'application/pdf') {
-                        const pdf = await pdfjsLib.getDocument(buffer).promise;
-                        for (let i = 1; i <= pdf.numPages; i++) {
-                            const page = await pdf.getPage(i);
-                            const content = await page.getTextContent();
-                            text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
-                        }
-                    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                        const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-                        text = result.value;
-                    }
-                    resolve(text);
-                } catch (err) {
-                    reject(err);
-                }
-            };
+    setImageDataUrl(null);
+    setExtractedText(null);
+    setGeneratedText("");
+    setError(null);
+    setIsParsing(true);
 
-            if (fileType.startsWith("image/")) {
-                reader.readAsDataURL(file); // This will trigger the onload with a data URL
-            } else {
-                reader.readAsArrayBuffer(file);
-            }
-        });
+    const fileType = file.type;
+    const reader = new FileReader();
+
+    reader.onerror = () => {
+        setIsParsing(false);
+        toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not read the selected file.' });
     };
 
-  const handleFileUpload = (file: File) => {
-     if (!file) return;
-
-    if (operation === 'summarize') {
-        const newFile: ProcessedFile = { id: `${file.name}-${Date.now()}`, file, status: 'pending' };
-        setFiles(prev => [...prev, newFile]);
-        handleFileParsing(newFile);
-    } else {
-        setImageDataUrl(null);
-        setExtractedText(null);
-        setGeneratedText("");
-        setError(null);
-        setIsParsing(true);
-
-        const fileType = file.type;
-
-        if (fileType.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const result = e.target?.result;
-            if (typeof result === "string") {
-            setImageDataUrl(result);
+    reader.onload = async (e) => {
+        try {
+            if (fileType.startsWith("image/")) {
+                const result = e.target?.result;
+                if (typeof result === "string") {
+                    setImageDataUrl(result);
+                }
+            } else if (fileType === 'application/pdf') {
+                const buffer = e.target?.result as ArrayBuffer;
+                const pdf = await pdfjsLib.getDocument(buffer).promise;
+                let text = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
+                }
+                setExtractedText(text);
+            } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                const buffer = e.target?.result as ArrayBuffer;
+                const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+                setExtractedText(result.value);
+            } else {
+                 toast({
+                    title: "Unsupported file type",
+                    description: "Please upload an image, PDF, or DOCX file.",
+                    variant: "destructive",
+                });
             }
+        } catch (error) {
+            console.error("Failed to parse file", error);
+            toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not read the contents of ${file.name}. The file might be corrupted or in an unsupported format.` });
+        } finally {
             setIsParsing(false);
-        };
-        reader.readAsDataURL(file);
-        } else if (fileType === 'application/pdf') {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-            const buffer = e.target?.result as ArrayBuffer;
-            const pdf = await pdfjsLib.getDocument(buffer).promise;
-            let text = '';
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const content = await page.getTextContent();
-                text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
-            }
-            setExtractedText(text);
-            } catch (error) {
-            console.error("Failed to parse PDF", error);
-            toast({ variant: 'destructive', title: 'Could not read PDF file.' });
-            } finally {
-            setIsParsing(false);
-            }
-        };
-        reader.readAsArrayBuffer(file);
-        } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-            const buffer = e.target?.result as ArrayBuffer;
-            const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-            setExtractedText(result.value);
-            } catch (error) {
-            console.error("Failed to parse DOCX", error);
-            toast({ variant: 'destructive', title: 'Could not read DOCX file.' });
-            } finally {
-            setIsParsing(false);
-            }
-        };
-        reader.readAsArrayBuffer(file);
+        }
+    };
+    
+    if (fileType.startsWith("image/") || fileType === 'application/pdf' || fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+         if (fileType.startsWith("image/")) {
+            reader.readAsDataURL(file);
         } else {
+            reader.readAsArrayBuffer(file);
+        }
+    } else {
         toast({
             title: "Unsupported file type",
             description: "Please upload an image, PDF, or DOCX file.",
             variant: "destructive",
         });
         setIsParsing(false);
-        }
     }
   };
-
-   const handleFileParsing = async (fileToParse: ProcessedFile) => {
-        setFiles(prev => prev.map(f => f.id === fileToParse.id ? { ...f, status: 'parsing' } : f));
-        try {
-            const text = await parseFile(fileToParse);
-            setFiles(prev => prev.map(f => f.id === fileToParse.id ? { ...f, extractedText: text, status: 'ready' } : f));
-        } catch (error) {
-            console.error("Failed to parse file", error);
-            setFiles(prev => prev.map(f => f.id === fileToParse.id ? { ...f, status: 'error', error: 'Failed to parse' } : f));
-            toast({ variant: 'destructive', title: `Could not read file: ${fileToParse.file.name}` });
-        }
-    };
   
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = event.target.files;
-    if (selectedFiles) {
-        Array.from(selectedFiles).forEach(file => handleFileUpload(file));
+    const file = event.target.files?.[0];
+    if (file) {
+        handleFileUpload(file);
     }
   };
   
@@ -257,81 +175,21 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
 
   const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
-    const droppedFiles = event.dataTransfer.files;
-    if (droppedFiles) {
-        Array.from(droppedFiles).forEach(file => handleFileUpload(file));
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+        handleFileUpload(file);
     }
   };
-
-  const handleRemoveFile = (id: string) => {
-    setFiles(prev => prev.filter(f => f.id !== id));
-  }
-
-  const handleBatchProcess = async () => {
-    setIsBatchProcessing(true);
-    for (const file of files) {
-        if (file.status === 'ready') {
-            setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'processing' } : f));
-            try {
-                const isImage = file.file.type.startsWith("image/");
-                const inputPayload = {
-                    operation: 'summarize',
-                    ...(isImage ? { photoDataUri: file.extractedText! } : { text: file.extractedText! })
-                };
-                const result = await processImageText(inputPayload as any);
-                if (result && result.processedText) {
-                    setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'done', generatedText: result.processedText } : f));
-                } else {
-                    throw new Error("The processed text is empty.");
-                }
-            } catch (e) {
-                console.error(e);
-                setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'error', error: `Failed to summarize.` } : f));
-            }
-        }
-    }
-    setIsBatchProcessing(false);
-  };
-    
-    const handleDownloadAll = () => {
-        const doc = new jsPDF();
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        doc.text(`Tex.io Summaries`, 14, 22);
-        
-        let yPos = 32;
-
-        files.forEach((file, index) => {
-            if (file.status === 'done' && file.generatedText) {
-                if(yPos > 260) {
-                   doc.addPage();
-                   yPos = 22;
-                }
-                
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(14);
-                doc.text(`Summary for: ${file.file.name}`, 14, yPos);
-                yPos += 8;
-
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(12);
-                
-                const splitText = doc.splitTextToSize(file.generatedText, 180);
-                doc.text(splitText, 14, yPos);
-                yPos += (splitText.length * 5) + 10;
-            }
-        });
-
-        doc.save("texio-summaries.pdf");
-        toast({
-            title: "PDF Downloaded",
-            description: "All summaries have been saved as a single PDF.",
-        });
-    };
-
 
   const handleProcess = () => {
-    if (!imageDataUrl && !extractedText) return;
+    if (!imageDataUrl && !extractedText?.trim()) {
+        toast({
+            variant: 'destructive',
+            title: 'No content to process',
+            description: 'Please upload a file or make sure the input text is not empty.',
+        });
+        return;
+    }
     
     const finalStyle = customStyle.trim() || targetStyle;
 
@@ -371,10 +229,11 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
         }
       } catch (e) {
         console.error(e);
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
         setError(`Failed to ${operation} text. Please try again.`);
         toast({
           title: `${operation.charAt(0).toUpperCase() + operation.slice(1)} Error`,
-          description: `An error occurred. Please try another image.`,
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -394,17 +253,13 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
     if (!textToDownload) return;
 
     const doc = new jsPDF();
-    
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.text(`Tex.io Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, 14, 22);
-    
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
-    
     const splitText = doc.splitTextToSize(textToDownload, 180);
     doc.text(splitText, 14, 32);
-
     doc.save(fileName);
     toast({
         title: "PDF Downloaded",
@@ -456,160 +311,6 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
 
   const finalStyle = customStyle.trim() || targetStyle;
 
-  if (operation === 'summarize') {
-    const readyFilesCount = files.filter(f => f.status === 'ready').length;
-    const finishedFilesCount = files.filter(f => f.status === 'done' || f.status === 'error').length;
-    const progress = files.length > 0 ? (finishedFilesCount / files.length) * 100 : 0;
-    
-    return (
-        <div className="grid md:grid-cols-2 gap-8 items-start">
-            {/* Upload Area */}
-            <div className="flex flex-col gap-4">
-                 <Label htmlFor={`image-upload-${operation}`} className="font-semibold text-md">
-                    Upload Files for Batch Summary
-                </Label>
-                <input
-                    type="file"
-                    id={`image-upload-${operation}`}
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="sr-only"
-                    accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    multiple
-                />
-                 <label
-                    htmlFor={`image-upload-${operation}`}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                    className={cn(
-                        "group flex flex-col items-center justify-center w-full min-h-[10rem] border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
-                        "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
-                    )}
-                >
-                     <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
-                        <Upload className="w-10 h-10 mb-3 text-muted-foreground transition-transform duration-300 group-hover:scale-110 group-hover:text-primary" />
-                        <p className="mb-2 text-sm text-muted-foreground">
-                            <span className="font-semibold text-primary">Click to upload</span> or drag and drop
-                        </p>
-                        <p className="text-xs text-muted-foreground">Image, PDF, or DOCX files</p>
-                    </div>
-                </label>
-                {files.length > 0 && (
-                    <Card className="max-h-96 overflow-y-auto">
-                        <CardContent className="p-4 space-y-3">
-                            {files.map(f => (
-                                <div key={f.id} className="flex items-center gap-3 p-2 rounded-lg bg-background/50">
-                                    <FileIcon className="h-5 w-5 text-primary" />
-                                    <div className="flex-1 overflow-hidden">
-                                        <p className="text-sm font-medium truncate">{f.file.name}</p>
-                                        <p className="text-xs text-muted-foreground capitalize">{f.status}</p>
-                                    </div>
-                                    {f.status === 'processing' && <Loader2 className="h-5 w-5 animate-spin" />}
-                                    {f.status === 'done' && <CheckCircle className="h-5 w-5 text-green-500" />}
-                                    <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => handleRemoveFile(f.id)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
-
-            {/* Results Area */}
-            <div className="flex flex-col gap-4 h-full">
-                <Label className="font-semibold text-md">
-                    Summaries
-                </Label>
-                <div className="relative flex-grow min-h-[24rem]">
-                    {files.filter(f => f.status === 'done').length > 0 ? (
-                        <Accordion type="single" collapsible className="w-full max-h-[36rem] overflow-y-auto pr-2">
-                             {files.filter(f => f.status === 'done').map(file => (
-                                <AccordionItem key={file.id} value={file.id}>
-                                    <AccordionTrigger>{file.file.name}</AccordionTrigger>
-                                    <AccordionContent>
-                                        <div className="relative">
-                                            <Textarea
-                                                readOnly
-                                                value={file.generatedText}
-                                                className="h-48 resize-y pr-24 bg-background/30"
-                                            />
-                                            <div className="absolute top-2 right-2 flex items-center">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-muted-foreground hover:text-foreground"
-                                                    onClick={() => handleCopy(file.generatedText!)}
-                                                >
-                                                    <Copy className="h-5 w-5" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-muted-foreground hover:text-foreground"
-                                                    onClick={() => handleDownloadPdf(file.generatedText!, `texio-summary-${file.file.name}.pdf`)}
-                                                >
-                                                    <Download className="h-5 w-5" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                             ))}
-                        </Accordion>
-                    ) : (
-                         <div className="h-full flex items-center justify-center text-center text-muted-foreground p-4 bg-muted/20 rounded-lg">
-                            {isBatchProcessing && <p>Processing files...</p>}
-                            {!isBatchProcessing && files.length > 0 && <p>Finished processing. Your summaries are ready.</p>}
-                            {!isBatchProcessing && files.length === 0 && <p>Your summaries will appear here after processing.</p>}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Controls */}
-             <div className="md:col-span-2 flex flex-col items-center justify-center gap-4 py-4">
-                {files.length > 0 && (
-                    <div className="w-full max-w-md animate-in fade-in duration-300">
-                        <div className="flex justify-between mb-1">
-                             <span className="text-sm font-medium text-muted-foreground">Processing Progress</span>
-                             <span className="text-sm font-medium">{finishedFilesCount} / {files.length} done</span>
-                        </div>
-                        <Progress value={progress} className="w-full h-2" />
-                    </div>
-                )}
-                <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
-                    <Button
-                        onClick={handleBatchProcess}
-                        disabled={readyFilesCount === 0 || isBatchProcessing}
-                        size="lg"
-                        className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 sm:w-auto"
-                    >
-                        {isBatchProcessing ? (
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        ) : (
-                            <Sparkles className="mr-2 h-5 w-5" />
-                        )}
-                        {isBatchProcessing ? "Summarizing..." : `Summarize All (${readyFilesCount})`}
-                    </Button>
-                    {finishedFilesCount > 0 && (
-                        <Button
-                            onClick={handleDownloadAll}
-                            variant="outline"
-                            size="lg"
-                            className="w-full max-w-xs text-lg font-semibold transition-all duration-300 hover:scale-105 sm:w-auto"
-                            disabled={isBatchProcessing}
-                        >
-                            <Download className="mr-2 h-5 w-5" />
-                            Download All
-                        </Button>
-                    )}
-                </div>
-            </div>
-        </div>
-    )
-  }
-
   return (
     <div className="grid md:grid-cols-2 gap-8 items-start">
       <div className="flex flex-col gap-4">
@@ -630,7 +331,6 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
                 onChange={handleFileChange}
                 className="sr-only"
                 accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                multiple={operation === 'summarize'}
             />
             <label
                 htmlFor={`image-upload-${operation}`}
@@ -828,7 +528,7 @@ export function OperationTab({ operation, onSendTo, initialText }: OperationTabP
          <div className="flex flex-wrap items-center justify-center gap-4">
           <Button
             onClick={handleProcess}
-            disabled={(!imageDataUrl && !extractedText) || isPending || isParsing || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
+            disabled={(!imageDataUrl && !extractedText?.trim()) || isPending || isParsing || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
             variant={isButtonBVariant ? "outline" : "default"}
             className={cn(

@@ -14,6 +14,17 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles } from 'lucide-react';
 import { FaGoogle } from 'react-icons/fa';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const countryCodes = [
     { name: 'United States', code: '+1', flag: '🇺🇸' },
@@ -32,6 +43,7 @@ const countryCodes = [
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState(countryCodes[0].code);
   const [otp, setOtp] = useState('');
@@ -40,18 +52,12 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  // Set up reCAPTCHA verifier
   useEffect(() => {
-    // This check is to prevent re-initializing the verifier on every render.
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
-        'callback': (response: any) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-        },
-        'expired-callback': () => {
-          // Response expired. Ask user to solve reCAPTCHA again.
-        }
+        'callback': (response: any) => {},
+        'expired-callback': () => {}
       });
     }
   }, []);
@@ -78,13 +84,13 @@ export default function LoginPage() {
   };
 
   const handlePasswordReset = async () => {
-    if (!email) {
+    if (!resetEmail) {
         toast({ variant: 'destructive', title: 'Email required', description: 'Please enter your email address to reset your password.' });
         return;
     }
     setIsPending(true);
     try {
-        await sendPasswordResetEmail(auth, email);
+        await sendPasswordResetEmail(auth, resetEmail);
         toast({ title: 'Password Reset Email Sent', description: 'Check your inbox for a link to reset your password.' });
     } catch (error: any) {
          toast({ variant: 'destructive', title: 'Password Reset Failed', description: error.message });
@@ -97,7 +103,6 @@ export default function LoginPage() {
     setIsPending(true);
     const provider = new GoogleAuthProvider();
     try {
-        // This forces the sign-in pop-up to use a trusted domain
         auth.languageCode = 'en'; 
         await signInWithPopup(auth, provider);
         toast({ title: 'Successfully signed in with Google!' });
@@ -146,7 +151,6 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4">
-       {/* This invisible div is required by Firebase App Check for the reCAPTCHA */}
       <div id="recaptcha-container"></div>
       <Tabs defaultValue="login" className="w-full max-w-sm">
         <div className="text-center mb-6">
@@ -175,9 +179,32 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                     <Label htmlFor="login-password">Password</Label>
-                    <Button variant="link" className="h-auto p-0 text-xs" onClick={handlePasswordReset}>
-                        Forgot Password?
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="link" className="h-auto p-0 text-xs">
+                            Forgot Password?
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Reset Password</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Enter your email address below and we'll send you a link to reset your password.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="py-4">
+                           <Label htmlFor="reset-email" className="sr-only">Email for password reset</Label>
+                           <Input id="reset-email" type="email" placeholder="m@example.com" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
+                        </div>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handlePasswordReset} disabled={isPending}>
+                            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Send Reset Link
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                 </div>
                 <Input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
               </div>
@@ -202,7 +229,7 @@ export default function LoginPage() {
                     <Label>Phone Number</Label>
                     <div className="flex gap-2">
                         <Select value={countryCode} onValueChange={setCountryCode}>
-                            <SelectTrigger className="w-[100px]">
+                            <SelectTrigger className="w-[120px]">
                                 <SelectValue placeholder="Select" />
                             </SelectTrigger>
                             <SelectContent>
