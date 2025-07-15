@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { TexioApp } from '@/components/texio-app';
 import Preloader from '@/components/preloader';
