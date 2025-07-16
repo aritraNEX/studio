@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Captions, Rows3, FunctionSquare } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -23,9 +23,10 @@ import { WorkspaceTab } from "./workspace-tab";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { ResearchTab } from "./research-tab";
 import { TtsTab } from "./tts-tab";
-import { CaptionGeneratorTab } from "./caption-generator-tab";
+import { TranscriptionTab } from "./transcription-tab";
 import { BatchSummaryTab } from "./batch-summary-tab";
 import { FormulaTab } from "./formula-tab";
+import { AITooltip } from "./ui/ai-tooltip";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
@@ -87,14 +88,16 @@ export function TexioApp({ projectId }: TexioAppProps) {
                 <FunctionSquare className="h-5 w-5 mr-2" />
                 <span>Formula</span>
             </TabsTrigger>
-            <TabsTrigger value="captions" className="py-2.5">
-                <Captions className="h-5 w-5 mr-2" />
-                <span>Captions</span>
+            <TabsTrigger value="video-to-text" className="py-2.5">
+                <Video className="h-5 w-5 mr-2" />
+                <span>Video to Text</span>
             </TabsTrigger>
-             <TabsTrigger value="workspace" className="py-2.5">
-                <Wand2 className="h-5 w-5 mr-2" />
-                <span>Workspace</span>
-            </TabsTrigger>
+             <AITooltip>
+                 <TabsTrigger value="workspace" className="py-2.5">
+                    <Wand2 className="h-5 w-5 mr-2" />
+                    <span>Workspace</span>
+                </TabsTrigger>
+            </AITooltip>
              <TabsTrigger value="research" className="py-2.5">
                 <GraduationCap className="h-5 w-5 mr-2" />
                 <span>Research</span>
@@ -130,8 +133,8 @@ export function TexioApp({ projectId }: TexioAppProps) {
           <TabsContent value="formula" className="pt-6">
             <FormulaTab />
           </TabsContent>
-           <TabsContent value="captions" className="pt-6">
-            <CaptionGeneratorTab />
+           <TabsContent value="video-to-text" className="pt-6">
+            <TranscriptionTab />
           </TabsContent>
           <TabsContent value="workspace" className="pt-6">
             <WorkspaceTab />
