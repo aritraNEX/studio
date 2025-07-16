@@ -12,13 +12,13 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { googleSearch } from '@/ai/tools/google-search-tool';
 
-export const AssignmentMakerInputSchema = z.object({
+const AssignmentMakerInputSchema = z.object({
   topic: z.string().describe('The topic for the assignment.'),
   instructions: z.string().optional().describe('Optional instructions for the assignment generation, like tone, focus areas, or required number of references.'),
 });
 export type AssignmentMakerInput = z.infer<typeof AssignmentMakerInputSchema>;
 
-export const AssignmentMakerOutputSchema = z.object({
+const AssignmentMakerOutputSchema = z.object({
   title: z.string().describe('A suitable title for the assignment.'),
   content: z.string().describe('The main body of the assignment, written in a clear and structured manner.'),
   references: z.array(z.string()).describe('A list of sources or references used to generate the assignment.'),
