@@ -49,8 +49,9 @@ Follow these instructions precisely:
     -   For a 'concept' diagram, show the relationships and connections between different ideas or entities.
     -   For a 'timeline', represent key events or milestones in chronological order.
 3.  Generate the complete and valid Mermaid.js syntax for this diagram. The syntax MUST start with the correct diagram type declaration (e.g., 'graph TD', 'mindmap', 'timeline').
-4.  Ensure the syntax is clean, well-structured, and immediately renderable by the Mermaid.js library. Do not include any explanatory text, comments, or Markdown formatting like \`\`\`mermaid ... \`\`\`.
-5.  Place the final, raw Mermaid syntax directly into the 'mermaidSyntax' field of the JSON output.
+4.  IMPORTANT: When defining nodes, do NOT use special characters like parentheses () in the node IDs. For example, use 'node_id' instead of 'node(id)'.
+5.  Ensure the syntax is clean, well-structured, and immediately renderable by the Mermaid.js library. Do not include any explanatory text, comments, or Markdown formatting like \`\`\`mermaid ... \`\`\`.
+6.  Place the final, raw Mermaid syntax directly into the 'mermaidSyntax' field of the JSON output.
 `,
 });
 
