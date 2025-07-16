@@ -34,21 +34,35 @@ const parseVTT = (vttContent: string): VttCue[] => {
     const lines = vttContent.split('\n');
     const cues: VttCue[] = [];
     
+    const parseTime = (timeStr: string) => {
+        if (!timeStr) return 0;
+        const parts = timeStr.split(':');
+        let hours = 0, minutes = 0, seconds = 0;
+        
+        if (parts.length === 3) { // HH:MM:SS.ms
+            hours = parseInt(parts[0], 10);
+            minutes = parseInt(parts[1], 10);
+            seconds = parseFloat(parts[2]);
+        } else if (parts.length === 2) { // MM:SS.ms
+            minutes = parseInt(parts[0], 10);
+            seconds = parseFloat(parts[1]);
+        } else {
+            return 0; // Invalid format
+        }
+
+        if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) return 0;
+
+        return hours * 3600 + minutes * 60 + seconds;
+    };
+
     for (let i = 1; i < lines.length; i++) {
         if (lines[i].includes('-->')) {
             const timeLine = lines[i];
             const textLine = lines[i + 1];
 
             if (timeLine && textLine) {
-                 const [start, end] = timeLine.split(' --> ');
-                 const parseTime = (timeStr: string) => {
-                     if (!timeStr) return 0;
-                     const parts = timeStr.split(':');
-                     if (parts.length < 3) return 0;
-                     const secondsParts = parts[2].split('.');
-                     if (secondsParts.length < 2) return 0;
-                     return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(secondsParts[0]) + parseInt(secondsParts[1]) / 1000;
-                 }
+                 const [start, end] = timeLine.split(' --> ').map(s => s.trim().split(' ')[0]); // Handle extra metadata like 'align:start'
+                 
                  cues.push({
                      startTime: parseTime(start),
                      endTime: parseTime(end),
