@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArrowLeft, ArrowRight, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Download, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { flashcardGenerator, FlashcardGeneratorOutput } from "@/ai/flows/flashcard-generator-flow";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import jsPDF from "jspdf";
 
 type AnimationStyle = 'flip-h' | 'flip-v' | 'fade' | 'slide-up' | 'zoom';
 
@@ -81,6 +82,46 @@ export function FlashcardGeneratorTab() {
     }
   };
   
+  const handleDownloadPdf = () => {
+    if (!result) return;
+    const doc = new jsPDF();
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("Tex.io Flashcards", 14, 22);
+
+    let yPos = 32;
+
+    result.flashcards.forEach((card, index) => {
+      if (yPos > 260) {
+        doc.addPage();
+        yPos = 22;
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text(`Card ${index + 1} - Front:`, 14, yPos);
+      yPos += 7;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
+      const frontText = doc.splitTextToSize(card.front, 180);
+      doc.text(frontText, 14, yPos);
+      yPos += frontText.length * 5 + 4;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text(`Card ${index + 1} - Back:`, 14, yPos);
+      yPos += 7;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
+      const backText = doc.splitTextToSize(card.back, 180);
+      doc.text(backText, 14, yPos);
+      yPos += backText.length * 5 + 10;
+    });
+
+    doc.save("texio-flashcards.pdf");
+  };
+
   const currentCard = result?.flashcards[currentCardIndex];
 
   return (
@@ -189,19 +230,33 @@ export function FlashcardGeneratorTab() {
         </div>
       </div>
       <div className="flex flex-col items-center justify-center gap-4 py-4">
-        <Button
-          onClick={handleGenerate}
-          disabled={!inputText.trim() || isPending}
-          size="lg"
-          className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 sm:w-auto"
-        >
-          {isPending ? (
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          ) : (
-            <Sparkles className="mr-2 h-5 w-5" />
-          )}
-          {isPending ? "Generating..." : "Create Flashcards"}
-        </Button>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+            <Button
+                onClick={handleGenerate}
+                disabled={!inputText.trim() || isPending}
+                size="lg"
+                className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 sm:w-auto"
+            >
+            {isPending ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+                <Sparkles className="mr-2 h-5 w-5" />
+            )}
+            {isPending ? "Generating..." : "Create Flashcards"}
+            </Button>
+            {result && result.flashcards.length > 0 && (
+                 <Button
+                    onClick={handleDownloadPdf}
+                    disabled={isPending}
+                    size="lg"
+                    variant="outline"
+                    className="w-full max-w-xs text-lg font-semibold transition-all duration-300 hover:scale-105 sm:w-auto"
+                >
+                    <Download className="mr-2 h-5 w-5" />
+                    Download PDF
+                </Button>
+            )}
+        </div>
         {error && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
       </div>
     </div>
