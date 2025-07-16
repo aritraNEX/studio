@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Captions, Rows3, FunctionSquare, ClipboardCheck } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Captions, Rows3, FunctionSquare } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -26,7 +26,7 @@ import { TtsTab } from "./tts-tab";
 import { CaptionGeneratorTab } from "./caption-generator-tab";
 import { BatchSummaryTab } from "./batch-summary-tab";
 import { FormulaTab } from "./formula-tab";
-import { TaskManagerTab } from "./task-manager-tab";
+
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
 
@@ -62,7 +62,7 @@ export function TexioApp({ projectId }: TexioAppProps) {
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 mx-auto max-w-7xl h-auto p-1.5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-11 mx-auto max-w-7xl h-auto p-1.5">
             <TabsTrigger value="paraphrase" className="py-2.5">
                 <Quote className="h-5 w-5 mr-2" />
                 <span>Paraphrase</span>
@@ -86,10 +86,6 @@ export function TexioApp({ projectId }: TexioAppProps) {
             <TabsTrigger value="formula" className="py-2.5">
                 <FunctionSquare className="h-5 w-5 mr-2" />
                 <span>Formula</span>
-            </TabsTrigger>
-             <TabsTrigger value="tasks" className="py-2.5">
-                <ClipboardCheck className="h-5 w-5 mr-2" />
-                <span>Tasks</span>
             </TabsTrigger>
             <TabsTrigger value="captions" className="py-2.5">
                 <Captions className="h-5 w-5 mr-2" />
@@ -133,9 +129,6 @@ export function TexioApp({ projectId }: TexioAppProps) {
           </TabsContent>
           <TabsContent value="formula" className="pt-6">
             <FormulaTab />
-          </TabsContent>
-          <TabsContent value="tasks" className="pt-6">
-            <TaskManagerTab />
           </TabsContent>
            <TabsContent value="captions" className="pt-6">
             <CaptionGeneratorTab />
