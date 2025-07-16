@@ -23,7 +23,6 @@ import { WorkspaceTab } from "./workspace-tab";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { ResearchTab } from "./research-tab";
 import { TtsTab } from "./tts-tab";
-import { TranscriptionTab } from "./transcription-tab";
 import { CaptionGeneratorTab } from "./caption-generator-tab";
 import { BatchSummaryTab } from "./batch-summary-tab";
 import { FormulaTab } from "./formula-tab";
@@ -92,10 +91,6 @@ export function TexioApp({ projectId }: TexioAppProps) {
                 <ClipboardCheck className="h-5 w-5 mr-2" />
                 <span>Tasks</span>
             </TabsTrigger>
-            <TabsTrigger value="transcription" className="py-2.5">
-                <FileText className="h-5 w-5 mr-2" />
-                <span>Transcription</span>
-            </TabsTrigger>
             <TabsTrigger value="captions" className="py-2.5">
                 <Captions className="h-5 w-5 mr-2" />
                 <span>Captions</span>
@@ -141,9 +136,6 @@ export function TexioApp({ projectId }: TexioAppProps) {
           </TabsContent>
           <TabsContent value="tasks" className="pt-6">
             <TaskManagerTab />
-          </TabsContent>
-          <TabsContent value="transcription" className="pt-6">
-            <TranscriptionTab />
           </TabsContent>
            <TabsContent value="captions" className="pt-6">
             <CaptionGeneratorTab />

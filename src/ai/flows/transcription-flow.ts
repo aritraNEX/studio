@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow for generating and translating video transcriptions.
@@ -39,7 +40,6 @@ export async function generateTranscription(
   return transcriptionFlow(input);
 }
 
-// Define a simpler output schema for the prompt itself. The flow will handle the language detection separately.
 const PromptOutputSchema = z.object({
  vtt: z
     .string()
@@ -51,7 +51,6 @@ const PromptOutputSchema = z.object({
 const transcriptionPrompt = ai.definePrompt({
   name: 'transcriptionPrompt',
   input: {schema: GenerateTranscriptionInputSchema},
-  // Use the simpler output schema for the prompt to ensure it only returns VTT content.
   output: {schema: PromptOutputSchema},
   prompt: `You are an expert transcriber and translator. Your task is to analyze the provided video and generate a transcription in the WebVTT format.
 
@@ -61,7 +60,7 @@ const transcriptionPrompt = ai.definePrompt({
 3.  After transcribing, translate the text for each cue into {{targetLanguage}}. The timestamps must remain the same as the original transcription.
 {{/if}}
 
-Do not include any additional commentary, explanation, or any fields other than the 'vtt' field in your response. The output must be only the WebVTT content inside the JSON structure.
+Do not include any additional commentary, explanation, or any fields other than the 'vtt' field in your response. The output must be only the VTT content inside the JSON structure.
 
 Video to process: {{media url=videoDataUri}}`,
 });

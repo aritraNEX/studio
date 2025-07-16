@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useTransition, useEffect } from "react";
-import { Upload, Loader2, Sparkles, Captions } from "lucide-react";
+import { Upload, Loader2, Sparkles, Captions, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -36,48 +36,40 @@ const parseVTT = (vttContent: string): VttCue[] => {
     
     const parseTime = (timeStr: string): number => {
         if (!timeStr) return 0;
-        const parts = timeStr.split(':');
+        const parts = timeStr.split(':').map(part => parseFloat(part));
         let seconds = 0;
         if (parts.length === 3) {
-            seconds = parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
+            seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
         } else if (parts.length === 2) {
-            seconds = parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+            seconds = parts[0] * 60 + parts[1];
+        } else if (parts.length === 1) {
+            seconds = parts[0];
         }
         return isNaN(seconds) ? 0 : seconds;
     };
 
-    let currentCue: Partial<VttCue> = {};
-    let textLines: string[] = [];
-
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        
+        const line = lines[i];
         if (line.includes('-->')) {
-            // If we have a cue being built, save it first
-            if (currentCue.startTime !== undefined) {
-                currentCue.text = textLines.join('\n');
-                cues.push(currentCue as VttCue);
-                textLines = [];
-            }
-
             const [startTimeStr, endTimeStr] = line.split(' --> ');
-            currentCue = {
+            const textLines: string[] = [];
+            let j = i + 1;
+            while (j < lines.length && lines[j] !== '') {
+                textLines.push(lines[j]);
+                j++;
+            }
+            cues.push({
                 startTime: parseTime(startTimeStr),
-                endTime: parseTime(endTimeStr?.split(' ')[0]), // handle metadata after timestamp
-            };
-        } else if (line !== '' && currentCue.startTime !== undefined) {
-            textLines.push(line);
+                endTime: parseTime(endTimeStr?.split(' ')[0]),
+                text: textLines.join('\n')
+            });
+            i = j; // Move index past the current cue block
         }
-    }
-    
-    // Add the last cue
-    if (currentCue.startTime !== undefined) {
-        currentCue.text = textLines.join('\n');
-        cues.push(currentCue as VttCue);
     }
     
     return cues;
 };
+
 
 // Component to render the "Social" style caption with word highlighting
 const SocialCaption = ({ text, wordsToHighlight }: { text: string; wordsToHighlight: string[] }) => {
@@ -225,6 +217,20 @@ export function CaptionGeneratorTab() {
       }
     });
   };
+
+  const handleDownload = () => {
+    if (!vttContent) return;
+    const blob = new Blob([vttContent], { type: "text/vtt;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "transcription.vtt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast({ title: "Downloaded transcription.vtt" });
+  };
   
   const captionStyleClasses: Record<CaptionStyle, string> = {
     minimal: 'bottom-8 text-white bg-black/60 px-4 py-2 text-xl font-sans rounded-lg shadow-lg',
@@ -320,6 +326,18 @@ export function CaptionGeneratorTab() {
                 {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
                 {isPending ? "Generating..." : "Generate Captions"}
             </Button>
+            {vttContent && (
+              <Button
+                onClick={handleDownload}
+                disabled={isPending}
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                <Download className="mr-2 h-5 w-5" />
+                Download .vtt
+              </Button>
+            )}
          </div>
          {captionStyle === 'social' && vttContent && (
              <div className="w-full max-w-sm mt-2 animate-in fade-in duration-300">
