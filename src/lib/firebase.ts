@@ -23,7 +23,7 @@ const storage = getStorage(app);
 // Initialize App Check on the client side only
 if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY) {
     try {
-        const appCheck = initializeAppCheck(app, {
+        initializeAppCheck(app, {
             provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY),
             isTokenAutoRefreshEnabled: true
         });
@@ -34,3 +34,5 @@ if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY)
 
 
 export { app, auth, db, storage };
+
+    

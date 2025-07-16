@@ -41,8 +41,10 @@ const countryCodes = [
 
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
   const [resetEmail, setResetEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState(countryCodes[0].code);
@@ -53,35 +55,59 @@ export default function LoginPage() {
   const { toast } = useToast();
   
   useEffect(() => {
-    if (!window.recaptchaVerifier) {
+    // Ensure recaptchaVerifier is only created once on the client
+    if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
-        'callback': (response: any) => {},
+        'callback': () => {},
         'expired-callback': () => {}
       });
     }
   }, []);
 
-  const handleAuthAction = async (action: 'login' | 'signup') => {
+  const handleLogin = async () => {
     setIsPending(true);
     try {
-      if (action === 'login') {
-        await signInWithEmailAndPassword(auth, email, password);
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password);
-      }
-      toast({ title: `Successfully ${action === 'login' ? 'logged in' : 'signed up'}!` });
+      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      toast({ title: 'Successfully logged in!' });
       router.push('/');
     } catch (error: any) {
+      let description = error.message;
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+          description = "Incorrect email or password. Please try again.";
+      }
       toast({
         variant: 'destructive',
-        title: 'Authentication Failed',
-        description: error.message,
+        title: 'Login Failed',
+        description: description,
       });
     } finally {
       setIsPending(false);
     }
   };
+
+  const handleSignUp = async () => {
+    setIsPending(true);
+    try {
+      await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
+      toast({ title: 'Successfully signed up!' });
+      router.push('/');
+    } catch (error: any) {
+      let description = error.message;
+      if (error.code === 'auth/email-already-in-use') {
+          description = 'This email is already registered. Please log in instead.';
+      } else if (error.code === 'auth/weak-password') {
+          description = 'The password is too weak. Please choose a stronger password.';
+      }
+      toast({
+        variant: 'destructive',
+        title: 'Sign-up Failed',
+        description: description,
+      });
+    } finally {
+      setIsPending(false);
+    }
+  }
 
   const handlePasswordReset = async () => {
     if (!resetEmail) {
@@ -161,9 +187,9 @@ export default function LoginPage() {
             <p className="text-lg text-muted-foreground/80 mt-2">Sign in or create an account to continue</p>
         </div>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="login">Email</TabsTrigger>
-          <TabsTrigger value="phone">Phone</TabsTrigger>
+          <TabsTrigger value="login">Login</TabsTrigger>
           <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          <TabsTrigger value="phone">Phone</TabsTrigger>
         </TabsList>
         <TabsContent value="login">
           <Card>
@@ -174,7 +200,7 @@ export default function LoginPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="login-email">Email</Label>
-                <Input id="login-email" type="email" placeholder="m@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Input id="login-email" type="email" placeholder="m@example.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -206,13 +232,37 @@ export default function LoginPage() {
                       </AlertDialogContent>
                     </AlertDialog>
                 </div>
-                <Input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <Input id="login-password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required />
               </div>
             </CardContent>
             <CardFooter className="flex-col gap-4">
-              <Button onClick={() => handleAuthAction('login')} className="w-full" disabled={isPending}>
+              <Button onClick={handleLogin} className="w-full" disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Login
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        <TabsContent value="signup">
+          <Card>
+            <CardHeader>
+              <CardTitle>Sign Up</CardTitle>
+              <CardDescription>Create a new account to get started.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="signup-email">Email</Label>
+                <Input id="signup-email" type="email" placeholder="m@example.com" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-password">Password</Label>
+                <Input id="signup-password" type="password" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} required />
+              </div>
+            </CardContent>
+            <CardFooter className="flex-col gap-4">
+              <Button onClick={handleSignUp} className="w-full" disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Sign Up
               </Button>
             </CardFooter>
           </Card>
@@ -265,30 +315,6 @@ export default function LoginPage() {
             </CardFooter>
           </Card>
         </TabsContent>
-        <TabsContent value="signup">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sign Up</CardTitle>
-              <CardDescription>Create a new account to get started.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
-                <Input id="signup-email" type="email" placeholder="m@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
-                <Input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-              </div>
-            </CardContent>
-            <CardFooter className="flex-col gap-4">
-              <Button onClick={() => handleAuthAction('signup')} className="w-full" disabled={isPending}>
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sign Up
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
         <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
@@ -312,3 +338,5 @@ declare global {
     recaptchaVerifier: RecaptchaVerifier;
   }
 }
+
+    
