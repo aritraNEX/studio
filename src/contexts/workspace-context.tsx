@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
+type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
 
 interface WorkspaceContextType {
   workspaceText: string;

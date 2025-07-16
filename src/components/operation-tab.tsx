@@ -28,8 +28,10 @@ import { db, storage } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useWorkspace } from "@/contexts/workspace-context";
+import { useRouter } from "next/navigation";
 
-type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
+
+type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
 
 const extraordinaryFonts = [
   "Poppins", "Playfair Display", "Montserrat", "Raleway", "Oswald", "Lora",
@@ -38,7 +40,7 @@ const extraordinaryFonts = [
   "Shadows Into Light", "Ubuntu", "Quattrocento",
 ];
 
-const allOperations: Operation[] = ['paraphrase', 'summarize', 'translate', 'style', 'tts'];
+const allOperations: Operation[] = ['paraphrase', 'summarize', 'translate', 'style', 'tts', 'grammar'];
 
 interface OperationTabProps {
   operation: Operation;
@@ -66,6 +68,8 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const { user } = useAuth();
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
   const [isSaving, setIsSaving] = useState(false);
+  const router = useRouter();
+
 
   useEffect(() => {
     setAppUrl(window.location.origin); // Use origin instead of href
@@ -104,7 +108,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
       };
       fetchProject();
     }
-  }, [projectId, user, operation, toast]);
+  }, [projectId, user, operation, toast, router]);
 
   useEffect(() => {
       if (initialText) {
@@ -341,15 +345,17 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
       paraphrase: 'Paraphrase',
       summarize: 'Summarize',
       translate: 'Translate',
-      style: 'Apply Style'
-  }[operation as 'paraphrase' | 'summarize' | 'translate' | 'style'];
+      style: 'Apply Style',
+      grammar: 'Check Grammar',
+  }[operation as 'paraphrase' | 'summarize' | 'translate' | 'style' | 'grammar'];
 
   const buttonTextPending = {
       paraphrase: 'Paraphrasing...',
       summarize: 'Summarizing...',
       translate: 'Translating...',
-      style: 'Applying Style...'
-  }[operation as 'paraphrase' | 'summarize' | 'translate' | 'style'];
+      style: 'Applying Style...',
+      grammar: 'Checking...',
+  }[operation as 'paraphrase' | 'summarize' | 'translate' | 'style' | 'grammar'];
 
   const finalStyle = customStyle.trim() || targetStyle;
 

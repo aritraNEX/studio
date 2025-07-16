@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -30,9 +30,10 @@ import { AITooltip } from "./ui/ai-tooltip";
 import { AssignmentMakerTab } from "./assignment-maker-tab";
 import { FlashcardGeneratorTab } from "./flashcard-generator-tab";
 import { CitationGeneratorTab } from "./citation-generator-tab";
+import { GrammarCheckTab } from "./grammar-check-tab";
 
 
-type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
+type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
 
 interface TexioAppProps {
   projectId?: string | null;
@@ -54,7 +55,7 @@ export function TexioApp({ projectId }: TexioAppProps) {
   };
 
   return (
-     <Card className="w-full max-w-5xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
+     <Card className="w-full max-w-6xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
       <CardHeader className="text-center pt-8">
         <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit mb-4 shadow-lg shadow-primary/30">
           <Sparkles className="h-8 w-8" />
@@ -66,7 +67,7 @@ export function TexioApp({ projectId }: TexioAppProps) {
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 mx-auto max-w-7xl h-auto p-1.5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 mx-auto h-auto p-1.5">
             <TabsTrigger value="paraphrase" className="py-2.5">
                 <Quote className="h-5 w-5 mr-2" />
                 <span>Paraphrase</span>
@@ -74,6 +75,10 @@ export function TexioApp({ projectId }: TexioAppProps) {
             <TabsTrigger value="summarize" className="py-2.5">
                 <BookText className="h-5 w-5 mr-2" />
                 <span>Summarize</span>
+            </TabsTrigger>
+            <TabsTrigger value="grammar" className="py-2.5">
+                <SpellCheck className="h-5 w-5 mr-2" />
+                <span>Grammar</span>
             </TabsTrigger>
              <TabsTrigger value="batch-summary" className="py-2.5">
                 <Rows3 className="h-5 w-5 mr-2" />
@@ -135,6 +140,9 @@ export function TexioApp({ projectId }: TexioAppProps) {
           </TabsContent>
           <TabsContent value="summarize" className="pt-6">
             <OperationTab operation="summarize" onSendTo={handleSendTo} projectId={projectId} />
+          </TabsContent>
+           <TabsContent value="grammar" className="pt-6">
+            <GrammarCheckTab />
           </TabsContent>
           <TabsContent value="batch-summary" className="pt-6">
             <BatchSummaryTab />

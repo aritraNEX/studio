@@ -3,7 +3,7 @@
 /**
  * @fileOverview This file defines a Genkit flow for processing text from an image or raw text.
  *
- * - processImageText - A function that accepts an image or text and performs an operation (paraphrase, summarize, translate, style).
+ * - processImageText - A function that accepts an image or text and performs an operation (paraphrase, summarize, translate, style, grammar).
  * - ProcessImageTextInput - The input type for the processImageText function.
  * - ProcessImageTextOutput - The return type for the processImageText function.
  */
@@ -18,7 +18,7 @@ const BaseProcessImageTextInputSchema = z.object({
       'A publicly accessible URL to a file (image, PDF, etc.) to be processed.'
     ).optional(),
   text: z.string().describe("Raw text to be processed.").optional(),
-  operation: z.enum(['paraphrase', 'summarize', 'translate', 'style']).describe('The operation to perform on the text.'),
+  operation: z.enum(['paraphrase', 'summarize', 'translate', 'style', 'grammar']).describe('The operation to perform on the text.'),
   targetLanguage: z.string().optional().describe('The target language for translation. Required if operation is "translate".'),
   targetStyle: z.string().optional().describe('The target style for rewriting. Required if operation is "style".'),
 });
@@ -32,7 +32,7 @@ export type ProcessImageTextInput = z.infer<typeof ProcessImageTextInputSchema>;
 const ProcessImageTextOutputSchema = z.object({
   processedText: z
     .string()
-    .describe('The processed text (paraphrased, summarized, translated, or styled).'),
+    .describe('The processed text (paraphrased, summarized, translated, styled, or grammar-corrected).'),
 });
 export type ProcessImageTextOutput = z.infer<typeof ProcessImageTextOutputSchema>;
 
@@ -87,6 +87,9 @@ const processImageTextFlow = ai.defineFlow(
           throw new Error('Target style is required for rewriting.');
         }
         instruction = `Rewrite the extracted text to match the following style: "${input.targetStyle}". If the style mentions a famous author, adopt their distinct writing style, including their typical vocabulary, sentence structure, and tone. Preserve the original formatting, including line breaks, lists, and bullet points.`;
+        break;
+      case 'grammar':
+        instruction = `You are a grammar correction expert. Analyze the following text and correct any and all grammatical errors, spelling mistakes, and punctuation issues. Your goal is to improve the text's clarity and correctness without altering its original meaning, style, or tone. Preserve the original formatting, including line breaks and lists. Only output the corrected text.`;
         break;
       default:
         throw new Error('Invalid operation specified.');
