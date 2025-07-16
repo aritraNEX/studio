@@ -1,0 +1,167 @@
+
+"use client";
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { collection, query, where, onSnapshot, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/auth-context';
+import { Loader2, Home, Trash2, Edit } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { formatDistanceToNow } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
+
+interface Project {
+  id: string;
+  inputText: string;
+  outputText: string;
+  operation: string;
+  createdAt: {
+    seconds: number;
+    nanoseconds: number;
+  };
+}
+
+export default function DashboardPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    const q = query(
+      collection(db, 'projects'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const userProjects: Project[] = [];
+      querySnapshot.forEach((doc) => {
+        userProjects.push({ id: doc.id, ...doc.data() } as Project);
+      });
+      setProjects(userProjects);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user, authLoading, router]);
+
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+        await deleteDoc(doc(db, "projects", projectId));
+        toast({
+            title: "Project Deleted",
+            description: "The project has been successfully deleted.",
+        })
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Deletion Failed",
+            description: "Could not delete the project. Please try again.",
+        })
+    }
+  };
+
+  if (authLoading || loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50">
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+          <h1 className="text-2xl font-bold tracking-tight">My Projects</h1>
+          <Button variant="outline" onClick={() => router.push('/')}>
+            <Home className="mr-2 h-4 w-4" />
+            Back to Editor
+          </Button>
+        </div>
+      </header>
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {projects.length === 0 ? (
+          <div className="text-center py-20">
+            <h2 className="text-xl font-semibold">No projects yet!</h2>
+            <p className="text-muted-foreground mt-2">
+              Go back to the editor to start creating and saving projects.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {projects.map((project) => (
+              <Card key={project.id} className="flex flex-col">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-lg capitalize pr-2">{project.operation}</CardTitle>
+                    <Badge variant="secondary">
+                        {formatDistanceToNow(new Date(project.createdAt.seconds * 1000), { addSuffix: true })}
+                    </Badge>
+                  </div>
+                   <CardDescription className="line-clamp-2 pt-2">
+                      Input: {project.inputText}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                    <p className="text-sm text-muted-foreground line-clamp-3">
+                        Output: {project.outputText}
+                    </p>
+                </CardContent>
+                <CardFooter className="flex justify-end gap-2">
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="icon">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete your project.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteProject(project.id)}>
+                                Delete
+                            </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                    <Button variant="outline" onClick={() => router.push(`/?projectId=${project.id}`)}>
+                        <Edit className="mr-2 h-4 w-4"/>
+                        Open
+                    </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

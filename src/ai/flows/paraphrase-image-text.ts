@@ -64,7 +64,7 @@ const processImageTextFlow = ai.defineFlow(
     outputSchema: ProcessImageTextOutputSchema,
   },
   async (input) => {
-    if (input.text && !input.text.trim()) {
+    if (!input.fileUrl && input.text && !input.text.trim()) {
         return { processedText: "" };
     }
     

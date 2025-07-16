@@ -2,12 +2,11 @@
 "use client";
 
 import React, { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { TexioApp } from '@/components/texio-app';
 import Preloader from '@/components/preloader';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
-import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import UserMenu from '@/components/user-menu';
 import { WorkspaceProvider } from '@/contexts/workspace-context';
@@ -44,7 +43,7 @@ function EditorContent() {
         isAppLoading ? "opacity-0" : "opacity-100"
       )}>
         <div className={cn("transition-transform duration-700", isAppLoading ? "scale-95" : "scale-100")}>
-          <TexioApp key={projectId} projectId={projectId} />
+          <TexioApp key={projectId || 'new'} projectId={projectId} />
         </div>
       </main>
     </WorkspaceProvider>

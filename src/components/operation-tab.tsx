@@ -3,7 +3,7 @@
 
 import { useState, useRef, useTransition, useEffect } from "react";
 import Image from "next/image";
-import { Copy, Loader2, Sparkles, Upload, Download, ChevronDown, Send, AudioLines, Share2, Link } from "lucide-react";
+import { Copy, Loader2, Sparkles, Upload, Download, ChevronDown, Send, AudioLines, Share2, Link, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -65,6 +65,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const { group } = useABTest();
   const { user } = useAuth();
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setAppUrl(window.location.origin); // Use origin instead of href
@@ -78,29 +79,32 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   useEffect(() => {
     if (projectId && user) {
       const fetchProject = async () => {
+        setIsParsing(true);
         const docRef = doc(db, 'projects', projectId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const projectData = docSnap.data();
           if (projectData.userId !== user.uid) {
              toast({ variant: 'destructive', title: 'Access Denied', description: "You don't have permission to view this project." });
+             router.push('/');
              return;
           }
-          setWorkspaceText(projectData.inputText);
-          setWorkspaceOperation(projectData.operation);
-          setGeneratedText(projectData.outputText);
-          // Pre-fill the correct tab based on operation
           if (projectData.operation === operation) {
             setExtractedText(projectData.inputText);
             setGeneratedText(projectData.outputText);
+            if (projectData.inputText.startsWith('https://firebasestorage.googleapis.com')) {
+                setFileUrl(projectData.inputText);
+            }
           }
         } else {
           toast({ variant: 'destructive', title: 'Project not found.' });
+          router.push('/');
         }
+        setIsParsing(false);
       };
       fetchProject();
     }
-  }, [projectId, user, operation, setWorkspaceText, setWorkspaceOperation, toast]);
+  }, [projectId, user, operation, toast]);
 
   useEffect(() => {
       if (initialText) {
@@ -109,20 +113,30 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
       }
   }, [initialText]);
 
-  const handleSaveProject = async (inputText: string, outputText: string, projectOperation: string) => {
-    if (!user) return;
+  const handleSaveProject = async () => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Please log in to save projects.' });
+      return;
+    }
+    if (!generatedText) {
+      toast({ variant: 'destructive', title: 'Nothing to save', description: 'Please generate a result first.' });
+      return;
+    }
+    setIsSaving(true);
     try {
       await addDoc(collection(db, 'projects'), {
         userId: user.uid,
-        inputText,
-        outputText,
-        operation: projectOperation,
+        inputText: extractedText || fileUrl || '',
+        outputText: generatedText,
+        operation: operation,
         createdAt: serverTimestamp(),
       });
       toast({title: "Project Saved!", description: "Your work has been saved to your dashboard."})
     } catch (error) {
       console.error("Error saving project: ", error);
       toast({ variant: 'destructive', title: 'Could not save project.' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -144,15 +158,12 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
         await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(storageRef);
 
-        setFileUrl(downloadURL); // Use this for displaying the image
+        setFileUrl(downloadURL); 
 
         const fileType = file.type;
         if (fileType.startsWith("image/")) {
-            // For images, we can use the URL directly with the AI
-            // No need to extract text on the client
-            setExtractedText(null);
+            setExtractedText(null); // Let AI handle extraction from URL
         } else {
-            // For other file types, extract text on client side
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
@@ -246,17 +257,15 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
         };
 
-        if (hasFile) {
+        if (fileUrl && !extractedText) {
             inputPayload.fileUrl = fileUrl;
-        }
-        if (hasText) {
+        } else {
             inputPayload.text = extractedText;
         }
 
         const result = await processImageText(inputPayload);
         if (result && result.processedText) {
           setGeneratedText(result.processedText);
-          await handleSaveProject(extractedText || fileUrl || 'File Input', result.processedText, operation);
         } else {
           throw new Error("The processed text is empty.");
         }
@@ -348,63 +357,58 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     <div className="grid md:grid-cols-2 gap-8 items-start">
       <div className="flex flex-col gap-4">
         <Label htmlFor={`image-upload-${operation}`} className="font-semibold text-md">
-          {initialText ? "Input Text" : "Upload File"}
+          {initialText ? "Input Text" : "Upload File or Enter Text"}
         </Label>
         
-        {initialText ? (
-             <div className="w-full h-96 p-4 overflow-y-auto bg-background/30 rounded-lg border">
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap font-mono">{initialText}</p>
+        <div className="relative">
+        <input
+            type="file"
+            id={`image-upload-${operation}`}
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="sr-only"
+            accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        />
+        <label
+            htmlFor={`image-upload-${operation}`}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            className={cn(
+            "group flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
+            "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
+            )}
+        >
+            {isParsing ? (
+            <div className="flex flex-col items-center justify-center text-center p-4">
+                <Loader2 className="w-10 h-10 mb-3 text-primary animate-spin" />
+                <p className="text-sm text-muted-foreground">Uploading & Parsing...</p>
             </div>
-        ) : (
-            <div className="relative">
-            <input
-                type="file"
-                id={`image-upload-${operation}`}
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="sr-only"
-                accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            />
-            <label
-                htmlFor={`image-upload-${operation}`}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                className={cn(
-                "group flex flex-col items-center justify-center w-full h-96 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
-                "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
-                )}
-            >
-                {isParsing ? (
-                <div className="flex flex-col items-center justify-center text-center p-4">
-                    <Loader2 className="w-10 h-10 mb-3 text-primary animate-spin" />
-                    <p className="text-sm text-muted-foreground">Uploading & Parsing...</p>
-                </div>
-                ) : fileUrl ? (
-                <div className="relative w-full h-full p-2">
-                    <Image
-                    src={fileUrl}
-                    alt="Uploaded content"
-                    fill
-                    className="rounded-lg object-contain"
-                    />
-                </div>
-                ) : extractedText ? (
-                    <div className="w-full h-full p-4 overflow-y-auto bg-background/30 rounded-lg">
-                        <h3 className="text-sm font-semibold text-foreground mb-2">Extracted Text Preview:</h3>
-                        <p className="text-xs text-muted-foreground whitespace-pre-wrap font-mono">{extractedText.substring(0, 1000)}{extractedText.length > 1000 && '...'}</p>
-                    </div>
-                ) : (
-                <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
-                    <Upload className="w-10 h-10 mb-3 text-muted-foreground transition-transform duration-300 group-hover:scale-110 group-hover:text-primary" />
-                    <p className="mb-2 text-sm text-muted-foreground">
-                    <span className="font-semibold text-primary">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-muted-foreground">Image, PDF, or DOCX files</p>
-                </div>
-                )}
-            </label>
+            ) : fileUrl ? (
+            <div className="relative w-full h-full p-2">
+                <Image
+                src={fileUrl}
+                alt="Uploaded content"
+                fill
+                className="rounded-lg object-contain"
+                />
             </div>
-        )}
+            ) : (
+            <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
+                <Upload className="w-10 h-10 mb-3 text-muted-foreground transition-transform duration-300 group-hover:scale-110 group-hover:text-primary" />
+                <p className="mb-2 text-sm text-muted-foreground">
+                <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+                </p>
+                <p className="text-xs text-muted-foreground">Image, PDF, or DOCX files</p>
+            </div>
+            )}
+        </label>
+        </div>
+        <Textarea
+            value={extractedText ?? ''}
+            onChange={(e) => setExtractedText(e.target.value)}
+            placeholder="Or type/paste your text here..."
+            className="h-48 resize-y bg-background focus-visible:ring-accent"
+        />
       </div>
       <div className="flex flex-col gap-4 h-full">
         {operation === 'translate' && (
@@ -548,10 +552,14 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             <div className="flex flex-col sm:flex-row items-center gap-4">
                 <Button 
                     onClick={() => onSendTo(generatedText, 'tts')} 
-                    className="w-full"
+                    className="w-full sm:w-auto"
                 >
                     <AudioLines className="mr-2 h-5 w-5" />
                     Listen with Text-to-Speech
+                </Button>
+                <Button onClick={handleSaveProject} disabled={isSaving || !user} className="w-full sm:w-auto">
+                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Save Project
                 </Button>
             </div>
           </div>

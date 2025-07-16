@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { auth } from "@/lib/firebase";
 import { signOut, updateProfile } from "firebase/auth";
-import { LogOut, User as UserIcon, Loader2, Edit, Save } from "lucide-react";
+import { LogOut, User as UserIcon, Loader2, Edit, Save, LayoutDashboard } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,9 +22,11 @@ import { ThemeToggle } from "./theme-toggle";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function UserMenu() {
   const { user } = useAuth();
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
   const [isPending, setIsPending] = useState(false);
@@ -32,6 +34,7 @@ export default function UserMenu() {
 
   const handleSignOut = async () => {
     await signOut(auth);
+    router.push('/login');
   };
 
   const handleProfileUpdate = async () => {
@@ -104,6 +107,14 @@ export default function UserMenu() {
                         </Button>
                     </div>
                 )}
+            </div>
+             <div className="pt-4">
+                 <DialogClose asChild>
+                    <Button onClick={() => router.push('/dashboard')} className="w-full">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        My Projects
+                    </Button>
+                 </DialogClose>
             </div>
           </div>
           <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">
