@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useTransition, useEffect } from "react";
-import { Upload, Loader2, Sparkles, Download, Captions } from "lucide-react";
+import { Upload, Loader2, Sparkles, Captions } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -25,75 +25,82 @@ interface VttCue {
   text: string;
 }
 
-type CaptionStyle = 'minimal' | 'cinematic' | 'highlight';
+type CaptionStyle = 'minimal' | 'cinematic' | 'highlight' | 'social';
 
 // A more robust VTT parser
 const parseVTT = (vttContent: string): VttCue[] => {
     if (!vttContent || !vttContent.startsWith('WEBVTT')) return [];
-
+    
     const cues: VttCue[] = [];
-    const lines = vttContent.replace(/\r\n/g, '\n').split('\n');
-    let i = 0;
-
-    // Helper to parse VTT time format (HH:MM:SS.ms or MM:SS.ms)
+    const lines = vttContent.replace(/\r/g, '').split('\n');
+    
     const parseTime = (timeStr: string): number => {
         if (!timeStr) return 0;
         const parts = timeStr.split(':');
         let seconds = 0;
         if (parts.length === 3) {
-            seconds += parseFloat(parts[0]) * 3600;
-            seconds += parseFloat(parts[1]) * 60;
-            seconds += parseFloat(parts[2]);
+            seconds = parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
         } else if (parts.length === 2) {
-            seconds += parseFloat(parts[0]) * 60;
-            seconds += parseFloat(parts[1]);
-        } else {
-            return 0; // Invalid format
+            seconds = parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
         }
         return isNaN(seconds) ? 0 : seconds;
     };
 
-    while (i < lines.length) {
-        // Skip empty lines and WEBVTT header
-        if (!lines[i].trim() || lines[i].trim() === 'WEBVTT') {
-            i++;
-            continue;
-        }
+    let currentCue: Partial<VttCue> = {};
+    let textLines: string[] = [];
 
-        // Skip cue identifiers
-        if (!lines[i].includes('-->')) {
-             i++;
-             continue;
-        }
-
-        const timeLine = lines[i];
-        const [startTimeStr, endTimeStr] = timeLine.split(' --> ').map(s => s.trim().split(' ')[0]);
-
-        if (startTimeStr && endTimeStr) {
-            const startTime = parseTime(startTimeStr);
-            const endTime = parseTime(endTimeStr);
-            
-            let textLines: string[] = [];
-            i++; // Move to the first line of text
-            while (i < lines.length && lines[i].trim() !== '') {
-                textLines.push(lines[i].trim());
-                i++;
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        if (line.includes('-->')) {
+            // If we have a cue being built, save it first
+            if (currentCue.startTime !== undefined) {
+                currentCue.text = textLines.join('\n');
+                cues.push(currentCue as VttCue);
+                textLines = [];
             }
 
-            if (textLines.length > 0) {
-                cues.push({
-                    startTime,
-                    endTime,
-                    text: textLines.join('\n'),
-                });
-            }
-        } else {
-            // If the time line is malformed, skip to the next potential block
-            i++;
+            const [startTimeStr, endTimeStr] = line.split(' --> ');
+            currentCue = {
+                startTime: parseTime(startTimeStr),
+                endTime: parseTime(endTimeStr?.split(' ')[0]), // handle metadata after timestamp
+            };
+        } else if (line !== '' && currentCue.startTime !== undefined) {
+            textLines.push(line);
         }
     }
-
+    
+    // Add the last cue
+    if (currentCue.startTime !== undefined) {
+        currentCue.text = textLines.join('\n');
+        cues.push(currentCue as VttCue);
+    }
+    
     return cues;
+};
+
+// Component to render the "Social" style caption with word highlighting
+const SocialCaption = ({ text, wordsToHighlight }: { text: string; wordsToHighlight: string[] }) => {
+    const highlightWords = new Set(wordsToHighlight.map(w => w.trim().toUpperCase()).filter(Boolean));
+    const words = text.split(/(\s+)/); // Split by space, keeping spaces for reconstruction
+
+    return (
+        <>
+            {words.map((word, index) => {
+                const isHighlight = highlightWords.has(word.toUpperCase());
+                return (
+                    <span
+                        key={index}
+                        className={cn(
+                            isHighlight ? 'text-yellow-400' : 'text-white'
+                        )}
+                    >
+                        {word}
+                    </span>
+                );
+            })}
+        </>
+    );
 };
 
 
@@ -109,30 +116,43 @@ export function CaptionGeneratorTab() {
 
   const [parsedCues, setParsedCues] = useState<VttCue[]>([]);
   const [activeCue, setActiveCue] = useState<VttCue | null>(null);
-  const [captionStyle, setCaptionStyle] = useState<CaptionStyle>('minimal');
+  const [captionStyle, setCaptionStyle] = useState<CaptionStyle>('social');
+  const [highlightWords, setHighlightWords] = useState<string>('');
 
 
   useEffect(() => {
     if (vttContent) {
-        setParsedCues(parseVTT(vttContent));
+        const cues = parseVTT(vttContent);
+        setParsedCues(cues);
     } else {
         setParsedCues([]);
     }
   }, [vttContent]);
 
   const handleTimeUpdate = () => {
-    if (!videoRef.current || parsedCues.length === 0) return;
+    if (!videoRef.current || parsedCues.length === 0) {
+      if (activeCue) setActiveCue(null);
+      return;
+    }
     
     const currentTime = videoRef.current.currentTime;
     const currentCue = parsedCues.find(cue => currentTime >= cue.startTime && currentTime <= cue.endTime);
     
-    setActiveCue(currentCue || null);
+    if (currentCue?.text !== activeCue?.text) {
+       setActiveCue(currentCue || null);
+    } else if (!currentCue && activeCue) {
+       setActiveCue(null);
+    }
   }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       handleFileUpload(file);
+    }
+     // Reset file input to allow uploading the same file again
+    if(event.target) {
+        event.target.value = "";
     }
   };
 
@@ -184,7 +204,6 @@ export function CaptionGeneratorTab() {
 
     startTransition(async () => {
       try {
-        // We don't need translation for this feature
         const result = await generateTranscription({ videoDataUri });
         if (result.vtt) {
           setVttContent(result.vtt);
@@ -201,7 +220,7 @@ export function CaptionGeneratorTab() {
         toast({
           variant: "destructive",
           title: "Generation Failed",
-          description: "Could not generate captions for this video.",
+          description: e instanceof Error ? e.message : "Could not generate captions for this video.",
         });
       }
     });
@@ -210,7 +229,8 @@ export function CaptionGeneratorTab() {
   const captionStyleClasses: Record<CaptionStyle, string> = {
     minimal: 'bottom-8 text-white bg-black/60 px-4 py-2 text-xl font-sans rounded-lg shadow-lg',
     cinematic: 'bottom-16 text-white text-3xl font-serif tracking-wider text-shadow-md',
-    highlight: 'bottom-10 text-black bg-yellow-400 px-3 py-1.5 text-2xl font-bold uppercase font-sans'
+    highlight: 'bottom-10 text-black bg-yellow-400 px-3 py-1.5 text-2xl font-bold uppercase font-sans',
+    social: 'bottom-24 text-white text-4xl font-extrabold uppercase [text-shadow:0_3px_5px_rgba(0,0,0,0.8)] leading-tight text-center px-4',
   };
 
   return (
@@ -249,11 +269,15 @@ export function CaptionGeneratorTab() {
                     </video>
                     {activeCue && (
                         <div className={cn(
-                            "absolute left-1/2 -translate-x-1/2 rounded-lg pointer-events-none text-center transition-opacity duration-200 whitespace-pre-wrap",
+                            "absolute left-1/2 -translate-x-1/2 rounded-lg pointer-events-none transition-opacity duration-200",
                             activeCue ? 'opacity-100' : 'opacity-0',
                             captionStyleClasses[captionStyle]
                         )}>
-                            {activeCue.text}
+                            {captionStyle === 'social' ? (
+                                <SocialCaption text={activeCue.text} wordsToHighlight={highlightWords.split(',')} />
+                            ) : (
+                                <p className="whitespace-pre-wrap">{activeCue.text}</p>
+                            )}
                         </div>
                     )}
                     </>
@@ -275,11 +299,12 @@ export function CaptionGeneratorTab() {
          <div className="w-full max-w-2xl flex flex-col sm:flex-row items-center gap-4">
             <div className="flex-grow w-full">
                 <Label htmlFor="caption-style-select" className="sr-only">Caption Style</Label>
-                <Select onValueChange={(value) => setCaptionStyle(value as CaptionStyle)} defaultValue="minimal" disabled={isPending || !vttContent}>
+                <Select onValueChange={(value) => setCaptionStyle(value as CaptionStyle)} defaultValue="social" disabled={isPending || !vttContent}>
                     <SelectTrigger id="caption-style-select" className="bg-background/50 focus-visible:ring-accent">
                         <SelectValue placeholder="Select a caption style" />
                     </SelectTrigger>
                     <SelectContent>
+                        <SelectItem value="social">Social</SelectItem>
                         <SelectItem value="minimal">Minimal</SelectItem>
                         <SelectItem value="cinematic">Cinematic</SelectItem>
                         <SelectItem value="highlight">Highlight</SelectItem>
@@ -296,10 +321,20 @@ export function CaptionGeneratorTab() {
                 {isPending ? "Generating..." : "Generate Captions"}
             </Button>
          </div>
+         {captionStyle === 'social' && vttContent && (
+             <div className="w-full max-w-sm mt-2 animate-in fade-in duration-300">
+                <Label htmlFor="highlight-words">Words to Highlight (comma-separated)</Label>
+                <Input 
+                    id="highlight-words"
+                    placeholder="e.g., AI, magic"
+                    value={highlightWords}
+                    onChange={(e) => setHighlightWords(e.target.value)}
+                    className="bg-background/50 focus-visible:ring-accent"
+                />
+             </div>
+         )}
           {detectedLanguage && <Badge variant="secondary" className="mt-2">Detected Language: {detectedLanguage}</Badge>}
       </div>
     </div>
   );
 }
-
-    

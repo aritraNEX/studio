@@ -39,23 +39,40 @@ export async function generateTranscription(
   return transcriptionFlow(input);
 }
 
+// Define a simpler output schema for the prompt itself. The flow will handle the language detection separately.
+const PromptOutputSchema = z.object({
+ vtt: z
+    .string()
+    .describe(
+      'The generated transcription in WebVTT format. This includes timestamps and text for each cue.'
+    ),
+});
+
 const transcriptionPrompt = ai.definePrompt({
   name: 'transcriptionPrompt',
   input: {schema: GenerateTranscriptionInputSchema},
-  output: {schema: GenerateTranscriptionOutputSchema},
+  // Use the simpler output schema for the prompt to ensure it only returns VTT content.
+  output: {schema: PromptOutputSchema},
   prompt: `You are an expert transcriber and translator. Your task is to analyze the provided video and generate a transcription in the WebVTT format.
 
-1.  First, identify the primary language spoken in the video and place it in the 'detectedLanguage' field.
-2.  Transcribe the audio from the video with precise start and end timestamps.
-3.  Format the entire output as a valid WebVTT file, starting with "WEBVTT".
+1.  Transcribe the audio from the video with precise start and end timestamps.
+2.  Format the entire output as a valid WebVTT file, starting with "WEBVTT".
 {{#if targetLanguage}}
-4.  After transcribing, translate the text for each cue into {{targetLanguage}}. The timestamps must remain the same as the original transcription.
+3.  After transcribing, translate the text for each cue into {{targetLanguage}}. The timestamps must remain the same as the original transcription.
 {{/if}}
 
-Do not include any additional commentary or explanation in your response. The output must be only the WebVTT content and the detected language.
+Do not include any additional commentary, explanation, or any fields other than the 'vtt' field in your response. The output must be only the WebVTT content inside the JSON structure.
 
 Video to process: {{media url=videoDataUri}}`,
 });
+
+const languageDetectionPrompt = ai.definePrompt({
+    name: 'languageDetectionPrompt',
+    input: { schema: z.object({ videoDataUri: z.string() }) },
+    output: { schema: z.object({ detectedLanguage: z.string() }) },
+    prompt: `Analyze the audio from the provided video and identify the primary language spoken. Respond with only the name of the language. Video: {{media url=videoDataUri}}`
+});
+
 
 const transcriptionFlow = ai.defineFlow(
   {
@@ -64,10 +81,22 @@ const transcriptionFlow = ai.defineFlow(
     outputSchema: GenerateTranscriptionOutputSchema,
   },
   async (input) => {
-    const {output} = await transcriptionPrompt(input);
-    if (!output) {
-      throw new Error('The model did not return any output.');
+    // Run transcription and language detection in parallel for efficiency
+    const [transcriptionResult, languageResult] = await Promise.all([
+        transcriptionPrompt(input),
+        languageDetectionPrompt({ videoDataUri: input.videoDataUri })
+    ]);
+    
+    const vtt = transcriptionResult.output?.vtt;
+    const detectedLanguage = languageResult.output?.detectedLanguage;
+
+    if (!vtt) {
+      throw new Error('The model did not return any VTT transcription.');
     }
-    return output;
+     if (!detectedLanguage) {
+      throw new Error('The model did not detect a language.');
+    }
+    
+    return { vtt, detectedLanguage };
   }
 );
