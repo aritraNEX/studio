@@ -11,6 +11,16 @@ import { flashcardGenerator, FlashcardGeneratorOutput } from "@/ai/flows/flashca
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+type AnimationStyle = 'flip-h' | 'flip-v' | 'fade' | 'slide-up' | 'zoom';
+
+const animationStyles: { name: string; id: AnimationStyle }[] = [
+    { name: "Flip Horizontal", id: "flip-h" },
+    { name: "Flip Vertical", id: "flip-v" },
+    { name: "Fade", id: "fade" },
+    { name: "Slide Up", id: "slide-up" },
+    { name: "Zoom", id: "zoom" },
+];
+
 export function FlashcardGeneratorTab() {
   const [inputText, setInputText] = useState<string>("");
   const [result, setResult] = useState<FlashcardGeneratorOutput | null>(null);
@@ -19,6 +29,7 @@ export function FlashcardGeneratorTab() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const [animationStyle, setAnimationStyle] = useState<AnimationStyle>('flip-h');
 
   const handleGenerate = () => {
     if (!inputText.trim()) {
@@ -95,12 +106,18 @@ export function FlashcardGeneratorTab() {
             <div className="flex flex-col items-center justify-center gap-4">
                 <Card 
                     onClick={() => setIsFlipped(f => !f)}
-                    className="w-full h-96 bg-background/50 flex flex-col items-center justify-center text-center cursor-pointer relative group"
-                    style={{ perspective: '1000px' }}
+                    className={cn(
+                        "w-full h-96 bg-background/50 flex flex-col items-center justify-center text-center cursor-pointer relative group overflow-hidden",
+                        {'[perspective:1000px]': animationStyle === 'flip-h' || animationStyle === 'flip-v'}
+                    )}
                 >
                     <div
-                        className={cn("w-full h-full flex items-center justify-center p-6 transition-transform duration-700", { 'transform -rotate-y-180': isFlipped })}
-                        style={{ transformStyle: 'preserve-3d' }}
+                        className={cn(
+                            "w-full h-full flex items-center justify-center transition-transform duration-700",
+                            { '[transform-style:preserve-3d]': animationStyle === 'flip-h' || animationStyle === 'flip-v'},
+                            { 'transform -rotate-y-180': isFlipped && animationStyle === 'flip-h' },
+                            { 'transform -rotate-x-180': isFlipped && animationStyle === 'flip-v' }
+                        )}
                     >
                         {isPending && (
                             <div className="flex flex-col items-center gap-4 text-muted-foreground animate-in fade-in duration-500">
@@ -116,11 +133,25 @@ export function FlashcardGeneratorTab() {
                         {currentCard && (
                             <>
                                 {/* Front of the card */}
-                                <CardContent className="absolute w-full h-full flex items-center justify-center text-xl font-semibold backface-hidden">
+                                <CardContent className={cn(
+                                    "absolute w-full h-full flex items-center justify-center p-6 text-xl font-semibold transition-all duration-700",
+                                    { 'backface-hidden': animationStyle === 'flip-h' || animationStyle === 'flip-v' },
+                                    { 'opacity-0': isFlipped && animationStyle === 'fade' },
+                                    { 'scale-50 opacity-0': isFlipped && animationStyle === 'zoom' },
+                                    
+                                )}>
                                     {currentCard.front}
                                 </CardContent>
                                 {/* Back of the card */}
-                                <CardContent className="absolute w-full h-full flex items-center justify-center text-lg transform rotate-y-180 backface-hidden">
+                                <CardContent className={cn(
+                                    "absolute w-full h-full flex items-center justify-center p-6 text-lg transition-all duration-700",
+                                    { 'backface-hidden transform rotate-y-180': animationStyle === 'flip-h' },
+                                    { 'backface-hidden transform rotate-x-180': animationStyle === 'flip-v' },
+                                    { 'opacity-0': !isFlipped && animationStyle === 'fade' },
+                                    { 'scale-50 opacity-0': !isFlipped && animationStyle === 'zoom' },
+                                    { 'translate-y-full': !isFlipped && animationStyle === 'slide-up' },
+                                    { 'translate-y-0': isFlipped && animationStyle === 'slide-up' },
+                                )}>
                                     {currentCard.back}
                                 </CardContent>
                             </>
@@ -128,17 +159,31 @@ export function FlashcardGeneratorTab() {
                     </div>
                 </Card>
                 {result && result.flashcards.length > 0 && (
-                     <div className="flex items-center justify-between w-full">
-                        <Button variant="outline" size="icon" onClick={handlePrevCard} aria-label="Previous card">
-                           <ArrowLeft className="h-5 w-5" />
-                        </Button>
-                        <div className="text-sm font-medium text-muted-foreground">
-                            Card {currentCardIndex + 1} of {result.flashcards.length}
+                    <>
+                        <div className="flex items-center justify-between w-full">
+                            <Button variant="outline" size="icon" onClick={handlePrevCard} aria-label="Previous card">
+                            <ArrowLeft className="h-5 w-5" />
+                            </Button>
+                            <div className="text-sm font-medium text-muted-foreground">
+                                Card {currentCardIndex + 1} of {result.flashcards.length}
+                            </div>
+                            <Button variant="outline" size="icon" onClick={handleNextCard} aria-label="Next card">
+                            <ArrowRight className="h-5 w-5" />
+                            </Button>
                         </div>
-                        <Button variant="outline" size="icon" onClick={handleNextCard} aria-label="Next card">
-                           <ArrowRight className="h-5 w-5" />
-                        </Button>
-                    </div>
+                        <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+                           {animationStyles.map(style => (
+                               <Button 
+                                   key={style.id}
+                                   variant={animationStyle === style.id ? 'default' : 'outline'}
+                                   size="sm"
+                                   onClick={() => setAnimationStyle(style.id)}
+                               >
+                                   {style.name}
+                               </Button>
+                           ))}
+                        </div>
+                    </>
                 )}
             </div>
         </div>
