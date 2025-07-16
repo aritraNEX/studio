@@ -19,16 +19,16 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // Initialize App Check on the client side only
-// if (typeof window !== 'undefined') {
-//     try {
-//         const appCheck = initializeAppCheck(app, {
-//             provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!),
-//             isTokenAutoRefreshEnabled: true
-//         });
-//     } catch (error) {
-//         console.error("Failed to initialize App Check", error);
-//     }
-// }
+if (typeof window !== 'undefined') {
+    try {
+        const appCheck = initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!),
+            isTokenAutoRefreshEnabled: true
+        });
+    } catch (error) {
+        console.error("Failed to initialize App Check", error);
+    }
+}
 
 
 export { app, auth, db };
