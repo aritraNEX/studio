@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -32,6 +32,7 @@ import { FlashcardGeneratorTab } from "./flashcard-generator-tab";
 import { CitationGeneratorTab } from "./citation-generator-tab";
 import { GrammarCheckTab } from "./grammar-check-tab";
 import { ConceptExplainerTab } from "./concept-explainer-tab";
+import { DiagramGeneratorTab } from "./diagram-generator-tab";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -76,7 +77,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 mx-auto h-auto p-1.5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-10 mx-auto h-auto p-1.5">
             <TabsTrigger value="paraphrase" className="py-2.5">
                 <Quote className="h-5 w-5 mr-2" />
                 <span>Paraphrase</span>
@@ -88,6 +89,10 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
             <TabsTrigger value="explainer" className="py-2.5">
                 <BrainCircuit className="h-5 w-5 mr-2" />
                 <span>Explainer</span>
+            </TabsTrigger>
+             <TabsTrigger value="diagrams" className="py-2.5">
+                <Share2 className="h-5 w-5 mr-2" />
+                <span>Diagrams</span>
             </TabsTrigger>
             <TabsTrigger value="grammar" className="py-2.5">
                 <SpellCheck className="h-5 w-5 mr-2" />
@@ -156,6 +161,9 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
           </TabsContent>
           <TabsContent value="explainer" className="pt-6">
             <ConceptExplainerTab />
+          </TabsContent>
+           <TabsContent value="diagrams" className="pt-6">
+            <DiagramGeneratorTab />
           </TabsContent>
            <TabsContent value="grammar" className="pt-6">
             <GrammarCheckTab />
