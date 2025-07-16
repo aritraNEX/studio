@@ -38,11 +38,19 @@ type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'g
 
 interface TexioAppProps {
   projectId?: string | null;
+  initialTab?: string | null;
+  initialTopic?: string | null;
 }
 
-export function TexioApp({ projectId }: TexioAppProps) {
-  const [activeTab, setActiveTab] = useState("paraphrase");
+export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps) {
+  const [activeTab, setActiveTab] = useState(initialTab || "paraphrase");
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
+
+  useEffect(() => {
+      if (initialTab) {
+          setActiveTab(initialTab);
+      }
+  }, [initialTab]);
 
   const handleSendTo = (text: string, operation: Operation) => {
     if (operation === 'tts') {

@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { conceptExplainer, ConceptExplainerOutput } from "@/ai/flows/concept-explainer-flow";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const IconComponent = ({ name }: { name: string }) => {
     const Icon = (LucideIcons as any)[name];
@@ -23,8 +26,10 @@ export function ConceptExplainerTab() {
   const [result, setResult] = useState<ConceptExplainerOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isSaving, setIsSaving] = useState(false);
   const [visibleStep, setVisibleStep] = useState<number>(-1);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleExplain = () => {
     if (!topic.trim()) {
@@ -62,6 +67,34 @@ export function ConceptExplainerTab() {
       }
     });
   };
+
+  const handleSaveProject = async () => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Please log in to save projects.' });
+      return;
+    }
+    if (!result) {
+      toast({ variant: 'destructive', title: 'Nothing to save', description: 'Please generate an explanation first.' });
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await addDoc(collection(db, 'projects'), {
+        userId: user.uid,
+        inputText: topic,
+        outputText: JSON.stringify(result),
+        operation: 'explainer',
+        createdAt: serverTimestamp(),
+      });
+      toast({title: "Project Saved!", description: "Your explanation has been saved to your dashboard."})
+    } catch (error) {
+      console.error("Error saving project: ", error);
+      toast({ variant: 'destructive', title: 'Could not save project.' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
 
   return (
     <div className="flex flex-col gap-8">
@@ -137,6 +170,14 @@ export function ConceptExplainerTab() {
                         </div>
                     ))}
                 </div>
+                 {user && (
+                    <div className="mt-8">
+                        <Button onClick={handleSaveProject} disabled={isSaving}>
+                            {isSaving ? <LucideIcons.Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LucideIcons.Save className="mr-2 h-4 w-4" />}
+                            Save Explanation
+                        </Button>
+                    </div>
+                )}
             </div>
         )}
       </div>

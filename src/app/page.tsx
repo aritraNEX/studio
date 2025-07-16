@@ -17,6 +17,8 @@ function EditorContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectId = searchParams.get('projectId');
+  const tab = searchParams.get('tab');
+  const topic = searchParams.get('topic');
 
   React.useEffect(() => {
     if (!authLoading && !user) {
@@ -43,7 +45,12 @@ function EditorContent() {
         isAppLoading ? "opacity-0" : "opacity-100"
       )}>
         <div className={cn("transition-transform duration-700", isAppLoading ? "scale-95" : "scale-100")}>
-          <TexioApp key={projectId || 'new'} projectId={projectId} />
+          <TexioApp 
+            key={projectId || topic || 'new'} 
+            projectId={projectId} 
+            initialTab={tab}
+            initialTopic={topic}
+          />
         </div>
       </main>
     </WorkspaceProvider>

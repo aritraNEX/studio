@@ -83,6 +83,30 @@ export default function DashboardPage() {
     }
   };
 
+  const handleOpenProject = (project: Project) => {
+    if (project.operation === 'explainer') {
+        const url = new URL(window.location.origin);
+        url.pathname = '/';
+        url.searchParams.set('tab', 'explainer');
+        url.searchParams.set('topic', project.inputText);
+        router.push(url.toString());
+    } else {
+        router.push(`/?projectId=${project.id}`);
+    }
+  }
+
+  const getOutputDescription = (project: Project) => {
+      if (project.operation === 'explainer') {
+          try {
+              const parsedOutput = JSON.parse(project.outputText);
+              return parsedOutput.introduction || 'View the full explanation.';
+          } catch {
+              return 'View the full explanation.';
+          }
+      }
+      return project.outputText;
+  }
+
   if (authLoading || loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -127,7 +151,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="flex-grow">
                     <p className="text-sm text-muted-foreground line-clamp-3">
-                        Output: {project.outputText}
+                        Output: {getOutputDescription(project)}
                     </p>
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
@@ -152,7 +176,7 @@ export default function DashboardPage() {
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
-                    <Button variant="outline" onClick={() => router.push(`/?projectId=${project.id}`)}>
+                    <Button variant="outline" onClick={() => handleOpenProject(project)}>
                         <Edit className="mr-2 h-4 w-4"/>
                         Open
                     </Button>
