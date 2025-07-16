@@ -27,53 +27,75 @@ interface VttCue {
 
 type CaptionStyle = 'minimal' | 'cinematic' | 'highlight';
 
-// A simple VTT parser
+// A more robust VTT parser
 const parseVTT = (vttContent: string): VttCue[] => {
     if (!vttContent || !vttContent.startsWith('WEBVTT')) return [];
-    
-    const lines = vttContent.split('\n');
+
     const cues: VttCue[] = [];
-    
-    const parseTime = (timeStr: string) => {
+    const lines = vttContent.replace(/\r\n/g, '\n').split('\n');
+    let i = 0;
+
+    // Helper to parse VTT time format (HH:MM:SS.ms or MM:SS.ms)
+    const parseTime = (timeStr: string): number => {
         if (!timeStr) return 0;
         const parts = timeStr.split(':');
-        let hours = 0, minutes = 0, seconds = 0;
-        
-        if (parts.length === 3) { // HH:MM:SS.ms
-            hours = parseInt(parts[0], 10);
-            minutes = parseInt(parts[1], 10);
-            seconds = parseFloat(parts[2]);
-        } else if (parts.length === 2) { // MM:SS.ms
-            minutes = parseInt(parts[0], 10);
-            seconds = parseFloat(parts[1]);
+        let seconds = 0;
+        if (parts.length === 3) {
+            seconds += parseFloat(parts[0]) * 3600;
+            seconds += parseFloat(parts[1]) * 60;
+            seconds += parseFloat(parts[2]);
+        } else if (parts.length === 2) {
+            seconds += parseFloat(parts[0]) * 60;
+            seconds += parseFloat(parts[1]);
         } else {
             return 0; // Invalid format
         }
-
-        if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) return 0;
-
-        return hours * 3600 + minutes * 60 + seconds;
+        return isNaN(seconds) ? 0 : seconds;
     };
 
-    for (let i = 1; i < lines.length; i++) {
-        if (lines[i].includes('-->')) {
-            const timeLine = lines[i];
-            const textLine = lines[i + 1];
+    while (i < lines.length) {
+        // Skip empty lines and WEBVTT header
+        if (!lines[i].trim() || lines[i].trim() === 'WEBVTT') {
+            i++;
+            continue;
+        }
 
-            if (timeLine && textLine) {
-                 const [start, end] = timeLine.split(' --> ').map(s => s.trim().split(' ')[0]); // Handle extra metadata like 'align:start'
-                 
-                 cues.push({
-                     startTime: parseTime(start),
-                     endTime: parseTime(end),
-                     text: textLine,
-                 });
-                 i++; // Skip the text line as it's processed
+        // Skip cue identifiers
+        if (!lines[i].includes('-->')) {
+             i++;
+             continue;
+        }
+
+        const timeLine = lines[i];
+        const [startTimeStr, endTimeStr] = timeLine.split(' --> ').map(s => s.trim().split(' ')[0]);
+
+        if (startTimeStr && endTimeStr) {
+            const startTime = parseTime(startTimeStr);
+            const endTime = parseTime(endTimeStr);
+            
+            let textLines: string[] = [];
+            i++; // Move to the first line of text
+            while (i < lines.length && lines[i].trim() !== '') {
+                textLines.push(lines[i].trim());
+                i++;
             }
+
+            if (textLines.length > 0) {
+                cues.push({
+                    startTime,
+                    endTime,
+                    text: textLines.join('\n'),
+                });
+            }
+        } else {
+            // If the time line is malformed, skip to the next potential block
+            i++;
         }
     }
+
     return cues;
-}
+};
+
 
 export function CaptionGeneratorTab() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -227,7 +249,7 @@ export function CaptionGeneratorTab() {
                     </video>
                     {activeCue && (
                         <div className={cn(
-                            "absolute left-1/2 -translate-x-1/2 rounded-lg pointer-events-none text-center transition-opacity duration-200",
+                            "absolute left-1/2 -translate-x-1/2 rounded-lg pointer-events-none text-center transition-opacity duration-200 whitespace-pre-wrap",
                             activeCue ? 'opacity-100' : 'opacity-0',
                             captionStyleClasses[captionStyle]
                         )}>
@@ -279,3 +301,5 @@ export function CaptionGeneratorTab() {
     </div>
   );
 }
+
+    
