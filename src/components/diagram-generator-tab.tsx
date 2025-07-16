@@ -50,8 +50,12 @@ export function DiagramGeneratorTab() {
                 setDiagramSvg(svg);
             } catch (e: any) {
                 console.error("Mermaid rendering error:", e);
-                setError(`Failed to render diagram: ${e.message}`);
-                toast({ variant: 'destructive', title: 'Diagram Rendering Error' });
+                const friendlyError = "The AI generated invalid diagram syntax. Please try generating again.";
+                setError(friendlyError);
+                toast({ variant: 'destructive', title: 'Diagram Rendering Error', description: friendlyError });
+                if (mermaidRef.current) {
+                    mermaidRef.current.innerHTML = `<div class="text-destructive text-center">${friendlyError}</div>`;
+                }
             }
         }
     };
@@ -71,6 +75,9 @@ export function DiagramGeneratorTab() {
     setError(null);
     setResult(null);
     setDiagramSvg("");
+    if (mermaidRef.current) {
+        mermaidRef.current.innerHTML = '';
+    }
 
     startTransition(async () => {
       try {
@@ -149,7 +156,7 @@ a.click();
             {isPending ? "Generating..." : "Generate"}
             </Button>
         </div>
-        {error && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
+        {error && !isPending && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
       </div>
 
       <Card className="relative w-full min-h-[500px] bg-muted/30 rounded-2xl p-4 sm:p-8 overflow-hidden">
@@ -177,7 +184,7 @@ a.click();
                 />
             )}
         </CardContent>
-         {result && !isPending && (
+         {result && !isPending && !error && (
              <div className="absolute top-4 right-4 flex gap-2">
                  <Button onClick={handleCopyCode} variant="outline">
                     <Copy className="mr-2 h-4 w-4" />
