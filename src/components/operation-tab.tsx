@@ -3,7 +3,7 @@
 
 import { useState, useRef, useTransition, useEffect } from "react";
 import Image from "next/image";
-import { Copy, Loader2, Sparkles, Upload, Download, ChevronDown, Send, AudioLines, Share2 } from "lucide-react";
+import { Copy, Loader2, Sparkles, Upload, Download, ChevronDown, Send, AudioLines, Share2, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,8 +24,9 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { useABTest } from "@/contexts/ab-test-context";
 import { useAuth } from "@/contexts/auth-context";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useWorkspace } from "@/contexts/workspace-context";
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
@@ -47,7 +48,7 @@ interface OperationTabProps {
 }
 
 export function OperationTab({ operation, onSendTo, initialText, projectId }: OperationTabProps) {
-  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [extractedText, setExtractedText] = useState<string | null>(initialText ?? null);
   const [isParsing, setIsParsing] = useState(false);
   const [generatedText, setGeneratedText] = useState<string>("");
@@ -125,71 +126,60 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     }
   };
 
-  const handleFileUpload = (file: File) => {
+  const handleFileUpload = async (file: File) => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Authentication required', description: 'You must be signed in to upload files.' });
+      return;
+    }
     if (!file) return;
 
-    setImageDataUrl(null);
+    setFileUrl(null);
     setExtractedText(null);
     setGeneratedText("");
     setError(null);
     setIsParsing(true);
 
-    const fileType = file.type;
-    const reader = new FileReader();
+    try {
+        const storageRef = ref(storage, `uploads/${user.uid}/${Date.now()}-${file.name}`);
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
 
-    reader.onerror = () => {
-        setIsParsing(false);
-        toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not read the selected file.' });
-    };
+        setFileUrl(downloadURL); // Use this for displaying the image
 
-    reader.onload = async (e) => {
-        try {
-            if (fileType.startsWith("image/")) {
-                const result = e.target?.result;
-                if (typeof result === "string") {
-                    setImageDataUrl(result);
-                }
-            } else if (fileType === 'application/pdf') {
-                const buffer = e.target?.result as ArrayBuffer;
-                const pdf = await pdfjsLib.getDocument(buffer).promise;
-                let text = '';
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const content = await page.getTextContent();
-                    text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
-                }
-                setExtractedText(text);
-            } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                const buffer = e.target?.result as ArrayBuffer;
-                const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-                setExtractedText(result.value);
-            } else {
-                 toast({
-                    title: "Unsupported file type",
-                    description: "Please upload an image, PDF, or DOCX file.",
-                    variant: "destructive",
-                });
-            }
-        } catch (error) {
-            console.error("Failed to parse file", error);
-            toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not read the contents of ${file.name}. The file might be corrupted or in an unsupported format.` });
-        } finally {
-            setIsParsing(false);
-        }
-    };
-    
-    if (fileType.startsWith("image/") || fileType === 'application/pdf' || fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-         if (fileType.startsWith("image/")) {
-            reader.readAsDataURL(file);
+        const fileType = file.type;
+        if (fileType.startsWith("image/")) {
+            // For images, we can use the URL directly with the AI
+            // No need to extract text on the client
+            setExtractedText(null);
         } else {
+            // For other file types, extract text on client side
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const buffer = e.target?.result as ArrayBuffer;
+                    if (fileType === 'application/pdf') {
+                        const pdf = await pdfjsLib.getDocument(buffer).promise;
+                        let text = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const content = await page.getTextContent();
+                            text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
+                        }
+                        setExtractedText(text);
+                    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                        const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+                        setExtractedText(result.value);
+                    }
+                } catch (err) {
+                     toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not read text from ${file.name}.` });
+                }
+            };
             reader.readAsArrayBuffer(file);
         }
-    } else {
-        toast({
-            title: "Unsupported file type",
-            description: "Please upload an image, PDF, or DOCX file.",
-            variant: "destructive",
-        });
+    } catch (error) {
+      console.error("Upload failed", error);
+      toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not upload your file to storage.'});
+    } finally {
         setIsParsing(false);
     }
   };
@@ -214,8 +204,10 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   };
 
   const handleProcess = () => {
-    const currentInput = imageDataUrl || extractedText;
-    if (!currentInput || (typeof currentInput === 'string' && !currentInput.trim())) {
+    const hasFile = !!fileUrl;
+    const hasText = !!extractedText?.trim();
+
+    if (!hasFile && !hasText) {
         toast({
             variant: 'destructive',
             title: 'No content to process',
@@ -248,16 +240,23 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     setGeneratedText("");
     startTransition(async () => {
       try {
-        const inputPayload = {
+        const inputPayload: any = {
             operation,
             ...(operation === 'translate' ? { targetLanguage } : {}),
             ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
-            ...(imageDataUrl ? { photoDataUri: imageDataUrl } : { text: extractedText! })
         };
-        const result = await processImageText(inputPayload as any);
+
+        if (hasFile) {
+            inputPayload.fileUrl = fileUrl;
+        }
+        if (hasText) {
+            inputPayload.text = extractedText;
+        }
+
+        const result = await processImageText(inputPayload);
         if (result && result.processedText) {
           setGeneratedText(result.processedText);
-          await handleSaveProject(extractedText || 'Image Input', result.processedText, operation);
+          await handleSaveProject(extractedText || fileUrl || 'File Input', result.processedText, operation);
         } else {
           throw new Error("The processed text is empty.");
         }
@@ -378,12 +377,12 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                 {isParsing ? (
                 <div className="flex flex-col items-center justify-center text-center p-4">
                     <Loader2 className="w-10 h-10 mb-3 text-primary animate-spin" />
-                    <p className="text-sm text-muted-foreground">Parsing your file...</p>
+                    <p className="text-sm text-muted-foreground">Uploading & Parsing...</p>
                 </div>
-                ) : imageDataUrl ? (
+                ) : fileUrl ? (
                 <div className="relative w-full h-full p-2">
                     <Image
-                    src={imageDataUrl}
+                    src={fileUrl}
                     alt="Uploaded content"
                     fill
                     className="rounded-lg object-contain"
@@ -562,7 +561,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
          <div className="flex flex-wrap items-center justify-center gap-4">
           <Button
             onClick={handleProcess}
-            disabled={(!imageDataUrl && !extractedText?.trim()) || isPending || isParsing || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
+            disabled={(!fileUrl && !extractedText?.trim()) || isPending || isParsing || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
             variant={isButtonBVariant ? "outline" : "default"}
             className={cn(

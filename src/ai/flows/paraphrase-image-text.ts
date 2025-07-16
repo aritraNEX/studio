@@ -12,10 +12,10 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const BaseProcessImageTextInputSchema = z.object({
-  photoDataUri: z
+  fileUrl: z
     .string()
     .describe(
-      "A photo containing text, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      'A publicly accessible URL to a file (image, PDF, etc.) to be processed.'
     ).optional(),
   text: z.string().describe("Raw text to be processed.").optional(),
   operation: z.enum(['paraphrase', 'summarize', 'translate', 'style']).describe('The operation to perform on the text.'),
@@ -23,8 +23,8 @@ const BaseProcessImageTextInputSchema = z.object({
   targetStyle: z.string().optional().describe('The target style for rewriting. Required if operation is "style".'),
 });
 
-const ProcessImageTextInputSchema = BaseProcessImageTextInputSchema.refine(data => data.photoDataUri || data.text, {
-    message: "Either photoDataUri or text must be provided."
+const ProcessImageTextInputSchema = BaseProcessImageTextInputSchema.refine(data => data.fileUrl || data.text, {
+    message: "Either fileUrl or text must be provided."
 });
 
 export type ProcessImageTextInput = z.infer<typeof ProcessImageTextInputSchema>;
@@ -43,7 +43,7 @@ export async function processImageText(
 }
 
 const promptInputSchema = z.object({
-    photoDataUri: BaseProcessImageTextInputSchema.shape.photoDataUri,
+    fileUrl: BaseProcessImageTextInputSchema.shape.fileUrl,
     text: BaseProcessImageTextInputSchema.shape.text,
     instruction: z.string()
 });
@@ -52,9 +52,9 @@ const processImageTextPrompt = ai.definePrompt({
   name: 'processImageTextPrompt',
   input: {schema: promptInputSchema},
   output: {schema: ProcessImageTextOutputSchema},
-  prompt: `{{#if photoDataUri}}Extract all text from the image, in the correct sequence, preserving the original structure like lists and line breaks.{{else}}The text to process is provided below.{{/if}} Then, follow this instruction: '{{{instruction}}}'. Place the final result in the 'processedText' field. Ensure the output formatting matches the original text's structure (e.g., lists, paragraphs). Do not add any extra commentary or explanation.
+  prompt: `{{#if fileUrl}}Extract all text from the document at the given URL, in the correct sequence, preserving the original structure like lists and line breaks.{{else}}The text to process is provided below.{{/if}} Then, follow this instruction: '{{{instruction}}}'. Place the final result in the 'processedText' field. Ensure the output formatting matches the original text's structure (e.g., lists, paragraphs). Do not add any extra commentary or explanation.
 
-  {{#if photoDataUri}}Image: {{media url=photoDataUri}}{{else}}Text: {{{text}}}{{/if}}`
+  {{#if fileUrl}}Document URL: {{media url=fileUrl}}{{else}}Text: {{{text}}}{{/if}}`
 });
 
 const processImageTextFlow = ai.defineFlow(
@@ -93,7 +93,7 @@ const processImageTextFlow = ai.defineFlow(
     }
 
     const {output} = await processImageTextPrompt({
-      photoDataUri: input.photoDataUri,
+      fileUrl: input.fileUrl,
       text: input.text,
       instruction: instruction,
     });
