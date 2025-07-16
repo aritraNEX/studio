@@ -8,3 +8,4 @@ import '@/ai/flows/research-assistant-flow.ts';
 import '@/ai/flows/transcription-flow.ts';
 import '@/ai/flows/assignment-maker-flow.ts';
 import '@/ai/flows/flashcard-generator-flow.ts';
+import '@/ai/flows/citation-generator-flow.ts';
