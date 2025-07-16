@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ArrowLeft, ArrowRight, Loader2, Download, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Download, Sparkles, Droplets } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +22,16 @@ const animationStyles: { name: string; id: AnimationStyle }[] = [
     { name: "Zoom", id: "zoom" },
 ];
 
+const colorThemes = [
+    { name: 'Default', id: 'default', bgFrontClass: 'bg-card', bgBackClass: 'bg-muted', textClass: 'text-card-foreground', pdf: { bg: [248, 250, 252], text: [30, 41, 59] } },
+    { name: 'Slate', id: 'slate', bgFrontClass: 'bg-slate-800', bgBackClass: 'bg-slate-700', textClass: 'text-slate-100', pdf: { bg: [30, 41, 59], text: [241, 245, 249] } },
+    { name: 'Sky', id: 'sky', bgFrontClass: 'bg-sky-500', bgBackClass: 'bg-sky-400', textClass: 'text-white', pdf: { bg: [14, 165, 233], text: [255, 255, 255] } },
+    { name: 'Amber', id: 'amber', bgFrontClass: 'bg-amber-400', bgBackClass: 'bg-amber-300', textClass: 'text-amber-900', pdf: { bg: [251, 191, 36], text: [120, 53, 15] } },
+    { name: 'Emerald', id: 'emerald', bgFrontClass: 'bg-emerald-500', bgBackClass: 'bg-emerald-400', textClass: 'text-white', pdf: { bg: [16, 185, 129], text: [255, 255, 255] } },
+    { name: 'Rose', id: 'rose', bgFrontClass: 'bg-rose-600', bgBackClass: 'bg-rose-500', textClass: 'text-white', pdf: { bg: [225, 29, 72], text: [255, 255, 255] } },
+];
+
+
 export function FlashcardGeneratorTab() {
   const [inputText, setInputText] = useState<string>("");
   const [result, setResult] = useState<FlashcardGeneratorOutput | null>(null);
@@ -31,6 +41,7 @@ export function FlashcardGeneratorTab() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const [animationStyle, setAnimationStyle] = useState<AnimationStyle>('flip-h');
+  const [colorTheme, setColorTheme] = useState(colorThemes[0]);
 
   const handleGenerate = () => {
     if (!inputText.trim()) {
@@ -71,14 +82,14 @@ export function FlashcardGeneratorTab() {
   const handleNextCard = () => {
     if (result) {
         setIsFlipped(false);
-        setCurrentCardIndex((prev) => (prev + 1) % result.flashcards.length);
+        setTimeout(() => setCurrentCardIndex((prev) => (prev + 1) % result.flashcards.length), 150);
     }
   };
 
   const handlePrevCard = () => {
      if (result) {
         setIsFlipped(false);
-        setCurrentCardIndex((prev) => (prev - 1 + result.flashcards.length) % result.flashcards.length);
+        setTimeout(() => setCurrentCardIndex((prev) => (prev - 1 + result.flashcards.length) % result.flashcards.length), 150);
     }
   };
   
@@ -92,34 +103,41 @@ export function FlashcardGeneratorTab() {
     let yPos = 32;
 
     result.flashcards.forEach((card, index) => {
-      if (yPos > 260) {
+      if (yPos > 240) { // Check space for both front and back
         doc.addPage();
         yPos = 22;
       }
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text(`Card ${index + 1} - Front:`, 14, yPos);
-      yPos += 7;
+      
+      const drawCard = (title: string, text: string) => {
+        const textLines = doc.splitTextToSize(text, 170);
+        const cardHeight = (textLines.length * 7) + 20;
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(12);
-      const frontText = doc.splitTextToSize(card.front, 180);
-      doc.text(frontText, 14, yPos);
-      yPos += frontText.length * 5 + 4;
+        if (yPos + cardHeight > 280) {
+            doc.addPage();
+            yPos = 22;
+        }
 
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text(`Card ${index + 1} - Back:`, 14, yPos);
-      yPos += 7;
+        doc.setFillColor(colorTheme.pdf.bg[0], colorTheme.pdf.bg[1], colorTheme.pdf.bg[2]);
+        doc.roundedRect(14, yPos, 182, cardHeight, 3, 3, 'F');
+        
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(colorTheme.pdf.text[0], colorTheme.pdf.text[1], colorTheme.pdf.text[2]);
+        doc.text(title, 20, yPos + 10);
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(12);
-      const backText = doc.splitTextToSize(card.back, 180);
-      doc.text(backText, 14, yPos);
-      yPos += backText.length * 5 + 10;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
+        doc.text(textLines, 20, yPos + 20);
+        
+        return cardHeight + 5;
+      };
+
+      yPos += drawCard(`Card ${index + 1} - Front`, card.front);
+      yPos += drawCard(`Card ${index + 1} - Back`, card.back);
+      yPos += 5; // Extra space between card pairs
     });
 
-    doc.save("texio-flashcards.pdf");
+    doc.save(`texio-flashcards-${colorTheme.id}.pdf`);
   };
 
   const currentCard = result?.flashcards[currentCardIndex];
@@ -148,13 +166,15 @@ export function FlashcardGeneratorTab() {
                 <Card 
                     onClick={() => setIsFlipped(f => !f)}
                     className={cn(
-                        "w-full h-96 bg-background/50 flex flex-col items-center justify-center text-center cursor-pointer relative group overflow-hidden",
+                        "w-full h-96 flex flex-col items-center justify-center text-center cursor-pointer relative group overflow-hidden transition-colors duration-500",
+                        colorTheme.bgFrontClass,
                         {'[perspective:1000px]': animationStyle === 'flip-h' || animationStyle === 'flip-v'}
                     )}
                 >
                     <div
                         className={cn(
                             "w-full h-full flex items-center justify-center transition-transform duration-700",
+                            colorTheme.textClass,
                             { '[transform-style:preserve-3d]': animationStyle === 'flip-h' || animationStyle === 'flip-v'},
                             { 'transform -rotate-y-180': isFlipped && animationStyle === 'flip-h' },
                             { 'transform -rotate-x-180': isFlipped && animationStyle === 'flip-v' }
@@ -167,7 +187,7 @@ export function FlashcardGeneratorTab() {
                             </div>
                         )}
                         {!isPending && !currentCard && (
-                             <div className="text-center text-muted-foreground p-4">
+                             <div className={cn("text-center p-4", colorTheme.id === 'default' ? 'text-muted-foreground' : colorTheme.textClass)}>
                                  <p>Your flashcards will appear here. Click a card to flip it.</p>
                             </div>
                         )}
@@ -176,6 +196,7 @@ export function FlashcardGeneratorTab() {
                                 {/* Front of the card */}
                                 <CardContent className={cn(
                                     "absolute w-full h-full flex items-center justify-center p-6 text-xl font-semibold transition-all duration-700",
+                                    colorTheme.bgFrontClass,
                                     { 'backface-hidden': animationStyle === 'flip-h' || animationStyle === 'flip-v' },
                                     { 'opacity-0': isFlipped && animationStyle === 'fade' },
                                     { 'scale-50 opacity-0': isFlipped && animationStyle === 'zoom' },
@@ -186,6 +207,7 @@ export function FlashcardGeneratorTab() {
                                 {/* Back of the card */}
                                 <CardContent className={cn(
                                     "absolute w-full h-full flex items-center justify-center p-6 text-lg transition-all duration-700",
+                                    colorTheme.bgBackClass,
                                     { 'backface-hidden transform rotate-y-180': animationStyle === 'flip-h' },
                                     { 'backface-hidden transform rotate-x-180': animationStyle === 'flip-v' },
                                     { 'opacity-0': !isFlipped && animationStyle === 'fade' },
@@ -212,17 +234,35 @@ export function FlashcardGeneratorTab() {
                             <ArrowRight className="h-5 w-5" />
                             </Button>
                         </div>
-                        <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
-                           {animationStyles.map(style => (
-                               <Button 
-                                   key={style.id}
-                                   variant={animationStyle === style.id ? 'default' : 'outline'}
-                                   size="sm"
-                                   onClick={() => setAnimationStyle(style.id)}
-                               >
-                                   {style.name}
-                               </Button>
-                           ))}
+                        <div className="flex flex-col items-center gap-3 mt-2 w-full">
+                           <Label className="text-sm font-medium text-muted-foreground">Animation Style</Label>
+                           <div className="flex flex-wrap items-center justify-center gap-2">
+                               {animationStyles.map(style => (
+                                   <Button 
+                                       key={style.id}
+                                       variant={animationStyle === style.id ? 'default' : 'outline'}
+                                       size="sm"
+                                       onClick={() => setAnimationStyle(style.id)}
+                                   >
+                                       {style.name}
+                                   </Button>
+                               ))}
+                           </div>
+                           <Label className="text-sm font-medium text-muted-foreground mt-2">Color Theme</Label>
+                           <div className="flex flex-wrap items-center justify-center gap-2">
+                               {colorThemes.map(theme => (
+                                   <Button 
+                                       key={theme.id}
+                                       variant="outline"
+                                       size="icon"
+                                       title={theme.name}
+                                       onClick={() => setColorTheme(theme)}
+                                       className={cn("h-8 w-8 rounded-full", { 'ring-2 ring-primary ring-offset-2': colorTheme.id === theme.id })}
+                                   >
+                                       <div className={cn("h-6 w-6 rounded-full", theme.bgFrontClass)}></div>
+                                   </Button>
+                               ))}
+                           </div>
                         </div>
                     </>
                 )}
@@ -262,3 +302,6 @@ export function FlashcardGeneratorTab() {
     </div>
   );
 }
+
+
+    
