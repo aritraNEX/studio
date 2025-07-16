@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -28,6 +28,7 @@ import { BatchSummaryTab } from "./batch-summary-tab";
 import { FormulaTab } from "./formula-tab";
 import { AITooltip } from "./ui/ai-tooltip";
 import { AssignmentMakerTab } from "./assignment-maker-tab";
+import { FlashcardGeneratorTab } from "./flashcard-generator-tab";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
@@ -89,6 +90,10 @@ export function TexioApp({ projectId }: TexioAppProps) {
                 <PenSquare className="h-5 w-5 mr-2" />
                 <span>Assign-mentor</span>
             </TabsTrigger>
+            <TabsTrigger value="flashcards" className="py-2.5">
+                <Copy className="h-5 w-5 mr-2" />
+                <span>Flashcards</span>
+            </TabsTrigger>
             <TabsTrigger value="formula" className="py-2.5">
                 <FunctionSquare className="h-5 w-5 mr-2" />
                 <span>Formula</span>
@@ -137,6 +142,9 @@ export function TexioApp({ projectId }: TexioAppProps) {
           </TabsContent>
           <TabsContent value="assign-mentor" className="pt-6">
             <AssignmentMakerTab />
+          </TabsContent>
+          <TabsContent value="flashcards" className="pt-6">
+            <FlashcardGeneratorTab />
           </TabsContent>
           <TabsContent value="formula" className="pt-6">
             <FormulaTab />
