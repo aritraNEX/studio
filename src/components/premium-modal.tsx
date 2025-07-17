@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "./ui/button";
 import { CheckCircle, Crown } from "lucide-react";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface PremiumModalProps {
   isOpen: boolean;
@@ -36,7 +37,7 @@ export function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[90vh] flex flex-col">
         <DialogHeader className="text-center items-center">
           <div className="bg-yellow-400/20 text-yellow-500 rounded-full p-3 w-fit mb-4 border border-yellow-500/30">
             <Crown className="h-8 w-8" />
@@ -46,17 +47,19 @@ export function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
             Unlock all features and supercharge your productivity.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-6">
-            <ul className="space-y-3">
-                {premiumFeatures.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                        <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-foreground">{feature}</span>
-                    </li>
-                ))}
-            </ul>
-        </div>
-        <DialogFooter className="flex-col gap-2">
+        <ScrollArea className="flex-grow">
+            <div className="py-6 pr-6">
+                <ul className="space-y-3">
+                    {premiumFeatures.map((feature, index) => (
+                        <li key={index} className="flex items-start gap-3">
+                            <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                            <span className="text-foreground">{feature}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </ScrollArea>
+        <DialogFooter className="flex-col gap-2 mt-auto">
             <p className="text-center text-muted-foreground text-sm">
                 Get unlimited access to everything for just
             </p>
