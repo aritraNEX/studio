@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "./ui/button";
+import { CheckoutButton } from "./checkout-button";
 import { CheckCircle, Crown } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 
@@ -29,11 +29,6 @@ const premiumFeatures = [
 ];
 
 export function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
-  const handleSubscribe = () => {
-    // This is where you would redirect to your Stripe checkout page
-    console.log("Redirecting to Stripe...");
-    onClose();
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -63,9 +58,7 @@ export function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
             <p className="text-center text-muted-foreground text-sm">
                 Get unlimited access to everything for just
             </p>
-            <Button size="lg" className="w-full text-lg font-bold" onClick={handleSubscribe}>
-                Upgrade Now for $1.50/month
-            </Button>
+            <CheckoutButton onSuccess={onClose} />
         </DialogFooter>
       </DialogContent>
     </Dialog>
