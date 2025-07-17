@@ -1,8 +1,9 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
-import { Copy, Loader2, Sparkles, SpellCheck } from "lucide-react";
+import { useState, useTransition, useRef } from "react";
+import Image from "next/image";
+import { Copy, Loader2, Sparkles, SpellCheck, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,22 +12,109 @@ import { processImageText, ProcessImageTextOutput } from "@/ai/flows/paraphrase-
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import * as diffmatchpatch from 'diff-match-patch';
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
+import { db, storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import * as pdfjsLib from "pdfjs-dist";
+import mammoth from "mammoth";
 
 const dmp = new diffmatchpatch.diff_match_patch();
 const { DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL } = diffmatchpatch;
 
 export function GrammarCheckTab() {
   const [inputText, setInputText] = useState<string>("");
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [isParsing, setIsParsing] = useState(false);
   const [result, setResult] = useState<ProcessImageTextOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (file: File) => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Authentication required', description: 'You must be signed in to upload files.' });
+      return;
+    }
+    if (!file) return;
+
+    setFileUrl(null);
+    setInputText("");
+    setResult(null);
+    setError(null);
+    setIsParsing(true);
+
+     try {
+        const storageRef = ref(storage, `uploads/${user.uid}/${Date.now()}-${file.name}`);
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
+
+        setFileUrl(downloadURL); 
+
+        const fileType = file.type;
+        if (fileType.startsWith("image/")) {
+            setInputText(""); // Let AI handle extraction from URL
+        } else {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const buffer = e.target?.result as ArrayBuffer;
+                    if (fileType === 'application/pdf') {
+                        const pdf = await pdfjsLib.getDocument(buffer).promise;
+                        let text = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const content = await page.getTextContent();
+                            text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
+                        }
+                        setInputText(text);
+                    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                        const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+                        setInputText(result.value);
+                    }
+                } catch (err) {
+                     toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not read text from ${file.name}.` });
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    } catch (error) {
+      console.error("Upload failed", error);
+      toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not upload your file to storage.'});
+    } finally {
+        setIsParsing(false);
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+        handleFileUpload(file);
+    }
+  };
+  
+  const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+        handleFileUpload(file);
+    }
+  };
 
   const handleGrammarCheck = () => {
-    if (!inputText.trim()) {
+    const hasFile = !!fileUrl;
+    const hasText = !!inputText.trim();
+
+    if (!hasFile && !hasText) {
       toast({
-        title: "Text is empty",
-        description: "Please enter some text to check.",
+        title: "No Content",
+        description: "Please upload a file or enter some text to check.",
         variant: "destructive",
       });
       return;
@@ -37,9 +125,19 @@ export function GrammarCheckTab() {
 
     startTransition(async () => {
       try {
-        const checkResult = await processImageText({ text: inputText, operation: 'grammar' });
+        const payload = {
+            operation: 'grammar' as const,
+            ...(fileUrl && !inputText ? { fileUrl } : { text: inputText })
+        };
+        const checkResult = await processImageText(payload);
+
         if (checkResult && checkResult.processedText) {
           setResult(checkResult);
+          // If input text was empty (file-only), populate it with corrected text for diff
+          if (!inputText && checkResult.processedText) {
+              const originalTextResult = await processImageText({ fileUrl, operation: 'style', targetStyle: 'original' });
+              setInputText(originalTextResult.processedText);
+          }
         } else {
           throw new Error("The AI returned an empty result.");
         }
@@ -87,15 +185,58 @@ export function GrammarCheckTab() {
     <div className="flex flex-col gap-8">
       <div className="grid md:grid-cols-2 gap-8 items-start">
         <div className="flex flex-col gap-4">
-          <Label htmlFor="grammar-input" className="font-semibold text-md">
-            Enter Your Text
+          <Label htmlFor="grammar-upload" className="font-semibold text-md">
+            Upload File or Enter Text
           </Label>
+          <div className="relative">
+            <input
+                type="file"
+                id="grammar-upload"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="sr-only"
+                accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            />
+            <label
+                htmlFor="grammar-upload"
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                className={cn(
+                "group flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
+                "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
+                )}
+            >
+                {isParsing ? (
+                <div className="flex flex-col items-center justify-center text-center p-4">
+                    <Loader2 className="w-10 h-10 mb-3 text-primary animate-spin" />
+                    <p className="text-sm text-muted-foreground">Uploading & Parsing...</p>
+                </div>
+                ) : fileUrl ? (
+                <div className="relative w-full h-full p-2">
+                    <Image
+                    src={fileUrl}
+                    alt="Uploaded content"
+                    fill
+                    className="rounded-lg object-contain"
+                    />
+                </div>
+                ) : (
+                <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
+                    <Upload className="w-10 h-10 mb-3 text-muted-foreground transition-transform duration-300 group-hover:scale-110 group-hover:text-primary" />
+                    <p className="mb-2 text-sm text-muted-foreground">
+                    <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-muted-foreground">Image, PDF, or DOCX files</p>
+                </div>
+                )}
+            </label>
+        </div>
           <Textarea
             id="grammar-input"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Paste your text here to check for grammar, spelling, and punctuation errors..."
-            className="h-96 resize-y bg-background focus-visible:ring-accent"
+            placeholder="Or paste your text here to check for grammar, spelling, and punctuation errors..."
+            className="h-48 resize-y bg-background focus-visible:ring-accent"
             disabled={isPending}
           />
         </div>
@@ -139,7 +280,7 @@ export function GrammarCheckTab() {
       <div className="flex flex-col items-center justify-center gap-4 py-4">
         <Button
           onClick={handleGrammarCheck}
-          disabled={!inputText.trim() || isPending}
+          disabled={(!fileUrl && !inputText.trim()) || isPending}
           size="lg"
           className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 sm:w-auto"
         >
@@ -155,3 +296,5 @@ export function GrammarCheckTab() {
     </div>
   );
 }
+
+    
