@@ -10,7 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 import { processImageText, ProcessImageTextOutput } from "@/ai/flows/paraphrase-image-text";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "./ui/scroll-area";
-import { DiffMatchPatch, DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL } from 'diff-match-patch';
+import * as diffmatchpatch from 'diff-match-patch';
+
+const dmp = new diffmatchpatch.diff_match_patch();
+const { DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL } = diffmatchpatch;
 
 export function GrammarCheckTab() {
   const [inputText, setInputText] = useState<string>("");
@@ -64,7 +67,6 @@ export function GrammarCheckTab() {
   
   const renderDiff = () => {
     if (!result) return null;
-    const dmp = new DiffMatchPatch();
     const diffs = dmp.diff_main(inputText, result.processedText);
     dmp.diff_cleanupSemantic(diffs);
 
