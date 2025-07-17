@@ -47,8 +47,8 @@ export function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
             Unlock all features and supercharge your productivity.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="flex-grow">
-            <div className="py-6 pr-6">
+        <ScrollArea className="flex-grow my-4">
+            <div className="pr-6">
                 <ul className="space-y-3">
                     {premiumFeatures.map((feature, index) => (
                         <li key={index} className="flex items-start gap-3">
@@ -59,7 +59,7 @@ export function PremiumModal({ isOpen, onClose }: PremiumModalProps) {
                 </ul>
             </div>
         </ScrollArea>
-        <DialogFooter className="flex-col gap-2 mt-auto">
+        <DialogFooter className="flex-col gap-2 mt-auto pt-4 border-t">
             <p className="text-center text-muted-foreground text-sm">
                 Get unlimited access to everything for just
             </p>
