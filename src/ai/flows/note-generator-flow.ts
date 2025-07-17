@@ -63,10 +63,18 @@ const noteGeneratorFlow = ai.defineFlow(
     }
   },
   async (input) => {
-    const {output} = await noteGeneratorPrompt(input);
-    if (!output) {
-        throw new Error("The model did not return any output.");
+    try {
+        const {output} = await noteGeneratorPrompt(input);
+        if (!output) {
+            throw new Error("The model did not return any output.");
+        }
+        return output;
+    } catch (e: any) {
+        if (e.message?.includes('overloaded')) {
+            throw new Error('The AI model is currently busy. Please try again in a moment.');
+        }
+        // Re-throw other errors
+        throw e;
     }
-    return output;
   }
 );
