@@ -11,3 +11,4 @@ import '@/ai/flows/flashcard-generator-flow.ts';
 import '@/ai/flows/citation-generator-flow.ts';
 import '@/ai/flows/concept-explainer-flow.ts';
 import '@/ai/flows/diagram-generator-flow.ts';
+import '@/ai/flows/note-generator-flow.ts';

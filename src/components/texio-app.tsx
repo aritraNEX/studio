@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, Crown } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, Crown, StickyNote } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -37,6 +37,7 @@ import { useSubscription } from "@/contexts/subscription-context";
 import { PremiumModal } from "./premium-modal";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
+import { NoteGeneratorTab } from "./note-generator-tab";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -145,6 +146,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
             {renderTabTrigger("batch-summary", <Rows3 className="h-5 w-5 mr-2" />, "Batch Summary")}
             {renderTabTrigger("style", <Palette className="h-5 w-5 mr-2" />, "Style")}
             {renderTabTrigger("assign-mentor", <PenSquare className="h-5 w-5 mr-2" />, "Assign-mentor")}
+            {renderTabTrigger("note-mentor", <StickyNote className="h-5 w-5 mr-2" />, "Note-mentor")}
             {renderTabTrigger("flashcards", <Copy className="h-5 w-5 mr-2" />, "Flashcards")}
             {renderTabTrigger("citations", <BookA className="h-5 w-5 mr-2" />, "Citations")}
             {renderTabTrigger("formula", <FunctionSquare className="h-5 w-5 mr-2" />, "Formula")}
@@ -183,6 +185,9 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
           </TabsContent>
           <TabsContent value="assign-mentor" className="pt-6">
             <AssignmentMakerTab />
+          </TabsContent>
+           <TabsContent value="note-mentor" className="pt-6">
+            <NoteGeneratorTab />
           </TabsContent>
           <TabsContent value="flashcards" className="pt-6">
             <FlashcardGeneratorTab />
