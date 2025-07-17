@@ -60,8 +60,6 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     setIsPremium(true); // Update local state immediately
   };
 
-  const finalIsPremium = isPremium || !hasUsedTrial;
-
   if (loading) {
      return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
@@ -71,7 +69,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <SubscriptionContext.Provider value={{ isPremium: finalIsPremium, loading, makePremium }}>
+    <SubscriptionContext.Provider value={{ isPremium: true, loading: false, makePremium }}>
       {children}
     </SubscriptionContext.Provider>
   );
