@@ -3,20 +3,23 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /workspaces/{workspaceId} {
-        allow read: if true;
-        allow write: if request.auth.uid == resource.data.ownerId;
+
+    // Users can read their own user document to check for premium status, but cannot write to it.
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // Prevent client-side writes for security
     }
+
+    // Users can create, read, and delete their own projects.
     match /projects/{projectId} {
-      // Allow individual read/write/delete only if the user is the owner
-      allow read, delete, update: if request.auth.uid == resource.data.userId;
-      
-      // Allow users to create new projects
-      allow create: if request.auth.uid != null;
-      
-      // Allow users to list (query) projects if they are logged in.
-      // The client-side query ensures they only fetch their own projects.
-      allow list: if request.auth.uid != null;
+      allow read, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Anyone can read a shared workspace, but only the owner can create/update it.
+    match /workspaces/{workspaceId} {
+      allow read: if true;
+      allow create, update: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
     }
   }
 }
