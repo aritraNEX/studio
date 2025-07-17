@@ -51,8 +51,9 @@ Follow these instructions precisely:
     -   For a 'timeline', represent key events or milestones in chronological order.
 3.  Generate the complete and valid Mermaid.js syntax for this diagram. The syntax MUST start with the correct diagram type declaration (e.g., 'graph TD', 'mindmap', 'timeline').
 4.  IMPORTANT: When defining nodes, do NOT use special characters like parentheses () in the node IDs. For example, use 'node_id' instead of 'node(id)'.
-5.  Ensure the syntax is clean, well-structured, and immediately renderable by the Mermaid.js library. Do not include any explanatory text, comments, or Markdown formatting like \`\`\`mermaid ... \`\`\`.
-6.  Place the final, raw Mermaid syntax directly into the 'mermaidSyntax' field of the JSON output.
+5.  CRITICAL: When defining a node's text, you **MUST** enclose the text in double quotes. For example, use \`id["This is the text"]\` instead of \`id[This is the text]\`. This is essential to handle special characters correctly.
+6.  Ensure the syntax is clean, well-structured, and immediately renderable by the Mermaid.js library. Do not include any explanatory text, comments, or Markdown formatting like \`\`\`mermaid ... \`\`\`.
+7.  Place the final, raw Mermaid syntax directly into the 'mermaidSyntax' field of the JSON output.
 `,
 });
 
