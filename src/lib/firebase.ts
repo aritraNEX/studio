@@ -20,8 +20,12 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Initialize App Check on the client side only
-if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY) {
+// Initialize App Check on the client side only, and not on localhost
+if (
+    typeof window !== 'undefined' && 
+    process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY &&
+    window.location.hostname !== "localhost"
+) {
     try {
         initializeAppCheck(app, {
             provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY),
