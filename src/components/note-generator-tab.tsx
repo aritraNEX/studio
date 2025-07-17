@@ -44,11 +44,18 @@ export function NoteGeneratorTab() {
         }
       } catch (e) {
         console.error(e);
-        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
+        let errorMessage = "An unknown error occurred.";
+        if (e instanceof Error) {
+            if (e.message.includes('overloaded')) {
+                errorMessage = "The AI model is currently busy. Please try again in a moment.";
+            } else {
+                errorMessage = e.message;
+            }
+        }
         setError(`Failed to generate notes. ${errorMessage}`);
         toast({
           title: "Note Generation Error",
-          description: "An error occurred while generating the notes. Please try again.",
+          description: errorMessage,
           variant: "destructive",
         });
       }
