@@ -3,13 +3,14 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './auth-context';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 
 interface SubscriptionContextType {
   isPremium: boolean;
   loading: boolean;
+  makePremium: () => Promise<void>;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
@@ -52,6 +53,13 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, authLoading]);
 
+  const makePremium = async () => {
+    if (!user) return;
+    const userRef = doc(db, 'users', user.uid);
+    await updateDoc(userRef, { isPremium: true });
+    setIsPremium(true); // Update local state immediately
+  };
+
   const finalIsPremium = isPremium || !hasUsedTrial;
 
   if (loading) {
@@ -63,7 +71,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <SubscriptionContext.Provider value={{ isPremium: finalIsPremium, loading }}>
+    <SubscriptionContext.Provider value={{ isPremium: finalIsPremium, loading, makePremium }}>
       {children}
     </SubscriptionContext.Provider>
   );
