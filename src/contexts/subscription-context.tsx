@@ -17,36 +17,43 @@ const SubscriptionContext = createContext<SubscriptionContextType | undefined>(u
 export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const { user, loading: authLoading } = useAuth();
   const [isPremium, setIsPremium] = useState(false);
+  const [hasUsedTrial, setHasUsedTrial] = useState(true); // Default to true
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authLoading) return; // Wait for authentication to resolve
+    if (authLoading) return;
 
     if (user) {
-      // User is logged in, check their subscription status from Firestore
       const docRef = doc(db, 'users', user.uid);
       const unsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists() && docSnap.data().isPremium === true) {
-          setIsPremium(true);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setIsPremium(data.isPremium === true);
+          setHasUsedTrial(data.hasUsedTrial === true);
         } else {
+          // Document might not exist yet for new user, defaults are fine
           setIsPremium(false);
+          setHasUsedTrial(false);
         }
         setLoading(false);
       }, (error) => {
         console.error("Failed to listen to user subscription status:", error);
         setIsPremium(false);
+        setHasUsedTrial(true);
         setLoading(false);
       });
 
       return () => unsubscribe();
     } else {
-      // User is not logged in, they are on the free plan by default
+      // Not logged in, no premium, no trial
       setIsPremium(false);
+      setHasUsedTrial(true);
       setLoading(false);
     }
   }, [user, authLoading]);
 
-  // While loading subscription status, we can show a loader or nothing
+  const finalIsPremium = isPremium || !hasUsedTrial;
+
   if (loading) {
      return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
@@ -56,7 +63,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <SubscriptionContext.Provider value={{ isPremium, loading }}>
+    <SubscriptionContext.Provider value={{ isPremium: finalIsPremium, loading }}>
       {children}
     </SubscriptionContext.Provider>
   );

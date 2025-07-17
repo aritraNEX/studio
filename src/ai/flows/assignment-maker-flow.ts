@@ -11,6 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { googleSearch } from '@/ai/tools/google-search-tool';
+import {setTrialUsed} from '@/lib/firebase-admin';
 
 const AssignmentMakerInputSchema = z.object({
   topic: z.string().describe('The topic for the assignment.'),
@@ -55,6 +56,14 @@ const assignmentMakerFlow = ai.defineFlow(
     name: 'assignmentMakerFlow',
     inputSchema: AssignmentMakerInputSchema,
     outputSchema: AssignmentMakerOutputSchema,
+    auth: {
+      required: true,
+      policy(auth, input) {
+        if (!auth.isPremium) {
+           setTrialUsed(auth.uid);
+        }
+      }
+    }
   },
   async (input) => {
     const {output} = await assignmentMakerPrompt(input);

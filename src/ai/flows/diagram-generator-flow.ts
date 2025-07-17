@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {setTrialUsed} from '@/lib/firebase-admin';
 
 const DiagramGeneratorInputSchema = z.object({
   topic: z.string().describe('The topic for the diagram.'),
@@ -60,6 +61,14 @@ const diagramGeneratorFlow = ai.defineFlow(
     name: 'diagramGeneratorFlow',
     inputSchema: DiagramGeneratorInputSchema,
     outputSchema: DiagramGeneratorOutputSchema,
+    auth: {
+      required: true,
+      policy(auth, input) {
+        if (!auth.isPremium) {
+           setTrialUsed(auth.uid);
+        }
+      }
+    }
   },
   async (input) => {
     if (!input.topic.trim()) {

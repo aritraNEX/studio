@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {setTrialUsed} from '@/lib/firebase-admin';
 
 const GenerateTranscriptionInputSchema = z.object({
   videoDataUri: z
@@ -78,6 +79,14 @@ const transcriptionFlow = ai.defineFlow(
     name: 'transcriptionFlow',
     inputSchema: GenerateTranscriptionInputSchema,
     outputSchema: GenerateTranscriptionOutputSchema,
+    auth: {
+      required: true,
+      policy(auth, input) {
+        if (!auth.isPremium) {
+           setTrialUsed(auth.uid);
+        }
+      }
+    }
   },
   async (input) => {
     // Run transcription and language detection in parallel for efficiency

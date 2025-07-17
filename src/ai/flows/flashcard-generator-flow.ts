@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {setTrialUsed} from '@/lib/firebase-admin';
 
 const FlashcardGeneratorInputSchema = z.object({
   text: z.string().describe('The source text from which to generate flashcards.'),
@@ -57,6 +58,14 @@ const flashcardGeneratorFlow = ai.defineFlow(
     name: 'flashcardGeneratorFlow',
     inputSchema: FlashcardGeneratorInputSchema,
     outputSchema: FlashcardGeneratorOutputSchema,
+    auth: {
+      required: true,
+      policy(auth, input) {
+        if (!auth.isPremium) {
+           setTrialUsed(auth.uid);
+        }
+      }
+    }
   },
   async (input) => {
     if (!input.text.trim()) {

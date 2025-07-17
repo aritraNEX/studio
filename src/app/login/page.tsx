@@ -3,8 +3,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithPhoneNumber, sendPasswordResetEmail, RecaptchaVerifier, type ConfirmationResult } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithPhoneNumber, sendPasswordResetEmail, RecaptchaVerifier, type ConfirmationResult, type UserCredential } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -39,6 +40,11 @@ const countryCodes = [
     { name: 'South Africa', code: '+27', flag: '🇿🇦' },
 ];
 
+async function createUserDocument(user: UserCredential['user']) {
+    const userRef = doc(db, 'users', user.uid);
+    // Use set with merge: true to create or update without overwriting
+    await setDoc(userRef, { hasUsedTrial: false, isPremium: false }, { merge: true });
+}
 
 export default function LoginPage() {
   const [loginEmail, setLoginEmail] = useState('');
@@ -89,7 +95,8 @@ export default function LoginPage() {
   const handleSignUp = async () => {
     setIsPending(true);
     try {
-      await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
+      const userCredential = await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
+      await createUserDocument(userCredential.user);
       toast({ title: 'Successfully signed up!' });
       router.push('/');
     } catch (error: any) {
@@ -130,7 +137,8 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     try {
         auth.languageCode = 'en'; 
-        await signInWithPopup(auth, provider);
+        const userCredential = await signInWithPopup(auth, provider);
+        await createUserDocument(userCredential.user);
         toast({ title: 'Successfully signed in with Google!' });
         router.push('/');
     } catch (error: any) {
@@ -164,7 +172,8 @@ export default function LoginPage() {
     if (!confirmationResult) return;
     setIsPending(true);
     try {
-        await confirmationResult.confirm(otp);
+        const userCredential = await confirmationResult.confirm(otp);
+        await createUserDocument(userCredential.user);
         toast({ title: 'Successfully signed in!' });
         router.push('/');
     } catch (error: any) {
@@ -338,5 +347,3 @@ declare global {
     recaptchaVerifier: RecaptchaVerifier;
   }
 }
-
-    

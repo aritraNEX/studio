@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {setTrialUsed} from '@/lib/firebase-admin';
 
 const ResearchAssistantInputSchema = z.object({
   text: z.string().describe('The text containing claims to be fact-checked and cited.'),
@@ -58,6 +59,14 @@ const researchAssistantFlow = ai.defineFlow(
     name: 'researchAssistantFlow',
     inputSchema: ResearchAssistantInputSchema,
     outputSchema: ResearchAssistantOutputSchema,
+    auth: {
+      required: true,
+      policy(auth, input) {
+        if (!auth.isPremium) {
+           setTrialUsed(auth.uid);
+        }
+      }
+    }
   },
   async (input) => {
     if (!input.text.trim()) {
