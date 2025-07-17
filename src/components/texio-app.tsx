@@ -85,7 +85,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
     return (
       <TabsTrigger 
         value={value} 
-        className={cn("py-2.5", { "opacity-70": isPremiumFeature && !isPremium })}
+        className="py-2.5 flex-1"
         onClick={(e) => {
           if (isPremiumFeature && !isPremium) {
             e.preventDefault();
@@ -96,9 +96,6 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
         <div className="flex items-center gap-2">
             {icon}
             <span>{label}</span>
-            {isPremiumFeature && (
-              <Crown className="h-4 w-4 text-yellow-500" />
-            )}
         </div>
       </TabsTrigger>
     );
@@ -107,18 +104,29 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
 
   return (
      <Card className="w-full max-w-6xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
-      <CardHeader className="text-center pt-8 relative">
+      <CardHeader className="text-center pt-8">
+        <div className="flex justify-between items-start mb-4">
+            {!isPremium ? (
+              <Button variant="secondary" onClick={() => setPremiumModalOpen(true)} className="bg-yellow-400/80 text-yellow-900 hover:bg-yellow-400 invisible">
+                <Crown className="mr-2 h-4 w-4"/>
+                Go Premium
+              </Button>
+            ) : <div/>}
+            <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit shadow-lg shadow-primary/30">
+              <Sparkles className="h-8 w-8" />
+            </div>
+            <div className="w-28"/> {/* Spacer to balance the header */}
+        </div>
+
         {!isPremium && (
-          <div className="absolute top-4 left-4">
+          <div className="flex justify-center mb-4">
             <Button variant="secondary" onClick={() => setPremiumModalOpen(true)} className="bg-yellow-400/80 text-yellow-900 hover:bg-yellow-400">
               <Crown className="mr-2 h-4 w-4"/>
               Go Premium
             </Button>
           </div>
         )}
-        <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit mb-4 shadow-lg shadow-primary/30">
-          <Sparkles className="h-8 w-8" />
-        </div>
+        
         <CardTitle className="text-4xl font-bold tracking-tight">Tex.io Editor</CardTitle>
         <CardDescription className="text-lg text-muted-foreground/80">
           Your all-in-one AI-powered text and media toolkit.
