@@ -35,8 +35,8 @@ import { ConceptExplainerTab } from "./concept-explainer-tab";
 import { DiagramGeneratorTab } from "./diagram-generator-tab";
 import { useSubscription } from "@/contexts/subscription-context";
 import { PremiumModal } from "./premium-modal";
-import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -85,7 +85,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
     return (
       <TabsTrigger 
         value={value} 
-        className={cn("py-2.5 relative", { "opacity-70": isPremiumFeature && !isPremium })}
+        className={cn("py-2.5", { "opacity-70": isPremiumFeature && !isPremium })}
         onClick={(e) => {
           if (isPremiumFeature && !isPremium) {
             e.preventDefault();
@@ -96,13 +96,10 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
         <div className="flex items-center gap-2">
             {icon}
             <span>{label}</span>
+            {isPremiumFeature && (
+              <Crown className="h-4 w-4 text-yellow-500" />
+            )}
         </div>
-        {isPremiumFeature && (
-            <Badge variant="secondary" className="absolute -top-1.5 -right-1.5 text-xs bg-yellow-400 text-yellow-900 px-1.5 py-0.5">
-                <Crown className="h-3 w-3 mr-1"/>
-                Pro
-            </Badge>
-        )}
       </TabsTrigger>
     );
   };
@@ -110,7 +107,15 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
 
   return (
      <Card className="w-full max-w-6xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
-      <CardHeader className="text-center pt-8">
+      <CardHeader className="text-center pt-8 relative">
+        {!isPremium && (
+          <div className="absolute top-4 left-4">
+            <Button variant="secondary" onClick={() => setPremiumModalOpen(true)} className="bg-yellow-400/80 text-yellow-900 hover:bg-yellow-400">
+              <Crown className="mr-2 h-4 w-4"/>
+              Go Premium
+            </Button>
+          </div>
+        )}
         <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit mb-4 shadow-lg shadow-primary/30">
           <Sparkles className="h-8 w-8" />
         </div>
@@ -122,7 +127,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
       <CardContent className="p-4 sm:p-8 pt-2">
         <PremiumModal isOpen={isPremiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-10 mx-auto h-auto p-1.5 flex-wrap">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 mx-auto h-auto p-1.5 flex-wrap">
             {renderTabTrigger("paraphrase", <Quote className="h-5 w-5 mr-2" />, "Paraphrase")}
             {renderTabTrigger("summarize", <BookText className="h-5 w-5 mr-2" />, "Summarize")}
             {renderTabTrigger("translate", <Languages className="h-5 w-5 mr-2" />, "Translate")}
