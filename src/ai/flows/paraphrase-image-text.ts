@@ -95,16 +95,30 @@ const processImageTextFlow = ai.defineFlow(
         throw new Error('Invalid operation specified.');
     }
 
-    const {output} = await processImageTextPrompt({
-      fileUrl: input.fileUrl,
-      text: input.text,
-      instruction: instruction,
-    });
-    
-    if (!output) {
-      throw new Error('The model did not return any output.');
+    try {
+        const {output} = await processImageTextPrompt({
+        fileUrl: input.fileUrl,
+        text: input.text,
+        instruction: instruction,
+        });
+        
+        if (!output) {
+        throw new Error('The model did not return any output.');
+        }
+        
+        return output;
+    } catch (e: any) {
+        if (e.message?.includes('overloaded')) {
+            throw new Error('The AI model is currently busy. Please try again in a moment.');
+        }
+        if (e.message?.includes('API key not valid')) {
+            throw new Error('The AI service API key is not valid. Please check your configuration.');
+        }
+         if (e.message?.includes('Deadline exceeded')) {
+            throw new Error('The request to the AI model timed out. Please try again.');
+        }
+        // Re-throw other errors
+        throw e;
     }
-    
-    return output;
   }
 );
