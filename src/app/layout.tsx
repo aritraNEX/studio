@@ -2,10 +2,10 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import Script from "next/script";
 import { AuthProvider } from '@/contexts/auth-context';
 import { ABTestProvider } from '@/contexts/ab-test-context';
 import 'katex/dist/katex.min.css';
+import { SubscriptionProvider } from '@/contexts/subscription-context';
 
 export const metadata: Metadata = {
   title: 'Tex.io',
@@ -26,9 +26,11 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AuthProvider>
-          <ABTestProvider>
-            {children}
-          </ABTestProvider>
+          <SubscriptionProvider>
+            <ABTestProvider>
+              {children}
+            </ABTestProvider>
+          </SubscriptionProvider>
         </AuthProvider>
         <Toaster />
       </body>

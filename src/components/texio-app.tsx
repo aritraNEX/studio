@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2 } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, Crown } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -33,6 +33,10 @@ import { CitationGeneratorTab } from "./citation-generator-tab";
 import { GrammarCheckTab } from "./grammar-check-tab";
 import { ConceptExplainerTab } from "./concept-explainer-tab";
 import { DiagramGeneratorTab } from "./diagram-generator-tab";
+import { useSubscription } from "@/contexts/subscription-context";
+import { PremiumModal } from "./premium-modal";
+import { Badge } from "./ui/badge";
+import { cn } from "@/lib/utils";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -43,15 +47,27 @@ interface TexioAppProps {
   initialTopic?: string | null;
 }
 
+const freeFeatures = ['paraphrase', 'summarize', 'translate'];
+
 export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps) {
   const [activeTab, setActiveTab] = useState(initialTab || "paraphrase");
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
+  const { isPremium } = useSubscription();
+  const [isPremiumModalOpen, setPremiumModalOpen] = useState(false);
 
   useEffect(() => {
       if (initialTab) {
           setActiveTab(initialTab);
       }
   }, [initialTab]);
+
+  const handleTabChange = (newTab: string) => {
+    if (!freeFeatures.includes(newTab) && !isPremium) {
+      setPremiumModalOpen(true);
+    } else {
+      setActiveTab(newTab);
+    }
+  };
 
   const handleSendTo = (text: string, operation: Operation) => {
     if (operation === 'tts') {
@@ -63,6 +79,34 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
         setActiveTab("workspace");
     }
   };
+  
+  const renderTabTrigger = (value: string, icon: React.ReactNode, label: string) => {
+    const isPremiumFeature = !freeFeatures.includes(value);
+    return (
+      <TabsTrigger 
+        value={value} 
+        className={cn("py-2.5 relative", { "opacity-70": isPremiumFeature && !isPremium })}
+        onClick={(e) => {
+          if (isPremiumFeature && !isPremium) {
+            e.preventDefault();
+            setPremiumModalOpen(true);
+          }
+        }}
+      >
+        <div className="flex items-center gap-2">
+            {icon}
+            <span>{label}</span>
+        </div>
+        {isPremiumFeature && (
+            <Badge variant="secondary" className="absolute -top-1.5 -right-1.5 text-xs bg-yellow-400 text-yellow-900 px-1.5 py-0.5">
+                <Crown className="h-3 w-3 mr-1"/>
+                Pro
+            </Badge>
+        )}
+      </TabsTrigger>
+    );
+  };
+
 
   return (
      <Card className="w-full max-w-6xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
@@ -76,88 +120,38 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
         </CardDescription>
       </CardHeader>
       <CardContent className="p-4 sm:p-8 pt-2">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-10 mx-auto h-auto p-1.5">
-            <TabsTrigger value="paraphrase" className="py-2.5">
-                <Quote className="h-5 w-5 mr-2" />
-                <span>Paraphrase</span>
-            </TabsTrigger>
-            <TabsTrigger value="summarize" className="py-2.5">
-                <BookText className="h-5 w-5 mr-2" />
-                <span>Summarize</span>
-            </TabsTrigger>
-            <TabsTrigger value="explainer" className="py-2.5">
-                <BrainCircuit className="h-5 w-5 mr-2" />
-                <span>Explainer</span>
-            </TabsTrigger>
-             <TabsTrigger value="diagrams" className="py-2.5">
-                <Share2 className="h-5 w-5 mr-2" />
-                <span>Diagrams</span>
-            </TabsTrigger>
-            <TabsTrigger value="grammar" className="py-2.5">
-                <SpellCheck className="h-5 w-5 mr-2" />
-                <span>Grammar</span>
-            </TabsTrigger>
-             <TabsTrigger value="batch-summary" className="py-2.5">
-                <Rows3 className="h-5 w-5 mr-2" />
-                <span>Batch Summary</span>
-            </TabsTrigger>
-            <TabsTrigger value="translate" className="py-2.5">
-                <Languages className="h-5 w-5 mr-2" />
-                <span>Translate</span>
-            </TabsTrigger>
-            <TabsTrigger value="style" className="py-2.5">
-                <Palette className="h-5 w-5 mr-2" />
-                <span>Style</span>
-            </TabsTrigger>
-             <TabsTrigger value="assign-mentor" className="py-2.5">
-                <PenSquare className="h-5 w-5 mr-2" />
-                <span>Assign-mentor</span>
-            </TabsTrigger>
-            <TabsTrigger value="flashcards" className="py-2.5">
-                <Copy className="h-5 w-5 mr-2" />
-                <span>Flashcards</span>
-            </TabsTrigger>
-            <TabsTrigger value="citations" className="py-2.5">
-                <BookA className="h-5 w-5 mr-2" />
-                <span>Citations</span>
-            </TabsTrigger>
-            <TabsTrigger value="formula" className="py-2.5">
-                <FunctionSquare className="h-5 w-5 mr-2" />
-                <span>Formula</span>
-            </TabsTrigger>
-            <TabsTrigger value="video-to-text" className="py-2.5">
-                <Video className="h-5 w-5 mr-2" />
-                <span>Video to Text</span>
-            </TabsTrigger>
-             <AITooltip>
-                 <TabsTrigger value="workspace" className="py-2.5">
-                    <Wand2 className="h-5 w-5 mr-2" />
-                    <span>Workspace</span>
-                </TabsTrigger>
+        <PremiumModal isOpen={isPremiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-10 mx-auto h-auto p-1.5 flex-wrap">
+            {renderTabTrigger("paraphrase", <Quote className="h-5 w-5 mr-2" />, "Paraphrase")}
+            {renderTabTrigger("summarize", <BookText className="h-5 w-5 mr-2" />, "Summarize")}
+            {renderTabTrigger("translate", <Languages className="h-5 w-5 mr-2" />, "Translate")}
+            {renderTabTrigger("explainer", <BrainCircuit className="h-5 w-5 mr-2" />, "Explainer")}
+            {renderTabTrigger("diagrams", <Share2 className="h-5 w-5 mr-2" />, "Diagrams")}
+            {renderTabTrigger("grammar", <SpellCheck className="h-5 w-5 mr-2" />, "Grammar")}
+            {renderTabTrigger("batch-summary", <Rows3 className="h-5 w-5 mr-2" />, "Batch Summary")}
+            {renderTabTrigger("style", <Palette className="h-5 w-5 mr-2" />, "Style")}
+            {renderTabTrigger("assign-mentor", <PenSquare className="h-5 w-5 mr-2" />, "Assign-mentor")}
+            {renderTabTrigger("flashcards", <Copy className="h-5 w-5 mr-2" />, "Flashcards")}
+            {renderTabTrigger("citations", <BookA className="h-5 w-5 mr-2" />, "Citations")}
+            {renderTabTrigger("formula", <FunctionSquare className="h-5 w-5 mr-2" />, "Formula")}
+            {renderTabTrigger("video-to-text", <Video className="h-5 w-5 mr-2" />, "Video to Text")}
+            <AITooltip>
+              {renderTabTrigger("workspace", <Wand2 className="h-5 w-5 mr-2" />, "Workspace")}
             </AITooltip>
-             <TabsTrigger value="research" className="py-2.5">
-                <GraduationCap className="h-5 w-5 mr-2" />
-                <span>Research</span>
-            </TabsTrigger>
-            <TabsTrigger value="plagiarism" className="py-2.5">
-                <ShieldCheck className="h-5 w-5 mr-2" />
-                <span>Plagiarism</span>
-            </TabsTrigger>
-             <TabsTrigger value="tts" className="py-2.5">
-                <AudioLines className="h-5 w-5 mr-2" />
-                <span>TTS</span>
-            </TabsTrigger>
-            <TabsTrigger value="notepad" className="py-2.5">
-                <Notebook className="h-5 w-5 mr-2" />
-                <span>Notepad</span>
-            </TabsTrigger>
+            {renderTabTrigger("research", <GraduationCap className="h-5 w-5 mr-2" />, "Research")}
+            {renderTabTrigger("plagiarism", <ShieldCheck className="h-5 w-5 mr-2" />, "Plagiarism")}
+            {renderTabTrigger("tts", <AudioLines className="h-5 w-5 mr-2" />, "TTS")}
+            {renderTabTrigger("notepad", <Notebook className="h-5 w-5 mr-2" />, "Notepad")}
           </TabsList>
           <TabsContent value="paraphrase" className="pt-6">
             <OperationTab operation="paraphrase" onSendTo={handleSendTo} projectId={projectId} />
           </TabsContent>
           <TabsContent value="summarize" className="pt-6">
             <OperationTab operation="summarize" onSendTo={handleSendTo} projectId={projectId} />
+          </TabsContent>
+          <TabsContent value="translate" className="pt-6">
+            <OperationTab operation="translate" onSendTo={handleSendTo} projectId={projectId} />
           </TabsContent>
           <TabsContent value="explainer" className="pt-6">
             <ConceptExplainerTab />
@@ -170,9 +164,6 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
           </TabsContent>
           <TabsContent value="batch-summary" className="pt-6">
             <BatchSummaryTab />
-          </TabsContent>
-          <TabsContent value="translate" className="pt-6">
-            <OperationTab operation="translate" onSendTo={handleSendTo} projectId={projectId} />
           </TabsContent>
           <TabsContent value="style" className="pt-6">
             <OperationTab operation="style" onSendTo={handleSendTo} projectId={projectId} />
