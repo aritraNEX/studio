@@ -94,9 +94,9 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
           }
         }}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2">
             {icon}
-            <span>{label}</span>
+            <span className="hidden sm:inline-block">{label}</span>
         </div>
       </TabsTrigger>
     );
@@ -133,31 +133,31 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
           Your all-in-one AI-powered text and media toolkit.
         </CardDescription>
       </CardHeader>
-      <CardContent className="p-4 sm:p-8 pt-2">
+      <CardContent className="p-2 sm:p-8 pt-2">
         <PremiumModal isOpen={isPremiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 mx-auto h-auto p-1.5 flex-wrap">
-            {renderTabTrigger("paraphrase", <Quote className="h-5 w-5 mr-2" />, "Paraphrase")}
-            {renderTabTrigger("summarize", <BookText className="h-5 w-5 mr-2" />, "Summarize")}
-            {renderTabTrigger("translate", <Languages className="h-5 w-5 mr-2" />, "Translate")}
-            {renderTabTrigger("explainer", <BrainCircuit className="h-5 w-5 mr-2" />, "Explainer")}
-            {renderTabTrigger("diagrams", <Share2 className="h-5 w-5 mr-2" />, "Diagrams")}
-            {renderTabTrigger("grammar", <SpellCheck className="h-5 w-5 mr-2" />, "Grammar")}
-            {renderTabTrigger("batch-summary", <Rows3 className="h-5 w-5 mr-2" />, "Batch Summary")}
-            {renderTabTrigger("style", <Palette className="h-5 w-5 mr-2" />, "Style")}
-            {renderTabTrigger("assign-mentor", <PenSquare className="h-5 w-5 mr-2" />, "Assign-mentor")}
-            {renderTabTrigger("note-mentor", <StickyNote className="h-5 w-5 mr-2" />, "Note-mentor")}
-            {renderTabTrigger("flashcards", <Copy className="h-5 w-5 mr-2" />, "Flashcards")}
-            {renderTabTrigger("citations", <BookA className="h-5 w-5 mr-2" />, "Citations")}
-            {renderTabTrigger("formula", <FunctionSquare className="h-5 w-5 mr-2" />, "Formula")}
-            {renderTabTrigger("video-to-text", <Video className="h-5 w-5 mr-2" />, "Video to Text")}
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 mx-auto h-auto p-1.5 flex-wrap">
+            {renderTabTrigger("paraphrase", <Quote className="h-5 w-5" />, "Paraphrase")}
+            {renderTabTrigger("summarize", <BookText className="h-5 w-5" />, "Summarize")}
+            {renderTabTrigger("translate", <Languages className="h-5 w-5" />, "Translate")}
+            {renderTabTrigger("explainer", <BrainCircuit className="h-5 w-5" />, "Explainer")}
+            {renderTabTrigger("diagrams", <Share2 className="h-5 w-5" />, "Diagrams")}
+            {renderTabTrigger("grammar", <SpellCheck className="h-5 w-5" />, "Grammar")}
+            {renderTabTrigger("batch-summary", <Rows3 className="h-5 w-5" />, "Batch Summary")}
+            {renderTabTrigger("style", <Palette className="h-5 w-5" />, "Style")}
+            {renderTabTrigger("assign-mentor", <PenSquare className="h-5 w-5" />, "Assign-mentor")}
+            {renderTabTrigger("note-mentor", <StickyNote className="h-5 w-5" />, "Note-mentor")}
+            {renderTabTrigger("flashcards", <Copy className="h-5 w-5" />, "Flashcards")}
+            {renderTabTrigger("citations", <BookA className="h-5 w-5" />, "Citations")}
+            {renderTabTrigger("formula", <FunctionSquare className="h-5 w-5" />, "Formula")}
+            {renderTabTrigger("video-to-text", <Video className="h-5 w-5" />, "Video to Text")}
             <AITooltip>
-              {renderTabTrigger("workspace", <Wand2 className="h-5 w-5 mr-2" />, "Workspace")}
+              {renderTabTrigger("workspace", <Wand2 className="h-5 w-5" />, "Workspace")}
             </AITooltip>
-            {renderTabTrigger("research", <GraduationCap className="h-5 w-5 mr-2" />, "Research")}
-            {renderTabTrigger("plagiarism", <ShieldCheck className="h-5 w-5 mr-2" />, "Plagiarism")}
-            {renderTabTrigger("tts", <AudioLines className="h-5 w-5 mr-2" />, "TTS")}
-            {renderTabTrigger("notepad", <Notebook className="h-5 w-5 mr-2" />, "Notepad")}
+            {renderTabTrigger("research", <GraduationCap className="h-5 w-5" />, "Research")}
+            {renderTabTrigger("plagiarism", <ShieldCheck className="h-5 w-5" />, "Plagiarism")}
+            {renderTabTrigger("tts", <AudioLines className="h-5 w-5" />, "TTS")}
+            {renderTabTrigger("notepad", <Notebook className="h-5 w-5" />, "Notepad")}
           </TabsList>
           <TabsContent value="paraphrase" className="pt-6">
             <OperationTab operation="paraphrase" onSendTo={handleSendTo} projectId={projectId} />

@@ -100,7 +100,7 @@ export function ConceptExplainerTab() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col items-center justify-center gap-4">
-        <Label htmlFor="explainer-topic" className="text-xl font-bold tracking-tight">
+        <Label htmlFor="explainer-topic" className="text-xl font-bold tracking-tight text-center">
           What complex topic can I simplify for you?
         </Label>
         <div className="flex w-full max-w-lg items-center space-x-2">
@@ -108,7 +108,7 @@ export function ConceptExplainerTab() {
                 id="explainer-topic"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g., Quantum Computing, Black Holes, Neural Networks"
+                placeholder="e.g., Quantum Computing, Black Holes"
                 className="bg-background focus-visible:ring-accent text-base h-12"
                 disabled={isPending}
                 onKeyDown={(e) => e.key === 'Enter' && handleExplain()}
@@ -130,7 +130,7 @@ export function ConceptExplainerTab() {
         {error && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
       </div>
 
-      <div className="relative w-full min-h-[500px] bg-muted/30 rounded-2xl p-8 overflow-hidden">
+      <div className="relative w-full min-h-[500px] bg-muted/30 rounded-2xl p-4 sm:p-8 overflow-hidden">
         {isPending && !result && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted-foreground animate-in fade-in duration-500">
             <LucideIcons.Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -146,7 +146,7 @@ export function ConceptExplainerTab() {
         {result && (
             <ScrollArea className="h-[70vh] w-full">
                 <div className="text-center animate-in fade-in-0 slide-in-from-top-10 duration-700 pr-6">
-                    <h2 className="text-4xl font-extrabold tracking-tight text-primary">{result.title}</h2>
+                    <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-primary">{result.title}</h2>
                     <p className="mt-2 text-lg text-muted-foreground">{result.introduction}</p>
                     <div 
                         className={cn(
@@ -158,16 +158,16 @@ export function ConceptExplainerTab() {
                             <div
                                 key={index}
                                 className={cn(
-                                    "flex flex-col items-center text-left p-6 bg-card rounded-xl shadow-lg border border-border/50 transition-all duration-700 ease-out",
+                                    "flex flex-col items-start text-left p-6 bg-card rounded-xl shadow-lg border border-border/50 transition-all duration-700 ease-out",
                                     index <= visibleStep 
                                         ? "opacity-100 translate-y-0 scale-100"
                                         : "opacity-0 translate-y-10 scale-90"
                                 )}
                             >
-                                <div className="p-3 bg-primary/10 text-primary rounded-full mb-4">
+                                <div className="p-3 bg-primary/10 text-primary rounded-full mb-4 self-center">
                                 <IconComponent name={step.icon} />
                                 </div>
-                                <h3 className="text-xl font-bold mb-2 text-foreground text-center">{step.title}</h3>
+                                <h3 className="text-xl font-bold mb-2 text-foreground text-center w-full">{step.title}</h3>
                                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{step.explanation}</p>
                             </div>
                         ))}
