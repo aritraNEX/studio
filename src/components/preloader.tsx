@@ -57,13 +57,23 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
   const [show, setShow] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShow(false);
-      setTimeout(onAnimationComplete, 700); 
-    }, 1500); // Reduced delay from 5000ms to 1500ms
+    // We rely on the parent component's loading state to call onAnimationComplete.
+    // This timeout is just for the fade-out animation itself.
+    if (!show) {
+        const timer = setTimeout(() => {
+            onAnimationComplete();
+        }, 700);
+        return () => clearTimeout(timer);
+    }
+  }, [show, onAnimationComplete]);
+  
+  // Expose a function to the parent to hide the preloader
+  useEffect(() => {
+      const hidePreloader = () => setShow(false);
+      window.addEventListener('app-ready', hidePreloader);
+      return () => window.removeEventListener('app-ready', hidePreloader);
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [onAnimationComplete]);
 
   return (
     <div

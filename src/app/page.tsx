@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { TexioApp } from '@/components/texio-app';
 import Preloader from '@/components/preloader';
@@ -12,7 +12,7 @@ import UserMenu from '@/components/user-menu';
 import { WorkspaceProvider } from '@/contexts/workspace-context';
 
 function EditorContent() {
-  const [isAppLoading, setAppLoading] = React.useState(true);
+  const [isAppLoading, setAppLoading] = useState(true);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -20,39 +20,48 @@ function EditorContent() {
   const tab = searchParams.get('tab');
   const topic = searchParams.get('topic');
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
     }
   }, [user, authLoading, router]);
-  
-  if (authLoading || !user) {
-    return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
+
+  useEffect(() => {
+      if (!isAppLoading) {
+          window.dispatchEvent(new Event('app-ready'));
+      }
+  }, [isAppLoading]);
+
+  // Immediately render the preloader, but start the app logic.
+  // The preloader will be hidden by the 'app-ready' event when content is loaded.
+  useEffect(() => {
+    if (!authLoading) {
+      setAppLoading(false);
+    }
+  }, [authLoading]);
 
   return (
     <WorkspaceProvider>
-      <Preloader onAnimationComplete={() => setAppLoading(false)} />
-      <div className="absolute top-4 right-4 z-50">
-        <UserMenu />
-      </div>
-      <main className={cn(
-        "flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4 sm:p-8 transition-opacity duration-700",
-        isAppLoading ? "opacity-0" : "opacity-100"
-      )}>
-        <div className={cn("transition-transform duration-700", isAppLoading ? "scale-95" : "scale-100")}>
-          <TexioApp 
-            key={projectId || topic || 'new'} 
-            projectId={projectId} 
-            initialTab={tab}
-            initialTopic={topic}
-          />
+      <Preloader onAnimationComplete={() => {}} />
+      <div className={cn("transition-opacity duration-700", isAppLoading ? "opacity-0" : "opacity-100")}>
+        <div className="absolute top-4 right-4 z-50">
+          <UserMenu />
         </div>
-      </main>
+        <main className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4 sm:p-8">
+            {authLoading ? (
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            ) : (
+                <div className={cn("transition-transform duration-700", isAppLoading ? "scale-95" : "scale-100")}>
+                    <TexioApp 
+                        key={projectId || topic || 'new'} 
+                        projectId={projectId} 
+                        initialTab={tab}
+                        initialTopic={topic}
+                    />
+                </div>
+            )}
+        </main>
+      </div>
     </WorkspaceProvider>
   );
 }

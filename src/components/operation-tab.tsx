@@ -22,7 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
-import { useABTest } from "@/contexts/ab-test-context";
 import { useAuth } from "@/contexts/auth-context";
 import { db, storage } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
@@ -64,7 +63,6 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const fileInputRef = useRef<HTMLInputElement>(null);
   const outputTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [appUrl, setAppUrl] = useState('');
-  const { group } = useABTest();
   const { user } = useAuth();
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
   const [isSaving, setIsSaving] = useState(false);
@@ -338,10 +336,8 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     }
     window.open(url, '_blank', 'noopener,noreferrer');
   };
-  
-  const isButtonBVariant = group === 'B';
 
-  const buttonText = isButtonBVariant ? "Generate Now" : {
+  const buttonText = {
       paraphrase: 'Paraphrase',
       summarize: 'Summarize',
       translate: 'Translate',
@@ -577,13 +573,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             onClick={handleProcess}
             disabled={(!fileUrl && !extractedText?.trim()) || isPending || isParsing || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
-            variant={isButtonBVariant ? "outline" : "default"}
-            className={cn(
-              "w-full max-w-xs text-lg font-semibold transition-all duration-300 hover:scale-105 sm:w-auto",
-              isButtonBVariant 
-                ? "border-2 border-primary text-primary hover:text-primary hover:bg-primary/10" 
-                : "shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40"
-            )}
+            className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 sm:w-auto"
           >
             {isPending ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />

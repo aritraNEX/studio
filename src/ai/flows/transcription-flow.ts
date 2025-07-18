@@ -89,20 +89,18 @@ const transcriptionFlow = ai.defineFlow(
     }
   },
   async (input) => {
-    // Run transcription and language detection in parallel for efficiency
-    const [transcriptionResult, languageResult] = await Promise.all([
-        transcriptionPrompt(input),
-        languageDetectionPrompt({ videoDataUri: input.videoDataUri })
-    ]);
-    
-    const vtt = transcriptionResult.output?.vtt;
+    // Run language detection first
+    const languageResult = await languageDetectionPrompt({ videoDataUri: input.videoDataUri });
     const detectedLanguage = languageResult.output?.detectedLanguage;
-
+    if (!detectedLanguage) {
+      throw new Error('The model did not detect a language.');
+    }
+    
+    // Then run transcription, potentially with translation
+    const transcriptionResult = await transcriptionPrompt(input);
+    const vtt = transcriptionResult.output?.vtt;
     if (!vtt) {
       throw new Error('The model did not return any VTT transcription.');
-    }
-     if (!detectedLanguage) {
-      throw new Error('The model did not detect a language.');
     }
     
     return { vtt, detectedLanguage };
