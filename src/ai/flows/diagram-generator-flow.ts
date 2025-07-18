@@ -75,10 +75,23 @@ const diagramGeneratorFlow = ai.defineFlow(
     if (!input.topic.trim()) {
         throw new Error('Topic is empty. Please provide a topic for the diagram.');
     }
+    
     const {output} = await diagramGeneratorPrompt(input);
+    
     if (!output || !output.mermaidSyntax) {
         throw new Error("The model did not return any Mermaid syntax.");
     }
-    return output;
+
+    // Post-processing to fix unquoted node labels
+    const fixedSyntax = output.mermaidSyntax.replace(
+        /(\w+)(\[)([^"\]].*?[^"\]])(\])/g,
+        (match, nodeId, openBracket, content, closeBracket) => {
+            // Escape existing quotes inside the content before wrapping
+            const escapedContent = content.replace(/"/g, '#quot;');
+            return `${nodeId}["${escapedContent}"]`;
+        }
+    );
+
+    return { mermaidSyntax: fixedSyntax };
   }
 );
