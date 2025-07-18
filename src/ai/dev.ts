@@ -1,3 +1,4 @@
+
 import { config } from 'dotenv';
 config();
 
@@ -12,3 +13,4 @@ import '@/ai/flows/citation-generator-flow.ts';
 import '@/ai/flows/concept-explainer-flow.ts';
 import '@/ai/flows/diagram-generator-flow.ts';
 import '@/ai/flows/note-generator-flow.ts';
+import '@/ai/flows/create-checkout-session-flow.ts';

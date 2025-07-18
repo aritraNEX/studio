@@ -6,7 +6,8 @@ import { useStripe } from '@stripe/react-stripe-js';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { useSubscription } from '@/contexts/subscription-context';
+import { createCheckoutSession } from '@/ai/flows/create-checkout-session-flow';
+import { useAuth } from '@/contexts/auth-context';
 
 interface CheckoutButtonProps {
     onSuccess: () => void;
@@ -16,42 +17,40 @@ export function CheckoutButton({ onSuccess }: CheckoutButtonProps) {
     const stripe = useStripe();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
-    const { makePremium } = useSubscription();
+    const { user } = useAuth();
 
     const handleCheckout = async () => {
+        if (!user || !stripe) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'User not logged in or Stripe not loaded.',
+            });
+            return;
+        }
+
         setLoading(true);
         
-        // This is a placeholder. In a real application, you would:
-        // 1. Make a request to your backend (e.g., a Firebase Cloud Function).
-        // 2. Your backend would create a Stripe Checkout Session and return the session ID.
-        // 3. You would use that session ID to redirect to Stripe's payment page.
-
         try {
-            // --- Placeholder Start ---
-            console.log("Simulating checkout process...");
-            // In a real app, you would get this from your backend.
-            const sessionId = "cs_test_placeholder_session_id"; 
-            
-            // This is where you would redirect to Stripe.
-            // Since this is a placeholder, we will just log it and show a success message.
-            console.log(`Redirecting to Stripe with session ID: ${sessionId}`);
-
-            // await stripe?.redirectToCheckout({ sessionId });
-            
-            // Simulating a successful payment after a short delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // In a real app, a webhook would update the user's status in Firestore.
-            // Here, we simulate it on the client-side.
-            await makePremium();
-
-            toast({
-                title: "Payment Successful! (Simulation)",
-                description: "You are now a premium user. All features unlocked!",
+            const { sessionId } = await createCheckoutSession({
+                userId: user.uid,
+                email: user.email || '',
+                priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,
+                successUrl: `${window.location.origin}/?upgraded=true`,
+                cancelUrl: window.location.href,
             });
-            onSuccess(); // Close the modal on success
-            // --- Placeholder End ---
 
+            if (!sessionId) {
+                throw new Error("Could not create a checkout session.");
+            }
+
+            const { error } = await stripe.redirectToCheckout({ sessionId });
+
+            if (error) {
+                throw error;
+            }
+            
+            onSuccess();
         } catch (error: any) {
             console.error("Stripe checkout error:", error);
             toast({
@@ -69,10 +68,10 @@ export function CheckoutButton({ onSuccess }: CheckoutButtonProps) {
             size="lg"
             className="w-full text-lg font-bold"
             onClick={handleCheckout}
-            disabled={loading}
+            disabled={loading || !stripe}
         >
             {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-            {loading ? 'Processing...' : 'Upgrade Now for $1.50/month'}
+            {loading ? 'Redirecting...' : 'Upgrade Now for $1.50/month'}
         </Button>
     );
 }
