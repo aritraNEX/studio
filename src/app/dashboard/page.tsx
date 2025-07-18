@@ -62,10 +62,18 @@ export default function DashboardPage() {
       });
       setProjects(userProjects);
       setLoading(false);
+    }, (error) => {
+      console.error("Error fetching projects: ", error);
+      toast({
+        variant: "destructive",
+        title: "Error fetching projects",
+        description: "Could not load your projects. Please try again later.",
+      });
+      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, toast]);
 
   const handleDeleteProject = async (projectId: string) => {
     try {
@@ -84,13 +92,31 @@ export default function DashboardPage() {
   };
 
   const handleOpenProject = (project: Project) => {
-    if (project.operation === 'explainer') {
+    // A mapping from saved operation to the tab value in the UI
+    const operationToTab: { [key: string]: string } = {
+        explainer: 'explainer',
+        paraphrase: 'paraphrase',
+        summarize: 'summarize',
+        translate: 'translate',
+        style: 'style',
+        // Add other mappings if needed
+    };
+    
+    const tab = operationToTab[project.operation];
+
+    if (tab) {
         const url = new URL(window.location.origin);
         url.pathname = '/';
-        url.searchParams.set('tab', 'explainer');
-        url.searchParams.set('topic', project.inputText);
+        url.searchParams.set('tab', tab);
+        
+        if (project.operation === 'explainer') {
+            url.searchParams.set('topic', project.inputText);
+        } else {
+            url.searchParams.set('projectId', project.id);
+        }
         router.push(url.toString());
     } else {
+        // Fallback for older projects or unmapped operations
         router.push(`/?projectId=${project.id}`);
     }
   }
@@ -142,7 +168,7 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg capitalize pr-2">{project.operation}</CardTitle>
                     <Badge variant="secondary">
-                        {formatDistanceToNow(new Date(project.createdAt.seconds * 1000), { addSuffix: true })}
+                        {project.createdAt?.seconds ? formatDistanceToNow(new Date(project.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now'}
                     </Badge>
                   </div>
                    <CardDescription className="line-clamp-2 pt-2">
