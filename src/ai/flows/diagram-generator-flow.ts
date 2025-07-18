@@ -37,23 +37,55 @@ const diagramGeneratorPrompt = ai.definePrompt({
   name: 'diagramGeneratorPrompt',
   input: {schema: DiagramGeneratorInputSchema},
   output: {schema: DiagramGeneratorOutputSchema},
-  prompt: `You are an expert diagram creator. Your task is to generate a Mermaid.js syntax for a given topic and diagram type.
+  prompt: `You are an expert diagram creator specializing in Mermaid.js syntax. Your task is to generate a complete and valid Mermaid.js diagram based on the user's topic and chosen diagram type.
 
 Topic: '{{topic}}'
 Diagram Type: '{{diagramType}}'
 
-Follow these instructions precisely:
-1.  Analyze the topic to understand its key components, relationships, and structure.
-2.  Based on the requested diagram type, create a comprehensive and accurate diagram.
-    -   For a 'flowchart', show a process or sequence of steps. Use standard flowchart shapes.
-    -   For a 'mindmap', start with a central idea and branch out into related concepts. Keep it hierarchical.
-    -   For a 'concept' diagram, show the relationships and connections between different ideas or entities.
-    -   For a 'timeline', represent key events or milestones in chronological order.
-3.  Generate the complete and valid Mermaid.js syntax for this diagram. The syntax MUST start with the correct diagram type declaration (e.g., 'graph TD', 'mindmap', 'timeline').
-4.  IMPORTANT: When defining nodes, do NOT use special characters like parentheses () in the node IDs. For example, use 'node_id' instead of 'node(id)'.
-5.  CRITICAL: When defining a node's text, you **MUST** enclose the text in double quotes. For example, use \`id["This is the text"]\` instead of \`id[This is the text]\`. This is essential to handle special characters correctly.
-6.  Ensure the syntax is clean, well-structured, and immediately renderable by the Mermaid.js library. Do not include any explanatory text, comments, or Markdown formatting like \`\`\`mermaid ... \`\`\`.
-7.  Place the final, raw Mermaid syntax directly into the 'mermaidSyntax' field of the JSON output.
+**CRITICAL INSTRUCTIONS - FOLLOW THESE EXACTLY:**
+
+1.  **Analyze the Topic**: Understand the core components, relationships, and structure of the topic.
+2.  **Choose the Correct Root Declaration**:
+    -   For **flowchart**: Start with \`graph TD;\` (for top-to-bottom).
+    -   For **mindmap**: Start with \`mindmap\`.
+    -   For **concept**: Start with \`graph TD;\`.
+    -   For **timeline**: Start with \`timeline\`.
+3.  **Define Nodes Correctly (MOST IMPORTANT RULE)**:
+    -   **Node Text MUST be in quotes**: All descriptive text for a node MUST be enclosed in double quotes.
+        -   **Correct:** \`A["This is the node text"]\`
+        -   **INCORRECT:** \`A[This is the node text]\`
+    -   **Node IDs MUST NOT contain special characters**: Node IDs should be simple alphanumeric strings (e.g., \`A\`, \`B1\`, \`Node_1\`).
+        -   **Correct:** \`A --> B\`
+        -   **INCORRECT:** \`"Node A" --> "Node B"\` (Using full text as ID is wrong)
+    -   **Mindmap Format is DIFFERENT**: For mindmaps, you do not declare node IDs. The structure is defined by indentation.
+        -   **Correct Mindmap Node:** \`  Node Text\`
+        -   **Correct Mindmap Node with parens:** \`  Topic (with details)\`
+        -   **INCORRECT Mindmap Node:** \`  A["Node Text"]\` (This syntax is for flowcharts/graphs)
+4.  **Connect Nodes Correctly (for flowcharts/graphs)**: Use arrows like \`-->\` to show relationships. You can add text to connectors like this: \`A-- "description" -->B\`.
+5.  **Final Output**:
+    -   The output must be ONLY the raw Mermaid syntax.
+    -   Do NOT include any explanatory text, comments, or Markdown backticks like \`\`\`mermaid ... \`\`\`.
+    -   Place the final, raw Mermaid syntax directly into the 'mermaidSyntax' field of the JSON output.
+
+**Examples:**
+
+*   **Flowchart Syntax:**
+    \`\`\`
+    graph TD;
+        A["Start"] --> B["Process 1 (Check data)"];
+        B --> C{"Decision"};
+        C -- "Yes" --> D["End"];
+        C -- "No" --> B;
+    \`\`\`
+*   **Mindmap Syntax:**
+    \`\`\`
+    mindmap
+      root((Central Topic))
+        Branch 1
+          Sub-branch 1.1
+          Sub-branch 1.2
+        Branch 2 (A longer description)
+    \`\`\`
 `,
 });
 
@@ -82,16 +114,6 @@ const diagramGeneratorFlow = ai.defineFlow(
         throw new Error("The model did not return any Mermaid syntax.");
     }
 
-    // Post-processing to fix unquoted node labels
-    const fixedSyntax = output.mermaidSyntax.replace(
-        /(\w+)(\[)([^"\]].*?[^"\]])(\])/g,
-        (match, nodeId, openBracket, content, closeBracket) => {
-            // Escape existing quotes inside the content before wrapping
-            const escapedContent = content.replace(/"/g, '#quot;');
-            return `${nodeId}["${escapedContent}"]`;
-        }
-    );
-
-    return { mermaidSyntax: fixedSyntax };
+    return output;
   }
 );

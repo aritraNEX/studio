@@ -151,9 +151,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
             {renderTabTrigger("citations", <BookA className="h-5 w-5" />, "Citations")}
             {renderTabTrigger("formula", <FunctionSquare className="h-5 w-5" />, "Formula")}
             {renderTabTrigger("video-to-text", <Video className="h-5 w-5" />, "Video to Text")}
-            <AITooltip>
-              {renderTabTrigger("workspace", <Wand2 className="h-5 w-5" />, "Workspace")}
-            </AITooltip>
+            {renderTabTrigger("workspace", <Wand2 className="h-5 w-5" />, "Workspace")}
             {renderTabTrigger("research", <GraduationCap className="h-5 w-5" />, "Research")}
             {renderTabTrigger("plagiarism", <ShieldCheck className="h-5 w-5" />, "Plagiarism")}
             {renderTabTrigger("tts", <AudioLines className="h-5 w-5" />, "TTS")}
