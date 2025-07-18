@@ -74,45 +74,61 @@ export function NoteGeneratorTab() {
   const handleDownloadPdf = () => {
     if (!result) return;
     const doc = new jsPDF();
+    const pageMargin = 14;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const contentWidth = pageWidth - (pageMargin * 2);
+    let yPos = 22;
+    const lineHeight = 7;
+
+    // Helper to add new page if needed
+    const checkPageBreak = () => {
+        if (yPos > doc.internal.pageSize.getHeight() - pageMargin) {
+            doc.addPage();
+            yPos = pageMargin;
+        }
+    }
     
     // Set Document Title
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
-    doc.text(result.title, 14, 22);
+    doc.text(result.title, pageMargin, yPos);
+    yPos += lineHeight * 2;
 
     // Set Document Content
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
 
-    // Split markdown content by lines to handle bolding
     const lines = result.content.split('\n');
-    let yPos = 32;
 
     lines.forEach(line => {
-        if (yPos > 270) { // Add new page if content overflows
-            doc.addPage();
-            yPos = 22;
-        }
+        checkPageBreak();
 
         // Simple markdown parser for bold text
         const parts = line.split('**');
-        let xPos = 14;
+        let xPos = pageMargin;
 
         parts.forEach((part, index) => {
-            doc.setFont('helvetica', index % 2 === 1 ? 'bold' : 'normal');
+            const isBold = index % 2 === 1;
+            doc.setFont('helvetica', isBold ? 'bold' : 'normal');
             
-            // Check if the part fits on the current line
-            const textWidth = doc.getTextWidth(part);
-            if (xPos + textWidth > 196) { // 210mm page width - 14mm margins
-                yPos += 7;
-                xPos = 14;
-            }
-
-            doc.text(part, xPos, yPos);
-            xPos += doc.getTextWidth(part);
+            // Split the part into words to handle wrapping
+            const words = part.split(' ');
+            words.forEach((word, wordIndex) => {
+                const wordWidth = doc.getTextWidth(word + ' ');
+                if (xPos + wordWidth > pageWidth - pageMargin) {
+                    yPos += lineHeight;
+                    xPos = pageMargin;
+                    checkPageBreak();
+                }
+                doc.text(word, xPos, yPos);
+                xPos += wordWidth;
+            });
         });
 
-        yPos += 7; // Move to the next line
+        yPos += lineHeight; 
+        if (line.trim() === '') { // Add extra space for empty lines (paragraphs)
+            yPos += lineHeight / 2;
+        }
     });
 
     doc.save(`note-mentor-${result.title.replace(/\s+/g, '-')}.pdf`);
