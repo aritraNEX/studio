@@ -26,7 +26,6 @@ import { TtsTab } from "./tts-tab";
 import { TranscriptionTab } from "./transcription-tab";
 import { BatchSummaryTab } from "./batch-summary-tab";
 import { FormulaTab } from "./formula-tab";
-import { AITooltip } from "./ui/ai-tooltip";
 import { AssignmentMakerTab } from "./assignment-maker-tab";
 import { FlashcardGeneratorTab } from "./flashcard-generator-tab";
 import { CitationGeneratorTab } from "./citation-generator-tab";
@@ -35,8 +34,6 @@ import { ConceptExplainerTab } from "./concept-explainer-tab";
 import { DiagramGeneratorTab } from "./diagram-generator-tab";
 import { useSubscription } from "@/contexts/subscription-context";
 import { PremiumModal } from "./premium-modal";
-import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
 import { NoteGeneratorTab } from "./note-generator-tab";
 
 
@@ -106,29 +103,11 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
   return (
      <Card className="w-full max-w-6xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
       <CardHeader className="text-center p-4 sm:p-8 pt-8">
-        <div className="flex justify-between items-start mb-4">
-            {!isPremium ? (
-              <Button variant="secondary" onClick={() => setPremiumModalOpen(true)} className="bg-yellow-400/80 text-yellow-900 hover:bg-yellow-400 invisible">
-                <Crown className="mr-2 h-4 w-4"/>
-                Go Premium
-              </Button>
-            ) : <div/>}
-            <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit shadow-lg shadow-primary/30">
-              <Sparkles className="h-8 w-8" />
-            </div>
-            <div className="w-28"/> {/* Spacer to balance the header */}
+        <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit mb-4 shadow-lg shadow-primary/30">
+          <Sparkles className="h-8 w-8" />
         </div>
-
-        {!isPremium && (
-          <div className="flex justify-center mb-4">
-            <Button variant="secondary" onClick={() => setPremiumModalOpen(true)} className="bg-yellow-400/80 text-yellow-900 hover:bg-yellow-400">
-              <Crown className="mr-2 h-4 w-4"/>
-              Go Premium
-            </Button>
-          </div>
-        )}
         
-        <CardTitle className="text-3xl sm:text-4xl font-bold tracking-tight">Tex.io Editor</CardTitle>
+        <CardTitle className="text-3xl sm:text-4xl font-bold tracking-tight">Tex.io</CardTitle>
         <CardDescription className="text-lg text-muted-foreground/80">
           Your all-in-one AI-powered text and media toolkit.
         </CardDescription>
