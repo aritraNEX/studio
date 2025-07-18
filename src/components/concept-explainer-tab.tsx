@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { ScrollArea } from "./ui/scroll-area";
 
 const IconComponent = ({ name }: { name: string }) => {
     const Icon = (LucideIcons as any)[name];
@@ -53,7 +54,7 @@ export function ConceptExplainerTab() {
         explainerResult.steps.forEach((_, index) => {
           setTimeout(() => {
             setVisibleStep(index);
-          }, (index + 1) * 1000); 
+          }, (index + 1) * 700); 
         });
       } catch (e) {
         console.error(e);
@@ -139,46 +140,48 @@ export function ConceptExplainerTab() {
         {!isPending && !result && (
           <div className="text-center text-muted-foreground p-4 flex flex-col items-center justify-center h-full">
             <LucideIcons.BrainCircuit className="h-24 w-24 text-primary/30 mb-4" />
-            <p className="text-lg">Your simplified explanation will appear here.</p>
+            <p className="text-lg">Your detailed explanation will appear here.</p>
           </div>
         )}
         {result && (
-            <div className="text-center animate-in fade-in-0 slide-in-from-top-10 duration-700">
-                <h2 className="text-4xl font-extrabold tracking-tight text-primary">{result.title}</h2>
-                <p className="mt-2 text-lg text-muted-foreground">{result.introduction}</p>
-                <div 
-                    className={cn(
-                        "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12 transition-all duration-1000 ease-out",
-                        visibleStep >= 0 ? "opacity-100" : "opacity-0 -translate-y-4"
-                    )}
-                >
-                    {result.steps.map((step, index) => (
-                        <div
-                            key={index}
-                            className={cn(
-                                "flex flex-col items-center p-6 bg-card rounded-xl shadow-lg border border-border/50 transition-all duration-700 ease-out",
-                                index <= visibleStep 
-                                    ? "opacity-100 translate-y-0 scale-100"
-                                    : "opacity-0 translate-y-10 scale-90"
-                            )}
-                        >
-                            <div className="p-3 bg-primary/10 text-primary rounded-full mb-4">
-                               <IconComponent name={step.icon} />
+            <ScrollArea className="h-[70vh] w-full">
+                <div className="text-center animate-in fade-in-0 slide-in-from-top-10 duration-700 pr-6">
+                    <h2 className="text-4xl font-extrabold tracking-tight text-primary">{result.title}</h2>
+                    <p className="mt-2 text-lg text-muted-foreground">{result.introduction}</p>
+                    <div 
+                        className={cn(
+                            "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-12 transition-all duration-1000 ease-out",
+                            visibleStep >= 0 ? "opacity-100" : "opacity-0 -translate-y-4"
+                        )}
+                    >
+                        {result.steps.map((step, index) => (
+                            <div
+                                key={index}
+                                className={cn(
+                                    "flex flex-col items-center text-left p-6 bg-card rounded-xl shadow-lg border border-border/50 transition-all duration-700 ease-out",
+                                    index <= visibleStep 
+                                        ? "opacity-100 translate-y-0 scale-100"
+                                        : "opacity-0 translate-y-10 scale-90"
+                                )}
+                            >
+                                <div className="p-3 bg-primary/10 text-primary rounded-full mb-4">
+                                <IconComponent name={step.icon} />
+                                </div>
+                                <h3 className="text-xl font-bold mb-2 text-foreground text-center">{step.title}</h3>
+                                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{step.explanation}</p>
                             </div>
-                            <h3 className="text-xl font-bold mb-2 text-foreground">{step.title}</h3>
-                            <p className="text-sm text-muted-foreground">{step.explanation}</p>
-                        </div>
-                    ))}
-                </div>
-                 {user && (
-                    <div className="mt-8">
-                        <Button onClick={handleSaveProject} disabled={isSaving}>
-                            {isSaving ? <LucideIcons.Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LucideIcons.Save className="mr-2 h-4 w-4" />}
-                            Save Explanation
-                        </Button>
+                        ))}
                     </div>
-                )}
-            </div>
+                    {user && visibleStep >= result.steps.length -1 && (
+                        <div className="mt-8">
+                            <Button onClick={handleSaveProject} disabled={isSaving}>
+                                {isSaving ? <LucideIcons.Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LucideIcons.Save className="mr-2 h-4 w-4" />}
+                                Save Explanation
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </ScrollArea>
         )}
       </div>
     </div>
