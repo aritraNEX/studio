@@ -86,7 +86,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
     return (
       <TabsTrigger 
         value={value} 
-        className="py-2.5 flex-1"
+        className="h-auto py-2.5 flex-1"
         onClick={(e) => {
           if (isPremiumFeature && !isPremium) {
             e.preventDefault();
@@ -94,9 +94,9 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
           }
         }}
       >
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
             {icon}
-            <span className="hidden sm:inline-block">{label}</span>
+            <span className="text-xs sm:text-sm">{label}</span>
         </div>
       </TabsTrigger>
     );
@@ -105,7 +105,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
 
   return (
      <Card className="w-full max-w-6xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
-      <CardHeader className="text-center pt-8">
+      <CardHeader className="text-center p-4 sm:p-8 pt-8">
         <div className="flex justify-between items-start mb-4">
             {!isPremium ? (
               <Button variant="secondary" onClick={() => setPremiumModalOpen(true)} className="bg-yellow-400/80 text-yellow-900 hover:bg-yellow-400 invisible">
@@ -128,7 +128,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
           </div>
         )}
         
-        <CardTitle className="text-4xl font-bold tracking-tight">Tex.io Editor</CardTitle>
+        <CardTitle className="text-3xl sm:text-4xl font-bold tracking-tight">Tex.io Editor</CardTitle>
         <CardDescription className="text-lg text-muted-foreground/80">
           Your all-in-one AI-powered text and media toolkit.
         </CardDescription>
@@ -136,7 +136,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
       <CardContent className="p-2 sm:p-8 pt-2">
         <PremiumModal isOpen={isPremiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 mx-auto h-auto p-1.5 flex-wrap">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 mx-auto h-auto p-1.5 flex-wrap">
             {renderTabTrigger("paraphrase", <Quote className="h-5 w-5" />, "Paraphrase")}
             {renderTabTrigger("summarize", <BookText className="h-5 w-5" />, "Summarize")}
             {renderTabTrigger("translate", <Languages className="h-5 w-5" />, "Translate")}
