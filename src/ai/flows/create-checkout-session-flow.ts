@@ -22,15 +22,6 @@ const CreateCheckoutSessionOutputSchema = z.object({
 });
 export type CreateCheckoutSessionOutput = z.infer<typeof CreateCheckoutSessionOutputSchema>;
 
-// This check ensures Stripe is only initialized when the secret key is available.
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn("STRIPE_SECRET_KEY is not set. Stripe functionality will be disabled.");
-}
-
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
-  : null;
-
 export async function createCheckoutSession(
   input: CreateCheckoutSessionInput
 ): Promise<CreateCheckoutSessionOutput> {
@@ -53,10 +44,13 @@ const createCheckoutSessionFlow = ai.defineFlow(
     },
   },
   async (input) => {
-    if (!stripe) {
-      throw new Error('Stripe is not configured. Cannot create checkout session.');
+    if (!process.env.STRIPE_SECRET_KEY) {
+        console.warn("STRIPE_SECRET_KEY is not set. Stripe functionality will be disabled.");
+        throw new Error('Stripe is not configured. Cannot create checkout session.');
     }
 
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
+    
     try {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
