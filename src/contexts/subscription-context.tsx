@@ -69,7 +69,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <SubscriptionContext.Provider value={{ isPremium: true, loading: false, makePremium }}>
+    <SubscriptionContext.Provider value={{ isPremium, loading, makePremium }}>
       {children}
     </SubscriptionContext.Provider>
   );
