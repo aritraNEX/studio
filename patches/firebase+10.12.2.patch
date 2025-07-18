@@ -1,0 +1,28 @@
+diff --git a/node_modules/firebase/dist/esm/index.esm2017.js b/node_modules/firebase/dist/esm/index.esm2017.js
+index 73e86c0..8f34d75 100644
+--- a/node_modules/firebase/dist/esm/index.esm2017.js
++++ b/node_modules/firebase/dist/esm/index.esm2017.js
+@@ -35189,6 +35189,11 @@
+       * Initializes a new instance of {@link Firestore}.
+       * @param authCredentials - A provider of authentication credentials.
+       * @param appCheckCredentials - A provider of app check credentials.
++      * @param R - A reference to the {@link FirebaseApp} that this instance belongs to.
++      * @param N - A reference to the {@link FirebaseApp} that this instance belongs to.
++      * @param S - A reference to the {@link FirebaseApp} that this instance belongs to.
++      * @param M - A reference to the {@link FirebaseApp} that this instance belongs to.
++      * @param O - A reference to the {@link FirebaseApp} that this instance belongs to.
+       */
+     constructor(
+     /**
+@@ -35201,6 +35206,11 @@
+       * The {@link FirebaseApp} that this `Firestore` instance is associated with.
+       */
+     this.app = R, this._firestoreClient = null, this._terminated = !1, this.INTERNAL = {
++        delete: async () => {
++            this._terminate();
++            await this._firestoreClient.delete();
++        }
++    }, this._app = N, this._authCredentials = new nt(S), this._appCheckCredentials = new q(M), this.settings = O, this.type = "firestore", this._persistenceKey = "(lite)", this._settings = new De(O), this._settings.host, this._settings.ssl, this._settings.credentials, this._databaseId = _e(O.projectId || R.options.projectId);
+         delete: async () => (this._terminate(), this._firestoreClient.delete())
+     }, this._app = N, this._authCredentials = new nt(S), this._appCheckCredentials = new q(M), this.settings = O, this.type = "firestore", this._persistenceKey = "(lite)", this._settings = new De(O), this._settings.host, this._settings.ssl, this._settings.credentials, this._databaseId = _e(R.options.projectId);
+   }
