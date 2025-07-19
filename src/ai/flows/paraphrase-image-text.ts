@@ -52,9 +52,11 @@ const processImageTextPrompt = ai.definePrompt({
   name: 'processImageTextPrompt',
   input: {schema: promptInputSchema},
   output: {schema: ProcessImageTextOutputSchema},
-  prompt: `{{#if fileUrl}}Extract all text from the document at the given URL, in the correct sequence, preserving the original structure like lists and line breaks.{{else}}The text to process is provided below.{{/if}} Then, follow this instruction: '{{{instruction}}}'. Place the final result in the 'processedText' field. Ensure the output formatting matches the original text's structure (e.g., lists, paragraphs). Do not add any extra commentary or explanation.
+  prompt: `{{#if fileUrl}}You will be given a URL to a document (image, PDF, etc.). Extract all text from this document, in the correct sequence, preserving the original structure like lists and line breaks. Then, follow this instruction: '{{{instruction}}}'. Place the final result in the 'processedText' field. Ensure the output formatting matches the original text's structure (e.g., lists, paragraphs). Do not add any extra commentary or explanation.
 
-  {{#if fileUrl}}Document URL: {{media url=fileUrl}}{{else}}Text: {{{text}}}{{/if}}`
+Document URL: {{media url=fileUrl}}{{else}}You will be given text to process. Follow this instruction: '{{{instruction}}}'. Place the final result in the 'processedText' field. Ensure the output formatting matches the original text's structure (e.g., lists, paragraphs). Do not add any extra commentary or explanation.
+
+Text: {{{text}}}{{/if}}`
 });
 
 const processImageTextFlow = ai.defineFlow(

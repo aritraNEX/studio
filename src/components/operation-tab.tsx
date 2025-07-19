@@ -131,7 +131,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     try {
       await addDoc(collection(db, 'projects'), {
         userId: user.uid,
-        inputText: extractedText || fileUrl || '',
+        inputText: fileUrl || extractedText || '',
         outputText: generatedText,
         operation: operation,
         createdAt: serverTimestamp(),
@@ -152,69 +152,64 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     }
     if (!file) return;
 
-    // Reset all relevant states for a new upload
+    // Reset states for a new upload
     setFileUrl(null);
     setLocalPreviewUrl(null);
-    setExtractedText(null);
+    setExtractedText(""); // CRITICAL FIX: Clear text input on new file upload
     setGeneratedText("");
     setError(null);
-    setIsParsing(false);
     
     const fileType = file.type;
     const isImage = fileType.startsWith("image/");
 
     if (isImage) {
-        // Create an instant local preview for images
         setLocalPreviewUrl(URL.createObjectURL(file));
+        setIsParsing(false);
     } else {
-        // For documents, show a parsing indicator
         setIsParsing(true);
     }
-
-    // Start the upload to Firebase Storage in the background
+    
     const storageRef = ref(storage, `uploads/${user.uid}/${Date.now()}-${file.name}`);
     uploadBytes(storageRef, file).then(snapshot => {
-        getDownloadURL(snapshot.ref).then(downloadURL => {
-            setFileUrl(downloadURL); // Set the final URL once uploaded
-
-            // If it's a document, now parse it for text content
-            if (!isImage) {
-                const reader = new FileReader();
-                reader.onerror = () => {
-                    toast({ variant: 'destructive', title: 'File Read Error', description: `Could not read the file: ${file.name}` });
-                    setIsParsing(false);
-                };
-                reader.onload = async (e) => {
-                    try {
-                        const buffer = e.target?.result as ArrayBuffer;
+      getDownloadURL(snapshot.ref).then(downloadURL => {
+        setFileUrl(downloadURL);
+        
+        if (!isImage) {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const buffer = e.target?.result as ArrayBuffer;
+                    if (fileType === 'application/pdf') {
+                        const pdf = await pdfjsLib.getDocument(buffer).promise;
                         let text = '';
-                        if (fileType === 'application/pdf') {
-                            const pdf = await pdfjsLib.getDocument(buffer).promise;
-                            for (let i = 1; i <= pdf.numPages; i++) {
-                                const page = await pdf.getPage(i);
-                                const content = await page.getTextContent();
-                                text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
-                            }
-                        } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                            const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-                            text = result.value;
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const content = await page.getTextContent();
+                            text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
                         }
                         setExtractedText(text);
-                    } catch (err) {
-                        console.error("File parse error:", err);
-                        toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not extract text from ${file.name}.` });
-                    } finally {
-                        setIsParsing(false);
+                    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                        const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+                        setExtractedText(result.value);
                     }
-                };
-                reader.readAsArrayBuffer(file);
-            }
-        });
+                } catch (err) {
+                     toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not read text from ${file.name}.` });
+                } finally {
+                    setIsParsing(false);
+                }
+            };
+            reader.onerror = () => {
+                toast({ variant: 'destructive', title: 'File Read Error', description: `Could not read the file: ${file.name}` });
+                setIsParsing(false);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+      });
     }).catch(error => {
         console.error("Upload failed", error);
         toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not upload your file to storage.'});
-        setIsParsing(false); // Stop parsing on upload error
-        setLocalPreviewUrl(null); // Clear preview if upload fails
+        setIsParsing(false);
+        setLocalPreviewUrl(null);
     });
   };
   
@@ -256,7 +251,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
         toast({
             variant: 'destructive',
             title: 'No content to process',
-            description: 'Please upload a file or make sure the input text is not empty.',
+            description: 'Please upload a file or enter text.',
         });
         return;
     }
@@ -285,16 +280,27 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     setGeneratedText("");
     startTransition(async () => {
       try {
-        const inputPayload: any = {
+        const inputPayload: {
+          operation: Operation;
+          fileUrl?: string;
+          text?: string;
+          targetLanguage?: string;
+          targetStyle?: string;
+        } = {
             operation,
             ...(operation === 'translate' ? { targetLanguage } : {}),
             ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
         };
 
-        if (hasFile && !hasText) {
-            inputPayload.fileUrl = fileUrl;
+        // CRITICAL FIX: Prioritize fileUrl over text input
+        if (hasFile) {
+          inputPayload.fileUrl = fileUrl;
+          // Do not send text if a file is present
+        } else if (hasText) {
+          inputPayload.text = extractedText;
         } else {
-            inputPayload.text = extractedText;
+           // This case should be caught earlier, but as a safeguard:
+           throw new Error("No content to process.");
         }
 
         const result = await processImageText(inputPayload);
@@ -643,5 +649,3 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     </div>
   );
 }
-
-    
