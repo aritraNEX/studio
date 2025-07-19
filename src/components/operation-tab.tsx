@@ -25,7 +25,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useAuth } from "@/contexts/auth-context";
 import { db, storage } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useRouter } from "next/navigation";
 
