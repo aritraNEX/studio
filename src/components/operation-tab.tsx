@@ -151,7 +151,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     if (!file) return;
 
     setFileUrl(null);
-    setExtractedText(null);
+    setExtractedText(null); // CRITICAL FIX: Clear old text state
     setGeneratedText("");
     setError(null);
     setIsParsing(true);
@@ -165,9 +165,10 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
 
       const fileType = file.type;
       if (fileType.startsWith("image/")) {
-        setExtractedText(null);
+        // For images, we are done. The URL is set and text is cleared.
         setIsParsing(false);
       } else {
+        // For documents, we need to parse the text
         const reader = new FileReader();
         reader.onerror = () => {
             toast({ variant: 'destructive', title: 'File Read Error', description: `Could not read the file: ${file.name}` });
@@ -626,5 +627,3 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     </div>
   );
 }
-
-    
