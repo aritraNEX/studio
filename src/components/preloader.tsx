@@ -55,24 +55,43 @@ const AnimatedIcon = ({ index }: { index: number }) => {
 
 const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void }) => {
   const [show, setShow] = useState(true);
+  const [appIsReady, setAppIsReady] = useState(false);
+  const [minimumTimeElapsed, setMinimumTimeElapsed] = useState(false);
 
   useEffect(() => {
-    // We rely on the parent component's loading state to call onAnimationComplete.
-    // This timeout is just for the fade-out animation itself.
+    // Set a timer for the minimum display duration of the animation.
+    const minTimeTimer = setTimeout(() => {
+      setMinimumTimeElapsed(true);
+    }, 5000);
+
+    // Listen for the event that signals the app's content is ready.
+    const hidePreloader = () => setAppIsReady(true);
+    window.addEventListener('app-ready', hidePreloader);
+
+    return () => {
+      clearTimeout(minTimeTimer);
+      window.removeEventListener('app-ready', hidePreloader);
+    };
+  }, []);
+
+  useEffect(() => {
+    // The preloader should only be hidden when both conditions are met:
+    // 1. The app content is loaded (appIsReady).
+    // 2. The minimum 5-second animation time has passed (minimumTimeElapsed).
+    if (appIsReady && minimumTimeElapsed) {
+      setShow(false);
+    }
+  }, [appIsReady, minimumTimeElapsed]);
+  
+  useEffect(() => {
+    // This effect handles the final fade-out animation of the component.
     if (!show) {
-        const timer = setTimeout(() => {
+        const fadeOutTimer = setTimeout(() => {
             onAnimationComplete();
         }, 700);
-        return () => clearTimeout(timer);
+        return () => clearTimeout(fadeOutTimer);
     }
   }, [show, onAnimationComplete]);
-  
-  // Expose a function to the parent to hide the preloader
-  useEffect(() => {
-      const hidePreloader = () => setShow(false);
-      window.addEventListener('app-ready', hidePreloader);
-      return () => window.removeEventListener('app-ready', hidePreloader);
-  }, []);
 
 
   return (
@@ -87,8 +106,8 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
             <AnimatedIcon key={index} index={index} />
         ))}
       </div>
-      <div className="z-10 text-center animate-logo-reveal">
-          <div className="mx-auto w-fit mb-4">
+      <div className="z-10 text-center">
+          <div className="mx-auto w-fit mb-4 animate-logo-reveal">
              <svg
                 width="48"
                 height="48"
@@ -103,8 +122,10 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
                 <circle cx="80" cy="70" r="10" fill="#2E8B57" />
               </svg>
           </div>
-          <h1 className="text-5xl font-bold tracking-tight text-foreground">Tex.io</h1>
-          <p className="mt-2 text-lg text-muted-foreground">Preparing the magic...</p>
+          <div className="animate-text-reveal">
+            <h1 className="text-5xl font-bold tracking-tight text-foreground">Tex.io</h1>
+            <p className="mt-2 text-lg text-muted-foreground">Preparing the magic...</p>
+          </div>
       </div>
     </div>
   );
