@@ -66,14 +66,14 @@ const plagiarismCheckFlow = ai.defineFlow(
     name: 'plagiarismCheckFlow',
     inputSchema: PlagiarismCheckInputSchema,
     outputSchema: PlagiarismCheckOutputSchema,
-    auth: {
-      required: true,
-      policy(auth, input) {
-        if (!auth.isPremium) {
-           setTrialUsed(auth.uid);
-        }
-      }
-    }
+    // auth: {
+    //   required: true,
+    //   policy(auth, input) {
+    //     if (!auth.isPremium) {
+    //        setTrialUsed(auth.uid);
+    //     }
+    //   }
+    // }
   },
   async (input) => {
     if (!input.text.trim()) {

@@ -56,14 +56,14 @@ const assignmentMakerFlow = ai.defineFlow(
     name: 'assignmentMakerFlow',
     inputSchema: AssignmentMakerInputSchema,
     outputSchema: AssignmentMakerOutputSchema,
-    auth: {
-      required: true,
-      policy(auth, input) {
-        if (!auth.isPremium) {
-           setTrialUsed(auth.uid);
-        }
-      }
-    }
+    // auth: {
+    //   required: true,
+    //   policy(auth, input) {
+    //     if (!auth.isPremium) {
+    //        setTrialUsed(auth.uid);
+    //     }
+    //   }
+    // }
   },
   async (input) => {
     const {output} = await assignmentMakerPrompt(input);

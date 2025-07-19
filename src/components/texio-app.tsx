@@ -60,11 +60,11 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
   }, [initialTab]);
 
   const handleTabChange = (newTab: string) => {
-    if (!freeFeatures.includes(newTab) && !isPremium) {
-      setPremiumModalOpen(true);
-    } else {
+    // if (!freeFeatures.includes(newTab) && !isPremium) {
+    //   setPremiumModalOpen(true);
+    // } else {
       setActiveTab(newTab);
-    }
+    // }
   };
 
   const handleSendTo = (text: string, operation: Operation) => {
@@ -86,8 +86,8 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
         className="h-auto py-2.5 flex-1"
         onClick={(e) => {
           if (isPremiumFeature && !isPremium) {
-            e.preventDefault();
-            setPremiumModalOpen(true);
+            // e.preventDefault();
+            // setPremiumModalOpen(true);
           }
         }}
       >

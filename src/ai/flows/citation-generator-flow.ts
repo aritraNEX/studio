@@ -52,14 +52,14 @@ const citationGeneratorFlow = ai.defineFlow(
     name: 'citationGeneratorFlow',
     inputSchema: CitationGeneratorInputSchema,
     outputSchema: CitationGeneratorOutputSchema,
-    auth: {
-      required: true,
-      policy(auth, input) {
-        if (!auth.isPremium) {
-           setTrialUsed(auth.uid);
-        }
-      }
-    }
+    // auth: {
+    //   required: true,
+    //   policy(auth, input) {
+    //     if (!auth.isPremium) {
+    //        setTrialUsed(auth.uid);
+    //     }
+    //   }
+    // }
   },
   async (input) => {
     if (!input.text.trim()) {

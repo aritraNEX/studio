@@ -61,14 +61,14 @@ const conceptExplainerFlow = ai.defineFlow(
     name: 'conceptExplainerFlow',
     inputSchema: ConceptExplainerInputSchema,
     outputSchema: ConceptExplainerOutputSchema,
-    auth: {
-      required: true,
-      policy(auth, input) {
-        if (!auth.isPremium) {
-           setTrialUsed(auth.uid);
-        }
-      }
-    }
+    // auth: {
+    //   required: true,
+    //   policy(auth, input) {
+    //     if (!auth.isPremium) {
+    //        setTrialUsed(auth.uid);
+    //     }
+    //   }
+    // }
   },
   async (input) => {
     if (!input.topic.trim()) {

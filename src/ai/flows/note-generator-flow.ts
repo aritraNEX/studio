@@ -53,14 +53,14 @@ const noteGeneratorFlow = ai.defineFlow(
     name: 'noteGeneratorFlow',
     inputSchema: NoteGeneratorInputSchema,
     outputSchema: NoteGeneratorOutputSchema,
-    auth: {
-      required: true,
-      policy(auth, input) {
-        if (!auth.isPremium) {
-           setTrialUsed(auth.uid);
-        }
-      }
-    }
+    // auth: {
+    //   required: true,
+    //   policy(auth, input) {
+    //     if (!auth.isPremium) {
+    //        setTrialUsed(auth.uid);
+    //     }
+    //   }
+    // }
   },
   async (input) => {
     try {
