@@ -25,7 +25,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useAuth } from "@/contexts/auth-context";
 import { db, storage } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "storage";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useRouter } from "next/navigation";
 
@@ -156,44 +156,52 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     setIsParsing(true);
 
     try {
-        const storageRef = ref(storage, `uploads/${user.uid}/${Date.now()}-${file.name}`);
-        await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(storageRef);
+      const storageRef = ref(storage, `uploads/${user.uid}/${Date.now()}-${file.name}`);
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
 
-        setFileUrl(downloadURL); 
+      setFileUrl(downloadURL); 
 
-        const fileType = file.type;
-        if (fileType.startsWith("image/")) {
-            setExtractedText(null); // Let AI handle extraction from URL
-        } else {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const buffer = e.target?.result as ArrayBuffer;
-                    if (fileType === 'application/pdf') {
-                        const pdf = await pdfjsLib.getDocument(buffer).promise;
-                        let text = '';
-                        for (let i = 1; i <= pdf.numPages; i++) {
-                            const page = await pdf.getPage(i);
-                            const content = await page.getTextContent();
-                            text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
-                        }
-                        setExtractedText(text);
-                    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                        const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-                        setExtractedText(result.value);
-                    }
-                } catch (err) {
-                     toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not read text from ${file.name}.` });
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
+      const fileType = file.type;
+      if (fileType.startsWith("image/")) {
+        setExtractedText(null); // Let AI handle extraction from URL
+        setIsParsing(false); // For images, parsing is done, user can proceed.
+      } else {
+        // For documents, parsing happens here.
+        const reader = new FileReader();
+        reader.onerror = () => {
+            toast({ variant: 'destructive', title: 'File Read Error', description: `Could not read the file: ${file.name}` });
+            setIsParsing(false);
+        };
+        reader.onload = async (e) => {
+          try {
+            const buffer = e.target?.result as ArrayBuffer;
+            let text = '';
+            if (fileType === 'application/pdf') {
+              const pdf = await pdfjsLib.getDocument(buffer).promise;
+              for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
+              }
+            } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+              const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+              text = result.value;
+            }
+            setExtractedText(text);
+          } catch (err) {
+            console.error("File parse error:", err);
+            toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not extract text from ${file.name}.` });
+          } finally {
+            setIsParsing(false); // End parsing state here
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
     } catch (error) {
       console.error("Upload failed", error);
       toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not upload your file to storage.'});
-    } finally {
-        setIsParsing(false);
+      setIsParsing(false);
     }
   };
   
