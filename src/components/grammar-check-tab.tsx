@@ -45,7 +45,10 @@ export function GrammarCheckTab() {
     setInputText("");
     setResult(null);
     setError(null);
-    setIsParsing(true);
+    
+    const fileType = file.type;
+    const isImage = fileType.startsWith("image/");
+    setIsParsing(!isImage);
 
      try {
         const storageRef = ref(storage, `uploads/${user.uid}/${Date.now()}-${file.name}`);
@@ -53,41 +56,39 @@ export function GrammarCheckTab() {
         const downloadURL = await getDownloadURL(storageRef);
 
         setFileUrl(downloadURL); 
-
-        const fileType = file.type;
-        if (fileType.startsWith("image/")) {
-            setInputText(""); // Let AI handle extraction from URL
-            setIsParsing(false);
-        } else {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const buffer = e.target?.result as ArrayBuffer;
-                    if (fileType === 'application/pdf') {
-                        const pdf = await pdfjsLib.getDocument(buffer).promise;
-                        let text = '';
-                        for (let i = 1; i <= pdf.numPages; i++) {
-                            const page = await pdf.getPage(i);
-                            const content = await page.getTextContent();
-                            text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
-                        }
-                        setInputText(text);
-                    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                        const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-                        setInputText(result.value);
-                    }
-                } catch (err) {
-                     toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not read text from ${file.name}.` });
-                } finally {
-                    setIsParsing(false);
-                }
-            };
-            reader.onerror = () => {
-                toast({ variant: 'destructive', title: 'File Read Error', description: `Could not read the file: ${file.name}` });
-                setIsParsing(false);
-            };
-            reader.readAsArrayBuffer(file);
+        
+        if (isImage) {
+            return;
         }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const buffer = e.target?.result as ArrayBuffer;
+                if (fileType === 'application/pdf') {
+                    const pdf = await pdfjsLib.getDocument(buffer).promise;
+                    let text = '';
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const content = await page.getTextContent();
+                        text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
+                    }
+                    setInputText(text);
+                } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                    const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+                    setInputText(result.value);
+                }
+            } catch (err) {
+                 toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not read text from ${file.name}.` });
+            } finally {
+                setIsParsing(false);
+            }
+        };
+        reader.onerror = () => {
+            toast({ variant: 'destructive', title: 'File Read Error', description: `Could not read the file: ${file.name}` });
+            setIsParsing(false);
+        };
+        reader.readAsArrayBuffer(file);
     } catch (error) {
       console.error("Upload failed", error);
       toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not upload your file to storage.'});
@@ -99,6 +100,10 @@ export function GrammarCheckTab() {
     const file = event.target.files?.[0];
     if (file) {
         handleFileUpload(file);
+    }
+     // Reset file input to allow uploading the same file again
+    if(event.target) {
+        event.target.value = "";
     }
   };
   
@@ -226,7 +231,7 @@ export function GrammarCheckTab() {
                 {isParsing ? (
                 <div className="flex flex-col items-center justify-center text-center p-4">
                     <Loader2 className="w-10 h-10 mb-3 text-primary animate-spin" />
-                    <p className="text-sm text-muted-foreground">Uploading & Parsing...</p>
+                    <p className="text-sm text-muted-foreground">Parsing document...</p>
                 </div>
                 ) : fileUrl ? (
                 <div className="relative w-full h-full p-2">
@@ -297,7 +302,7 @@ export function GrammarCheckTab() {
       <div className="flex flex-col items-center justify-center gap-4 py-4">
         <Button
           onClick={handleGrammarCheck}
-          disabled={(!fileUrl && !inputText.trim()) || isPending}
+          disabled={(!fileUrl && !inputText.trim()) || isPending || isParsing}
           size="lg"
           className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto"
         >
@@ -313,5 +318,4 @@ export function GrammarCheckTab() {
     </div>
   );
 }
-
     

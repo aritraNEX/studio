@@ -24,8 +24,8 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
 import { db, storage } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useRouter } from "next/navigation";
 
@@ -151,10 +151,14 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     if (!file) return;
 
     setFileUrl(null);
-    setExtractedText(null); // CRITICAL FIX: Clear old text state
+    setExtractedText(null);
     setGeneratedText("");
     setError(null);
-    setIsParsing(true);
+    
+    const fileType = file.type;
+    const isImage = fileType.startsWith("image/");
+    
+    setIsParsing(!isImage); // Only show parsing indicator for non-image files
 
     try {
       const storageRef = ref(storage, `uploads/${user.uid}/${Date.now()}-${file.name}`);
@@ -163,42 +167,41 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
 
       setFileUrl(downloadURL); 
 
-      const fileType = file.type;
-      if (fileType.startsWith("image/")) {
+      if (isImage) {
         // For images, we are done. The URL is set and text is cleared.
-        setIsParsing(false);
-      } else {
-        // For documents, we need to parse the text
-        const reader = new FileReader();
-        reader.onerror = () => {
-            toast({ variant: 'destructive', title: 'File Read Error', description: `Could not read the file: ${file.name}` });
-            setIsParsing(false);
-        };
-        reader.onload = async (e) => {
-          try {
-            const buffer = e.target?.result as ArrayBuffer;
-            let text = '';
-            if (fileType === 'application/pdf') {
-              const pdf = await pdfjsLib.getDocument(buffer).promise;
-              for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const content = await page.getTextContent();
-                text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
-              }
-            } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-              const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-              text = result.value;
-            }
-            setExtractedText(text);
-          } catch (err) {
-            console.error("File parse error:", err);
-            toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not extract text from ${file.name}.` });
-          } finally {
-            setIsParsing(false);
-          }
-        };
-        reader.readAsArrayBuffer(file);
+        return; 
       }
+      
+      // For documents, we need to parse the text
+      const reader = new FileReader();
+      reader.onerror = () => {
+          toast({ variant: 'destructive', title: 'File Read Error', description: `Could not read the file: ${file.name}` });
+          setIsParsing(false);
+      };
+      reader.onload = async (e) => {
+        try {
+          const buffer = e.target?.result as ArrayBuffer;
+          let text = '';
+          if (fileType === 'application/pdf') {
+            const pdf = await pdfjsLib.getDocument(buffer).promise;
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const content = await page.getTextContent();
+              text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
+            }
+          } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+            text = result.value;
+          }
+          setExtractedText(text);
+        } catch (err) {
+          console.error("File parse error:", err);
+          toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not extract text from ${file.name}.` });
+        } finally {
+          setIsParsing(false);
+        }
+      };
+      reader.readAsArrayBuffer(file);
     } catch (error) {
       console.error("Upload failed", error);
       toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not upload your file to storage.'});
@@ -210,6 +213,10 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     const file = event.target.files?.[0];
     if (file) {
         handleFileUpload(file);
+    }
+     // Reset file input to allow uploading the same file again
+    if(event.target) {
+        event.target.value = "";
     }
   };
   
@@ -275,7 +282,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
         };
 
-        if (fileUrl && !extractedText) {
+        if (fileUrl && !hasText) {
             inputPayload.fileUrl = fileUrl;
         } else {
             inputPayload.text = extractedText;
@@ -402,7 +409,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             {isParsing ? (
             <div className="flex flex-col items-center justify-center text-center p-4">
                 <Loader2 className="w-10 h-10 mb-3 text-primary animate-spin" />
-                <p className="text-sm text-muted-foreground">Uploading & Parsing...</p>
+                <p className="text-sm text-muted-foreground">Parsing document...</p>
             </div>
             ) : fileUrl ? (
             <div className="relative w-full h-full p-2">
