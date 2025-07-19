@@ -103,8 +103,20 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
   return (
      <Card className="w-full max-w-6xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
       <CardHeader className="text-center p-4 sm:p-8 pt-8">
-        <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit mb-4 shadow-lg shadow-primary/30">
-          <Sparkles className="h-8 w-8" />
+        <div className="mx-auto w-fit mb-4">
+            <svg
+                width="48"
+                height="48"
+                viewBox="0 0 100 100"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-12 w-12"
+              >
+                <circle cx="40" cy="40" r="30" fill="#2E8B57" />
+                <circle cx="70" cy="35" r="20" fill="#3CB371" />
+                <circle cx="65" cy="75" r="25" fill="#20B2AA" />
+                <circle cx="80" cy="70" r="10" fill="#2E8B57" />
+              </svg>
         </div>
         
         <CardTitle className="text-3xl sm:text-4xl font-bold tracking-tight">Tex.io</CardTitle>
