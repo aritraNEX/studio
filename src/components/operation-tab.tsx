@@ -67,6 +67,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
+  const [isDragging, setIsDragging] = useState(false);
 
 
   useEffect(() => {
@@ -164,10 +165,9 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
 
       const fileType = file.type;
       if (fileType.startsWith("image/")) {
-        setExtractedText(null); // Let AI handle extraction from URL
-        setIsParsing(false); // For images, parsing is done, user can proceed.
+        setExtractedText(null);
+        setIsParsing(false);
       } else {
-        // For documents, parsing happens here.
         const reader = new FileReader();
         reader.onerror = () => {
             toast({ variant: 'destructive', title: 'File Read Error', description: `Could not read the file: ${file.name}` });
@@ -193,7 +193,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             console.error("File parse error:", err);
             toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not extract text from ${file.name}.` });
           } finally {
-            setIsParsing(false); // End parsing state here
+            setIsParsing(false);
           }
         };
         reader.readAsArrayBuffer(file);
@@ -214,10 +214,17 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   
   const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
+    setIsDragging(false);
     const file = event.dataTransfer.files?.[0];
     if (file) {
         handleFileUpload(file);
@@ -383,9 +390,12 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             htmlFor={`image-upload-${operation}`}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
+            onDragLeave={handleDragLeave}
             className={cn(
-            "group flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
-            "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
+                "group flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
+                isDragging
+                    ? "border-primary bg-primary/20"
+                    : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
             )}
         >
             {isParsing ? (
@@ -616,3 +626,5 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     </div>
   );
 }
+
+    

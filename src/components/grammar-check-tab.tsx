@@ -32,6 +32,7 @@ export function GrammarCheckTab() {
   const { toast } = useToast();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleFileUpload = async (file: File) => {
     if (!user) {
@@ -56,6 +57,7 @@ export function GrammarCheckTab() {
         const fileType = file.type;
         if (fileType.startsWith("image/")) {
             setInputText(""); // Let AI handle extraction from URL
+            setIsParsing(false);
         } else {
             const reader = new FileReader();
             reader.onload = async (e) => {
@@ -76,15 +78,20 @@ export function GrammarCheckTab() {
                     }
                 } catch (err) {
                      toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not read text from ${file.name}.` });
+                } finally {
+                    setIsParsing(false);
                 }
+            };
+            reader.onerror = () => {
+                toast({ variant: 'destructive', title: 'File Read Error', description: `Could not read the file: ${file.name}` });
+                setIsParsing(false);
             };
             reader.readAsArrayBuffer(file);
         }
     } catch (error) {
       console.error("Upload failed", error);
       toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not upload your file to storage.'});
-    } finally {
-        setIsParsing(false);
+      setIsParsing(false);
     }
   };
 
@@ -97,10 +104,17 @@ export function GrammarCheckTab() {
   
   const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
+    setIsDragging(false);
     const file = event.dataTransfer.files?.[0];
     if (file) {
         handleFileUpload(file);
@@ -127,7 +141,7 @@ export function GrammarCheckTab() {
       try {
         const payload = {
             operation: 'grammar' as const,
-            ...(fileUrl && !inputText ? { fileUrl } : { text: inputText })
+            ...(hasFile && !hasText ? { fileUrl } : { text: inputText })
         };
         const checkResult = await processImageText(payload);
 
@@ -201,9 +215,12 @@ export function GrammarCheckTab() {
                 htmlFor="grammar-upload"
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
+                onDragLeave={handleDragLeave}
                 className={cn(
-                "group flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
-                "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
+                    "group flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
+                    isDragging
+                        ? "border-primary bg-primary/20"
+                        : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
                 )}
             >
                 {isParsing ? (
@@ -296,3 +313,5 @@ export function GrammarCheckTab() {
     </div>
   );
 }
+
+    

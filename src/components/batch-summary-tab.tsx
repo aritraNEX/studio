@@ -32,6 +32,7 @@ export function BatchSummaryTab() {
     const [isBatchProcessing, setIsBatchProcessing] = useState(false);
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
 
     const parseFile = async (fileToParse: ProcessedFile): Promise<{ text?: string, dataUri?: string }> => {
         return new Promise((resolve, reject) => {
@@ -107,10 +108,17 @@ export function BatchSummaryTab() {
   
     const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
         event.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (event: React.DragEvent<HTMLLabelElement>) => {
+        event.preventDefault();
+        setIsDragging(false);
     };
 
     const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
         event.preventDefault();
+        setIsDragging(false);
         const droppedFiles = event.dataTransfer.files;
         if (droppedFiles) {
             Array.from(droppedFiles).forEach(file => handleFileUpload(file));
@@ -131,7 +139,7 @@ export function BatchSummaryTab() {
                     const isImage = file.file.type.startsWith("image/");
                     const inputPayload = {
                         operation: 'summarize' as const,
-                        ...(isImage ? { photoDataUri: file.extractedText! } : { text: file.extractedText! })
+                        ...(isImage ? { fileUrl: file.extractedText! } : { text: file.extractedText! })
                     };
                     const result = await processImageText(inputPayload);
                     if (result && result.processedText) {
@@ -234,9 +242,12 @@ export function BatchSummaryTab() {
                     htmlFor="batch-upload"
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
+                    onDragLeave={handleDragLeave}
                     className={cn(
                         "group flex flex-col items-center justify-center w-full min-h-[10rem] border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
-                        "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
+                        isDragging 
+                            ? "border-primary bg-primary/20"
+                            : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
                     )}
                 >
                      <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
@@ -360,3 +371,5 @@ export function BatchSummaryTab() {
         </div>
     );
 }
+
+    

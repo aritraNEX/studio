@@ -22,6 +22,7 @@ export function TranscriptionTab() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -54,10 +55,17 @@ export function TranscriptionTab() {
   
   const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
+    setIsDragging(false);
     const file = event.dataTransfer.files?.[0];
     if (file) {
       handleFileUpload(file);
@@ -133,9 +141,12 @@ export function TranscriptionTab() {
                 htmlFor="video-upload"
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
+                onDragLeave={handleDragLeave}
                 className={cn(
-                    "group relative flex flex-col items-center justify-center w-full h-96 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
-                    "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground overflow-hidden"
+                    "group relative flex flex-col items-center justify-center w-full h-96 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300 overflow-hidden",
+                    isDragging
+                        ? "border-primary bg-primary/20"
+                        : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
                 )}
              >
             {videoUrl ? (
@@ -224,3 +235,5 @@ export function TranscriptionTab() {
     </div>
   );
 }
+
+    
