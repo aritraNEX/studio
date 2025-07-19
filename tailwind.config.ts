@@ -106,11 +106,29 @@ export default {
             opacity: '0',
           },
         },
+         'logo-reveal': {
+          '0%': {
+            transform: 'scale(0.8) translateY(10px)',
+            opacity: '0',
+          },
+          '60%': {
+            transform: 'scale(1.05) translateY(0)',
+            opacity: '1',
+          },
+          '80%': {
+            transform: 'scale(0.95)',
+          },
+          '100%': {
+            transform: 'scale(1)',
+            opacity: '1',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'float-up': 'float-up linear infinite',
+        'logo-reveal': 'logo-reveal 1.5s ease-out forwards',
       },
     },
   },

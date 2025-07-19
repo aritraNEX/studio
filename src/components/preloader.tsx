@@ -87,9 +87,21 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
             <AnimatedIcon key={index} index={index} />
         ))}
       </div>
-      <div className="z-10 text-center animate-in fade-in duration-1000 delay-500">
-          <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit mb-4 shadow-lg shadow-primary/30">
-            <Sparkles className="h-10 w-10 animate-pulse" />
+      <div className="z-10 text-center animate-logo-reveal">
+          <div className="mx-auto w-fit mb-4">
+             <svg
+                width="48"
+                height="48"
+                viewBox="0 0 100 100"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-16 w-16"
+              >
+                <circle cx="40" cy="40" r="30" fill="#2E8B57" />
+                <circle cx="70" cy="35" r="20" fill="#3CB371" />
+                <circle cx="65" cy="75" r="25" fill="#20B2AA" />
+                <circle cx="80" cy="70" r="10" fill="#2E8B57" />
+              </svg>
           </div>
           <h1 className="text-5xl font-bold tracking-tight text-foreground">Tex.io</h1>
           <p className="mt-2 text-lg text-muted-foreground">Preparing the magic...</p>
