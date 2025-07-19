@@ -117,7 +117,7 @@ export function ConceptExplainerTab() {
                 onClick={handleExplain}
                 disabled={!topic.trim() || isPending}
                 size="lg"
-                className="h-12 text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
+                className="h-12 text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95"
             >
             {isPending ? (
                 <LucideIcons.Loader2 className="mr-2 h-5 w-5 animate-spin" />

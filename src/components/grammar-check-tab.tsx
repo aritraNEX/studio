@@ -282,7 +282,7 @@ export function GrammarCheckTab() {
           onClick={handleGrammarCheck}
           disabled={(!fileUrl && !inputText.trim()) || isPending}
           size="lg"
-          className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 sm:w-auto"
+          className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto"
         >
           {isPending ? (
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -296,5 +296,3 @@ export function GrammarCheckTab() {
     </div>
   );
 }
-
-    
