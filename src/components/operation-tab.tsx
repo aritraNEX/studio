@@ -3,7 +3,7 @@
 
 import { useState, useRef, useTransition, useEffect } from "react";
 import Image from "next/image";
-import { Copy, Loader2, Sparkles, Upload, Download, ChevronDown, Send, AudioLines, Share2, Link, Save } from "lucide-react";
+import { Copy, Loader2, Sparkles, Upload, Download, ChevronDown, Send, AudioLines, Share2, Link, Save, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,7 +52,6 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
   const [extractedText, setExtractedText] = useState<string | null>(initialText ?? null);
-  const [isParsing, setIsParsing] = useState(false);
   const [generatedText, setGeneratedText] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -69,6 +68,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -83,7 +83,6 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   useEffect(() => {
     if (projectId && user) {
       const fetchProject = async () => {
-        setIsParsing(true);
         const docRef = doc(db, 'projects', projectId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
@@ -94,29 +93,22 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
              return;
           }
           if (projectData.operation === operation) {
-            setExtractedText(projectData.inputText);
             setGeneratedText(projectData.outputText);
-            if (projectData.inputText.startsWith('https://firebasestorage.googleapis.com')) {
-                setFileUrl(projectData.inputText);
-                setLocalPreviewUrl(projectData.inputText);
+            // This is a saved project, the 'inputText' is the fileUrl
+            const savedFileUrl = projectData.inputText;
+            if (savedFileUrl && savedFileUrl.startsWith('https://firebasestorage.googleapis.com')) {
+                setFileUrl(savedFileUrl);
+                setLocalPreviewUrl(savedFileUrl);
             }
           }
         } else {
           toast({ variant: 'destructive', title: 'Project not found.' });
           router.push('/');
         }
-        setIsParsing(false);
       };
       fetchProject();
     }
   }, [projectId, user, operation, toast, router]);
-
-  useEffect(() => {
-      if (initialText) {
-          setExtractedText(initialText);
-          setGeneratedText("");
-      }
-  }, [initialText]);
 
   const handleSaveProject = async () => {
     if (!user) {
@@ -131,7 +123,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     try {
       await addDoc(collection(db, 'projects'), {
         userId: user.uid,
-        inputText: fileUrl || extractedText || '',
+        inputText: fileUrl || fileName || '',
         outputText: generatedText,
         operation: operation,
         createdAt: serverTimestamp(),
@@ -155,61 +147,32 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     // Reset states for a new upload
     setFileUrl(null);
     setLocalPreviewUrl(null);
-    setExtractedText(""); // CRITICAL FIX: Clear text input on new file upload
+    setExtractedText(null);
     setGeneratedText("");
     setError(null);
+    setFileName(file.name);
     
     const fileType = file.type;
     const isImage = fileType.startsWith("image/");
 
+    // Instant local preview
     if (isImage) {
         setLocalPreviewUrl(URL.createObjectURL(file));
-        setIsParsing(false);
     } else {
-        setIsParsing(true);
+        setLocalPreviewUrl(null); // No preview for non-image files
     }
     
+    // Background upload
     const storageRef = ref(storage, `uploads/${user.uid}/${Date.now()}-${file.name}`);
     uploadBytes(storageRef, file).then(snapshot => {
       getDownloadURL(snapshot.ref).then(downloadURL => {
         setFileUrl(downloadURL);
-        
-        if (!isImage) {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const buffer = e.target?.result as ArrayBuffer;
-                    if (fileType === 'application/pdf') {
-                        const pdf = await pdfjsLib.getDocument(buffer).promise;
-                        let text = '';
-                        for (let i = 1; i <= pdf.numPages; i++) {
-                            const page = await pdf.getPage(i);
-                            const content = await page.getTextContent();
-                            text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
-                        }
-                        setExtractedText(text);
-                    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                        const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-                        setExtractedText(result.value);
-                    }
-                } catch (err) {
-                     toast({ variant: 'destructive', title: 'File Parse Error', description: `Could not read text from ${file.name}.` });
-                } finally {
-                    setIsParsing(false);
-                }
-            };
-            reader.onerror = () => {
-                toast({ variant: 'destructive', title: 'File Read Error', description: `Could not read the file: ${file.name}` });
-                setIsParsing(false);
-            };
-            reader.readAsArrayBuffer(file);
-        }
       });
     }).catch(error => {
         console.error("Upload failed", error);
         toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not upload your file to storage.'});
-        setIsParsing(false);
         setLocalPreviewUrl(null);
+        setFileName(null);
     });
   };
   
@@ -218,7 +181,6 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     if (file) {
         handleFileUpload(file);
     }
-     // Reset file input to allow uploading the same file again
     if(event.target) {
         event.target.value = "";
     }
@@ -244,14 +206,11 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   };
 
   const handleProcess = () => {
-    const hasFile = !!fileUrl;
-    const hasText = !!extractedText?.trim();
-
-    if (!hasFile && !hasText) {
+    if (!fileUrl) {
         toast({
             variant: 'destructive',
-            title: 'No content to process',
-            description: 'Please upload a file or enter text.',
+            title: 'No file to process',
+            description: 'Please upload a file.',
         });
         return;
     }
@@ -280,30 +239,12 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     setGeneratedText("");
     startTransition(async () => {
       try {
-        const inputPayload: {
-          operation: Operation;
-          fileUrl?: string;
-          text?: string;
-          targetLanguage?: string;
-          targetStyle?: string;
-        } = {
+        const result = await processImageText({
             operation,
+            fileUrl: fileUrl,
             ...(operation === 'translate' ? { targetLanguage } : {}),
             ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
-        };
-
-        // CRITICAL FIX: Prioritize fileUrl over text input
-        if (hasFile) {
-          inputPayload.fileUrl = fileUrl;
-          // Do not send text if a file is present
-        } else if (hasText) {
-          inputPayload.text = extractedText;
-        } else {
-           // This case should be caught earlier, but as a safeguard:
-           throw new Error("No content to process.");
-        }
-
-        const result = await processImageText(inputPayload);
+        });
         if (result && result.processedText) {
           setGeneratedText(result.processedText);
         } else {
@@ -397,7 +338,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     <div className="grid md:grid-cols-2 gap-8 items-start">
       <div className="flex flex-col gap-4">
         <Label htmlFor={`image-upload-${operation}`} className="font-semibold text-md">
-          {initialText ? "Input Text" : "Upload File or Enter Text"}
+          Upload a File
         </Label>
         
         <div className="relative">
@@ -415,18 +356,13 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             onDrop={handleDrop}
             onDragLeave={handleDragLeave}
             className={cn(
-                "group flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
+                "group flex flex-col items-center justify-center w-full h-80 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
                 isDragging
                     ? "border-primary bg-primary/20"
                     : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
             )}
         >
-            {isParsing ? (
-            <div className="flex flex-col items-center justify-center text-center p-4">
-                <Loader2 className="w-10 h-10 mb-3 text-primary animate-spin" />
-                <p className="text-sm text-muted-foreground">Parsing document...</p>
-            </div>
-            ) : localPreviewUrl ? (
+            {localPreviewUrl ? (
             <div className="relative w-full h-full p-2">
                 <Image
                 src={localPreviewUrl}
@@ -434,6 +370,12 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                 fill
                 className="rounded-lg object-contain"
                 />
+            </div>
+            ) : fileName ? (
+             <div className="flex flex-col items-center justify-center text-center p-4">
+                <FileText className="w-16 h-16 mb-4 text-primary" />
+                <p className="font-semibold text-foreground">{fileName}</p>
+                <p className="text-sm text-muted-foreground mt-2">Ready to be processed</p>
             </div>
             ) : (
             <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
@@ -446,12 +388,6 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             )}
         </label>
         </div>
-        <Textarea
-            value={extractedText ?? ''}
-            onChange={(e) => setExtractedText(e.target.value)}
-            placeholder="Or type/paste your text here..."
-            className="h-48 resize-y bg-background focus-visible:ring-accent"
-        />
       </div>
       <div className="flex flex-col gap-4 h-full">
         {operation === 'translate' && (
@@ -612,7 +548,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
          <div className="flex flex-wrap items-center justify-center gap-4">
           <Button
             onClick={handleProcess}
-            disabled={(!fileUrl && !extractedText?.trim()) || isPending || isParsing || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
+            disabled={!fileUrl || isPending || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
             className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto"
           >
