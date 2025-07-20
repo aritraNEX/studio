@@ -11,7 +11,8 @@ import { assignmentMaker, AssignmentMakerOutput } from "@/ai/flows/assignment-ma
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
-import jsPDF from "jspdf";
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 
 export function AssignmentMakerTab() {
   const [topic, setTopic] = useState<string>("");
@@ -64,45 +65,100 @@ export function AssignmentMakerTab() {
     });
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (!result) return;
-    const doc = new jsPDF();
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.text(result.title, 14, 22);
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(12);
-    
-    const splitText = doc.splitTextToSize(result.content, 180);
-    doc.text(splitText, 14, 32);
+    try {
+      const pdfDoc = await PDFDocument.create();
+      pdfDoc.registerFontkit(fontkit);
 
-    let yPos = 32 + (splitText.length * 5) + 10;
+      // Fetch a font that supports a wide range of characters
+      const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
+      const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+      const customFont = await pdfDoc.embedFont(fontBytes);
 
-    if (result.references.length > 0) {
-        if (yPos > 260) {
-            doc.addPage();
-            yPos = 22;
+      const page = pdfDoc.addPage();
+      const { width, height } = page.getSize();
+      const margin = 50;
+      let y = height - margin;
+
+      // Title
+      page.drawText(result.title, {
+        x: margin,
+        y,
+        font: customFont,
+        size: 18,
+        color: rgb(0, 0, 0),
+      });
+      y -= 30;
+
+      // Content
+      const contentLines = result.content.split('\n');
+      for (const line of contentLines) {
+        if (y < margin) {
+            page.addPage();
+            y = height - margin;
         }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text("References", 14, yPos);
-        yPos += 8;
+        page.drawText(line, {
+            x: margin,
+            y,
+            font: customFont,
+            size: 12,
+            color: rgb(0, 0, 0),
+            lineHeight: 15,
+        });
+        y -= 15;
+      }
+      y -= 10;
+      
+      // References
+      if (result.references.length > 0) {
+        if (y < margin + 20) {
+            page.addPage();
+            y = height - margin;
+        }
+        page.drawText('References', {
+            x: margin,
+            y,
+            font: customFont,
+            size: 14,
+            color: rgb(0, 0, 0),
+        });
+        y -= 20;
 
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        result.references.forEach(ref => {
-            if (yPos > 280) {
-                doc.addPage();
-                yPos = 22;
+        for (const ref of result.references) {
+            if (y < margin) {
+                page.addPage();
+                y = height - margin;
             }
-            const splitRef = doc.splitTextToSize(ref, 180);
-            doc.text(splitRef, 14, yPos);
-            yPos += (splitRef.length * 4) + 2;
+            page.drawText(`- ${ref}`, {
+                x: margin,
+                y,
+                font: customFont,
+                size: 10,
+                color: rgb(0.3, 0.3, 0.3),
+                lineHeight: 12,
+            });
+            y -= 12;
+        }
+      }
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `assign-mentor-${result.title.replace(/\s+/g, '-')}.pdf`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+    } catch (pdfError) {
+        console.error("Failed to generate PDF:", pdfError);
+        toast({
+            variant: "destructive",
+            title: "PDF Generation Failed",
+            description: "Could not create the PDF file. Please try again."
         });
     }
-
-    doc.save(`assign-mentor-${result.title.replace(/\s+/g, '-')}.pdf`);
   };
 
   return (

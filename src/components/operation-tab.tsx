@@ -11,7 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import jsPDF from "jspdf";
+import { PDFDocument, rgb } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
 import {
@@ -272,22 +273,59 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     });
   };
 
-  const handleDownloadPdf = (textToDownload: string, fileName: string) => {
+  const handleDownloadPdf = async (textToDownload: string, fileName: string) => {
     if (!textToDownload) return;
+    
+    try {
+      const pdfDoc = await PDFDocument.create();
+      pdfDoc.registerFontkit(fontkit);
 
-    const doc = new jsPDF();
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.text(`Tex.io Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, 14, 22);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(12);
-    const splitText = doc.splitTextToSize(textToDownload, 180);
-    doc.text(splitText, 14, 32);
-    doc.save(fileName);
-    toast({
-        title: "PDF Downloaded",
-        description: "Your result has been saved as a PDF.",
-    });
+      const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
+      const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+      const customFont = await pdfDoc.embedFont(fontBytes);
+
+      const page = pdfDoc.addPage();
+      const { width, height } = page.getSize();
+      const margin = 50;
+
+      page.drawText(`Tex.io Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, {
+          x: margin,
+          y: height - margin,
+          font: customFont,
+          size: 18,
+          color: rgb(0, 0, 0),
+      });
+
+      page.drawText(textToDownload, {
+          x: margin,
+          y: height - margin - 30,
+          font: customFont,
+          size: 12,
+          lineHeight: 15,
+          color: rgb(0.2, 0.2, 0.2),
+          maxWidth: width - 2 * margin,
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+      toast({
+          title: "PDF Downloaded",
+          description: "Your result has been saved as a PDF.",
+      });
+    } catch(err) {
+      console.error("Failed to generate PDF", err);
+      toast({
+          variant: "destructive",
+          title: "PDF Download Failed",
+          description: "Could not create PDF from the result.",
+      });
+    }
   };
 
   const handleShare = (platform: 'twitter' | 'facebook' | 'linkedin' | 'whatsapp' | 'email', text: string) => {

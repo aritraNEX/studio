@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import jsPDF from "jspdf";
+import { PDFDocument, rgb } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 
 export function NotepadTab() {
   const [notes, setNotes] = useState<string>("");
@@ -41,27 +42,60 @@ export function NotepadTab() {
     });
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (!notes) return;
 
-    const doc = new jsPDF();
-    
-    // Set a professional, universally supported font
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.text("Tex.io Notepad", 14, 22);
+    try {
+        const pdfDoc = await PDFDocument.create();
+        pdfDoc.registerFontkit(fontkit);
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(12);
+        const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
+        const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+        const customFont = await pdfDoc.embedFont(fontBytes);
+        
+        const page = pdfDoc.addPage();
+        const { width, height } = page.getSize();
+        const margin = 50;
 
-    const splitText = doc.splitTextToSize(notes, 180);
-    doc.text(splitText, 14, 32);
+        page.drawText("Tex.io Notepad", {
+            x: margin,
+            y: height - margin,
+            font: customFont,
+            size: 18,
+            color: rgb(0, 0, 0),
+        });
 
-    doc.save("texio-notepad.pdf");
-    toast({
-      title: "PDF Downloaded",
-      description: "Your notes have been saved as a PDF.",
-    });
+        page.drawText(notes, {
+            x: margin,
+            y: height - margin - 30,
+            font: customFont,
+            size: 12,
+            lineHeight: 15,
+            color: rgb(0.2, 0.2, 0.2),
+            maxWidth: width - 2 * margin,
+        });
+
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = "texio-notepad.pdf";
+        link.click();
+        URL.revokeObjectURL(link.href);
+
+        toast({
+            title: "PDF Downloaded",
+            description: "Your notes have been saved as a PDF.",
+        });
+
+    } catch(err) {
+        toast({
+            variant: "destructive",
+            title: "PDF Download Failed",
+            description: "Could not generate the PDF for your notes.",
+        });
+        console.error(err);
+    }
   };
 
   return (

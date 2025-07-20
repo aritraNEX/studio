@@ -11,7 +11,8 @@ import { noteGenerator, NoteGeneratorOutput } from "@/ai/flows/note-generator-fl
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
-import jsPDF from "jspdf";
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 
 export function NoteGeneratorTab() {
   const [topic, setTopic] = useState<string>("");
@@ -71,67 +72,101 @@ export function NoteGeneratorTab() {
     });
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (!result) return;
-    const doc = new jsPDF();
-    const pageMargin = 14;
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const contentWidth = pageWidth - (pageMargin * 2);
-    let yPos = 22;
-    const lineHeight = 7;
+     try {
+      const pdfDoc = await PDFDocument.create();
+      pdfDoc.registerFontkit(fontkit);
 
-    // Helper to add new page if needed
-    const checkPageBreak = () => {
-        if (yPos > doc.internal.pageSize.getHeight() - pageMargin) {
-            doc.addPage();
-            yPos = pageMargin;
-        }
-    }
-    
-    // Set Document Title
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.text(result.title, pageMargin, yPos);
-    yPos += lineHeight * 2;
+      const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
+      const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+      const customFont = await pdfDoc.embedFont(fontBytes);
+      const boldFont = await pdfDoc.embedFont(fontBytes, { subset: true }); // Assuming same font for bold for simplicity
 
-    // Set Document Content
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(12);
+      const page = pdfDoc.addPage();
+      const { width, height } = page.getSize();
+      const margin = 50;
+      let y = height - margin;
 
-    const lines = result.content.split('\n');
+      const drawTextWithWrap = (text: string, options: any) => {
+          const { font, size, color, lineHeight } = options;
+          const textWidth = (txt: string) => font.widthOfTextAtSize(txt, size);
+          
+          let currentLine = '';
+          const words = text.split(' ');
 
-    lines.forEach(line => {
-        checkPageBreak();
+          for(const word of words) {
+              const lineWithNextWord = currentLine ? `${currentLine} ${word}` : word;
+              if (textWidth(lineWithNextWord) < width - 2 * margin) {
+                  currentLine = lineWithNextWord;
+              } else {
+                  if (y < margin) {
+                    page.addPage();
+                    y = height - margin;
+                  }
+                  page.drawText(currentLine, { x: margin, y, font, size, color, lineHeight });
+                  y -= lineHeight;
+                  currentLine = word;
+              }
+          }
+          if (currentLine) {
+            if (y < margin) {
+                page.addPage();
+                y = height - margin;
+            }
+            page.drawText(currentLine, { x: margin, y, font, size, color, lineHeight });
+            y -= lineHeight;
+          }
+      };
 
-        // Simple markdown parser for bold text
+
+      // Title
+      drawTextWithWrap(result.title, { font: boldFont, size: 18, color: rgb(0,0,0), lineHeight: 22 });
+      y -= 10;
+      
+      // Content
+      const lines = result.content.split('\n');
+      for (const line of lines) {
         const parts = line.split('**');
-        let xPos = pageMargin;
-
-        parts.forEach((part, index) => {
-            const isBold = index % 2 === 1;
-            doc.setFont('helvetica', isBold ? 'bold' : 'normal');
-            
-            // Split the part into words to handle wrapping
-            const words = part.split(' ');
-            words.forEach((word, wordIndex) => {
-                const wordWidth = doc.getTextWidth(word + ' ');
-                if (xPos + wordWidth > pageWidth - pageMargin) {
-                    yPos += lineHeight;
-                    xPos = pageMargin;
-                    checkPageBreak();
-                }
-                doc.text(word, xPos, yPos);
-                xPos += wordWidth;
-            });
-        });
-
-        yPos += lineHeight; 
-        if (line.trim() === '') { // Add extra space for empty lines (paragraphs)
-            yPos += lineHeight / 2;
+        if (y < margin) {
+            page.addPage();
+            y = height - margin;
         }
-    });
 
-    doc.save(`note-mentor-${result.title.replace(/\s+/g, '-')}.pdf`);
+        let currentX = margin;
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            const isBold = i % 2 === 1;
+            const fontToUse = isBold ? boldFont : customFont;
+
+            page.drawText(part, {
+                x: currentX,
+                y,
+                font: fontToUse,
+                size: 12,
+                color: rgb(0, 0, 0),
+            });
+            currentX += fontToUse.widthOfTextAtSize(part, 12);
+        }
+        y -= 15; // Move to next line
+      }
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `note-mentor-${result.title.replace(/\s+/g, '-')}.pdf`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+    } catch (pdfError) {
+        console.error("Failed to generate PDF:", pdfError);
+        toast({
+            variant: "destructive",
+            title: "PDF Generation Failed",
+            description: "Could not create the PDF file. Please try again."
+        });
+    }
   };
 
   return (

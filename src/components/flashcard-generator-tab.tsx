@@ -10,7 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { flashcardGenerator, FlashcardGeneratorOutput } from "@/ai/flows/flashcard-generator-flow";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import jsPDF from "jspdf";
+import { PDFDocument, rgb } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
+
 
 type AnimationStyle = 'flip-h' | 'flip-v' | 'fade' | 'slide-up' | 'zoom';
 
@@ -23,12 +25,12 @@ const animationStyles: { name: string; id: AnimationStyle }[] = [
 ];
 
 const colorThemes = [
-    { name: 'Default', id: 'default', bgFrontClass: 'bg-card', bgBackClass: 'bg-muted', textClass: 'text-card-foreground', pdf: { bg: [248, 250, 252], text: [30, 41, 59] } },
-    { name: 'Slate', id: 'slate', bgFrontClass: 'bg-slate-800', bgBackClass: 'bg-slate-700', textClass: 'text-slate-100', pdf: { bg: [30, 41, 59], text: [241, 245, 249] } },
-    { name: 'Sky', id: 'sky', bgFrontClass: 'bg-sky-500', bgBackClass: 'bg-sky-400', textClass: 'text-white', pdf: { bg: [14, 165, 233], text: [255, 255, 255] } },
-    { name: 'Amber', id: 'amber', bgFrontClass: 'bg-amber-400', bgBackClass: 'bg-amber-300', textClass: 'text-amber-900', pdf: { bg: [251, 191, 36], text: [120, 53, 15] } },
-    { name: 'Emerald', id: 'emerald', bgFrontClass: 'bg-emerald-500', bgBackClass: 'bg-emerald-400', textClass: 'text-white', pdf: { bg: [16, 185, 129], text: [255, 255, 255] } },
-    { name: 'Rose', id: 'rose', bgFrontClass: 'bg-rose-600', bgBackClass: 'bg-rose-500', textClass: 'text-white', pdf: { bg: [225, 29, 72], text: [255, 255, 255] } },
+    { name: 'Default', id: 'default', bgFrontClass: 'bg-card', bgBackClass: 'bg-muted', textClass: 'text-card-foreground', pdf: { bg: [0.97, 0.98, 0.99], text: [0.06, 0.09, 0.13] } },
+    { name: 'Slate', id: 'slate', bgFrontClass: 'bg-slate-800', bgBackClass: 'bg-slate-700', textClass: 'text-slate-100', pdf: { bg: [0.11, 0.15, 0.21], text: [0.95, 0.96, 0.97] } },
+    { name: 'Sky', id: 'sky', bgFrontClass: 'bg-sky-500', bgBackClass: 'bg-sky-400', textClass: 'text-white', pdf: { bg: [0.05, 0.65, 0.91], text: [1, 1, 1] } },
+    { name: 'Amber', id: 'amber', bgFrontClass: 'bg-amber-400', bgBackClass: 'bg-amber-300', textClass: 'text-amber-900', pdf: { bg: [0.98, 0.75, 0.14], text: [0.47, 0.21, 0.06] } },
+    { name: 'Emerald', id: 'emerald', bgFrontClass: 'bg-emerald-500', bgBackClass: 'bg-emerald-400', textClass: 'text-white', pdf: { bg: [0.06, 0.73, 0.51], text: [1, 1, 1] } },
+    { name: 'Rose', id: 'rose', bgFrontClass: 'bg-rose-600', bgBackClass: 'bg-rose-500', textClass: 'text-white', pdf: { bg: [0.88, 0.11, 0.28], text: [1, 1, 1] } },
 ];
 
 
@@ -93,51 +95,83 @@ export function FlashcardGeneratorTab() {
     }
   };
   
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (!result) return;
-    const doc = new jsPDF();
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("Tex.io Flashcards", 14, 22);
+    try {
+        const pdfDoc = await PDFDocument.create();
+        pdfDoc.registerFontkit(fontkit);
 
-    let yPos = 32;
+        const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
+        const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+        const customFont = await pdfDoc.embedFont(fontBytes);
 
-    result.flashcards.forEach((card, index) => {
-      if (yPos > 240) { // Check space for both front and back
-        doc.addPage();
-        yPos = 22;
-      }
-      
-      const drawCard = (title: string, text: string) => {
-        const textLines = doc.splitTextToSize(text, 170);
-        const cardHeight = (textLines.length * 7) + 20;
+        let page = pdfDoc.addPage();
+        const { width, height } = page.getSize();
+        const cardWidth = width / 2 - 30;
+        const cardHeight = height / 4 - 30;
+        let x = 20;
+        let y = height - 20 - cardHeight;
+        let cardCount = 0;
+        
+        const drawCard = (text: string, isFront: boolean) => {
+            if (cardCount > 0 && cardCount % 8 === 0) {
+                page = pdfDoc.addPage();
+                x = 20;
+                y = height - 20 - cardHeight;
+            }
 
-        if (yPos + cardHeight > 280) {
-            doc.addPage();
-            yPos = 22;
+            // Draw card background
+            const bgColor = isFront ? colorTheme.pdf.bg : [colorTheme.pdf.bg[0] * 0.9, colorTheme.pdf.bg[1] * 0.9, colorTheme.pdf.bg[2] * 0.9];
+            page.drawRectangle({
+                x,
+                y,
+                width: cardWidth,
+                height: cardHeight,
+                color: rgb(bgColor[0], bgColor[1], bgColor[2]),
+                borderColor: rgb(0.8, 0.8, 0.8),
+                borderWidth: 0.5,
+            });
+
+            // Draw text
+            const textColor = rgb(colorTheme.pdf.text[0], colorTheme.pdf.text[1], colorTheme.pdf.text[2]);
+            page.drawText(text, {
+                x: x + 10,
+                y: y + cardHeight / 2, // Simple centering
+                font: customFont,
+                size: 10,
+                color: textColor,
+                maxWidth: cardWidth - 20,
+            });
+
+            cardCount++;
+            x += cardWidth + 20;
+            if (cardCount % 2 === 0) {
+                x = 20;
+                y -= cardHeight + 20;
+            }
+        };
+
+        for (const card of result.flashcards) {
+            drawCard(card.front, true);
+            drawCard(card.back, false);
         }
 
-        doc.setFillColor(colorTheme.pdf.bg[0], colorTheme.pdf.bg[1], colorTheme.pdf.bg[2]);
-        doc.roundedRect(14, yPos, 182, cardHeight, 3, 3, 'F');
-        
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(10);
-        doc.setTextColor(colorTheme.pdf.text[0], colorTheme.pdf.text[1], colorTheme.pdf.text[2]);
-        doc.text(title, 20, yPos + 10);
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `texio-flashcards-${colorTheme.id}.pdf`;
+        link.click();
+        URL.revokeObjectURL(link.href);
 
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(12);
-        doc.text(textLines, 20, yPos + 20);
-        
-        return cardHeight + 5;
-      };
-
-      yPos += drawCard(`Card ${index + 1} - Front`, card.front);
-      yPos += drawCard(`Card ${index + 1} - Back`, card.back);
-      yPos += 5; // Extra space between card pairs
-    });
-
-    doc.save(`texio-flashcards-${colorTheme.id}.pdf`);
+    } catch (pdfError) {
+        console.error("Failed to generate PDF:", pdfError);
+        toast({
+            variant: "destructive",
+            title: "PDF Generation Failed",
+            description: "Could not create the PDF file. Please try again."
+        });
+    }
   };
 
   const currentCard = result?.flashcards[currentCardIndex];
