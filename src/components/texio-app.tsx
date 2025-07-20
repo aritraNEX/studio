@@ -46,7 +46,7 @@ interface TexioAppProps {
   initialTopic?: string | null;
 }
 
-const freeFeatures = ['paraphrase', 'summarize', 'translate'];
+const freeFeatures = ['paraphrase', 'summarize', 'translate', 'style', 'notepad', 'formula'];
 
 export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps) {
   const [activeTab, setActiveTab] = useState(initialTab || "paraphrase");
@@ -62,11 +62,11 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
   }, [initialTab]);
 
   const handleTabChange = (newTab: string) => {
-    // if (!freeFeatures.includes(newTab) && !isPremium) {
-    //   setPremiumModalOpen(true);
-    // } else {
+    if (!freeFeatures.includes(newTab) && !isPremium) {
+      setPremiumModalOpen(true);
+    } else {
       setActiveTab(newTab);
-    // }
+    }
   };
 
   const handleSendTo = (text: string, operation: Operation) => {
@@ -85,11 +85,11 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
     return (
       <TabsTrigger 
         value={value} 
-        className="h-auto py-2.5 flex-1"
+        className="h-auto py-2.5 flex-1 relative"
         onClick={(e) => {
           if (isPremiumFeature && !isPremium) {
-            // e.preventDefault();
-            // setPremiumModalOpen(true);
+            e.preventDefault();
+            setPremiumModalOpen(true);
           }
         }}
       >
@@ -97,6 +97,9 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
             {icon}
             <span className="text-xs sm:text-sm">{label}</span>
         </div>
+        {isPremiumFeature && (
+            <Crown className="absolute top-1 right-1 h-3 w-3 text-yellow-500" />
+        )}
       </TabsTrigger>
     );
   };

@@ -1,31 +1,28 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only read and write their own user document
     match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+      // Users can read their own data.
+      // They can create their user document.
+      // They can ONLY update the `hasUsedTrial` field, but cannot set `isPremium`.
+      allow read, create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId && !(request.resource.data.diff(resource.data).affectedKeys().hasAny(['isPremium']));
     }
     
-    // Users can only read, write, and delete their own projects
     match /projects/{projectId} {
+      // Users can read, write, and delete their own projects.
       allow read, write, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
-    // Allow users to create projects if they are logged in
-    match /projects/{projectId} {
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-    }
-
-    // Workspaces can be read by anyone, but only written by the owner
     match /workspaces/{workspaceId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == resource.data.ownerId;
-    }
-
-    // Allow users to create workspaces if they are logged in
-    match /workspaces/{workspaceId} {
-       allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
+      // Anyone can read a shared workspace.
+      allow read;
+      // Only the owner can create or update their own workspace.
+      allow create, update: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
+      // No one can delete a workspace from the client to prevent accidental data loss.
+      allow delete: if false;
     }
   }
 }

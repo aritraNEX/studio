@@ -59,14 +59,14 @@ const researchAssistantFlow = ai.defineFlow(
     name: 'researchAssistantFlow',
     inputSchema: ResearchAssistantInputSchema,
     outputSchema: ResearchAssistantOutputSchema,
-    // auth: {
-    //   required: true,
-    //   policy(auth, input) {
-    //     if (!auth.isPremium) {
-    //        setTrialUsed(auth.uid);
-    //     }
-    //   }
-    // }
+    auth: {
+      required: true,
+      policy(auth, input) {
+        if (!auth.isPremium) {
+           setTrialUsed(auth.uid);
+        }
+      }
+    }
   },
   async (input) => {
     if (!input.text.trim()) {

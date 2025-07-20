@@ -58,14 +58,14 @@ const flashcardGeneratorFlow = ai.defineFlow(
     name: 'flashcardGeneratorFlow',
     inputSchema: FlashcardGeneratorInputSchema,
     outputSchema: FlashcardGeneratorOutputSchema,
-    // auth: {
-    //   required: true,
-    //   policy(auth, input) {
-    //     if (!auth.isPremium) {
-    //        setTrialUsed(auth.uid);
-    //     }
-    //   }
-    // }
+    auth: {
+      required: true,
+      policy(auth, input) {
+        if (!auth.isPremium) {
+           setTrialUsed(auth.uid);
+        }
+      }
+    }
   },
   async (input) => {
     if (!input.text.trim()) {

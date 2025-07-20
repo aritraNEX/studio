@@ -79,14 +79,14 @@ const transcriptionFlow = ai.defineFlow(
     name: 'transcriptionFlow',
     inputSchema: GenerateTranscriptionInputSchema,
     outputSchema: GenerateTranscriptionOutputSchema,
-    // auth: {
-    //   required: true,
-    //   policy(auth, input) {
-    //     if (!auth.isPremium) {
-    //        setTrialUsed(auth.uid);
-    //     }
-    //   }
-    // }
+    auth: {
+      required: true,
+      policy(auth, input) {
+        if (!auth.isPremium) {
+           setTrialUsed(auth.uid);
+        }
+      }
+    }
   },
   async (input) => {
     // Run language detection first
