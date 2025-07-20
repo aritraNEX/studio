@@ -97,8 +97,8 @@ export function GrammarCheckTab() {
   const handleGrammarCheck = () => {
     if (!fileUrl) {
       toast({
-        title: "No File",
-        description: "Please upload a file to check.",
+        title: "File is still uploading",
+        description: "Please wait for the file to finish uploading before checking.",
         variant: "destructive",
       });
       return;
@@ -261,7 +261,7 @@ export function GrammarCheckTab() {
       <div className="flex flex-col items-center justify-center gap-4 py-4">
         <Button
           onClick={handleGrammarCheck}
-          disabled={!fileUrl || isPending}
+          disabled={!fileName || isPending}
           size="lg"
           className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto"
         >

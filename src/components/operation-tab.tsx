@@ -209,8 +209,8 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     if (!fileUrl) {
         toast({
             variant: 'destructive',
-            title: 'No file to process',
-            description: 'Please upload a file.',
+            title: 'File is still uploading',
+            description: 'Please wait for the file to finish uploading before processing.',
         });
         return;
     }
@@ -548,7 +548,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
          <div className="flex flex-wrap items-center justify-center gap-4">
           <Button
             onClick={handleProcess}
-            disabled={!fileUrl || isPending || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
+            disabled={!fileName || isPending || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
             className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto"
           >
