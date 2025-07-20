@@ -47,7 +47,7 @@ interface TexioAppProps {
   initialTopic?: string | null;
 }
 
-const freeFeatures = ['paraphrase', 'summarize', 'translate', 'style', 'notepad', 'formula', 'plagiarism', 'grammar'];
+const freeFeatures = ['paraphrase', 'summarize', 'translate', 'style', 'notepad', 'formula', 'plagiarism', 'grammar', 'tts'];
 const allFeatures = [
     { value: 'paraphrase', icon: <Quote className="h-5 w-5" />, label: 'Paraphrase' },
     { value: 'summarize', icon: <BookText className="h-5 w-5" />, label: 'Summarize' },
@@ -55,6 +55,7 @@ const allFeatures = [
     { value: 'grammar', icon: <SpellCheck className="h-5 w-5" />, label: 'Grammar' },
     { value: 'plagiarism', icon: <ShieldCheck className="h-5 w-5" />, label: 'Plagiarism' },
     { value: 'style', icon: <Palette className="h-5 w-5" />, label: 'Style' },
+    { value: 'tts', icon: <AudioLines className="h-5 w-5" />, label: 'TTS' },
     { value: 'notepad', icon: <Notebook className="h-5 w-5" />, label: 'Notepad' },
     { value: 'formula', icon: <FunctionSquare className="h-5 w-5" />, label: 'Formula' },
     { value: 'explainer', icon: <BrainCircuit className="h-5 w-5" />, label: 'Explainer' },
@@ -67,7 +68,6 @@ const allFeatures = [
     { value: 'video-to-text', icon: <Video className="h-5 w-5" />, label: 'Video to Text' },
     { value: 'workspace', icon: <Wand2 className="h-5 w-5" />, label: 'Workspace' },
     { value: 'research', icon: <GraduationCap className="h-5 w-5" />, label: 'Research' },
-    { value: 'tts', icon: <AudioLines className="h-5 w-5" />, label: 'TTS' },
 ];
 
 
@@ -161,14 +161,14 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
             <div className="flex flex-col gap-4">
                 <div>
                     <h3 className="text-sm font-semibold text-muted-foreground mb-2 text-center">Free Tools</h3>
-                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 mx-auto h-auto p-1.5 flex-wrap">
+                    <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 mx-auto h-auto p-1.5 flex-wrap">
                         {allFeatures.filter(f => freeFeatures.includes(f.value)).map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
                     </TabsList>
                 </div>
                 <Separator />
                  <div>
                     <h3 className="text-sm font-semibold text-muted-foreground mb-2 text-center">Premium Tools</h3>
-                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 xl:grid-cols-11 mx-auto h-auto p-1.5 flex-wrap">
+                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-10 mx-auto h-auto p-1.5 flex-wrap">
                         {allFeatures.filter(f => !freeFeatures.includes(f.value)).map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
                     </TabsList>
                 </div>
