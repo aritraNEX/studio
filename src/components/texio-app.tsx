@@ -36,6 +36,7 @@ import { useSubscription } from "@/contexts/subscription-context";
 import { PremiumModal } from "./premium-modal";
 import { NoteGeneratorTab } from "./note-generator-tab";
 import { useABTest } from "@/contexts/ab-test-context";
+import { Separator } from "./ui/separator";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -47,6 +48,28 @@ interface TexioAppProps {
 }
 
 const freeFeatures = ['paraphrase', 'summarize', 'translate', 'style', 'notepad', 'formula', 'plagiarism', 'grammar'];
+const allFeatures = [
+    { value: 'paraphrase', icon: <Quote className="h-5 w-5" />, label: 'Paraphrase' },
+    { value: 'summarize', icon: <BookText className="h-5 w-5" />, label: 'Summarize' },
+    { value: 'translate', icon: <Languages className="h-5 w-5" />, label: 'Translate' },
+    { value: 'grammar', icon: <SpellCheck className="h-5 w-5" />, label: 'Grammar' },
+    { value: 'plagiarism', icon: <ShieldCheck className="h-5 w-5" />, label: 'Plagiarism' },
+    { value: 'style', icon: <Palette className="h-5 w-5" />, label: 'Style' },
+    { value: 'notepad', icon: <Notebook className="h-5 w-5" />, label: 'Notepad' },
+    { value: 'formula', icon: <FunctionSquare className="h-5 w-5" />, label: 'Formula' },
+    { value: 'explainer', icon: <BrainCircuit className="h-5 w-5" />, label: 'Explainer' },
+    { value: 'diagrams', icon: <Share2 className="h-5 w-5" />, label: 'Diagrams' },
+    { value: 'batch-summary', icon: <Rows3 className="h-5 w-5" />, label: 'Batch Summary' },
+    { value: 'assign-mentor', icon: <PenSquare className="h-5 w-5" />, label: 'Assign-mentor' },
+    { value: 'note-mentor', icon: <StickyNote className="h-5 w-5" />, label: 'Note-mentor' },
+    { value: 'flashcards', icon: <Copy className="h-5 w-5" />, label: 'Flashcards' },
+    { value: 'citations', icon: <BookA className="h-5 w-5" />, label: 'Citations' },
+    { value: 'video-to-text', icon: <Video className="h-5 w-5" />, label: 'Video to Text' },
+    { value: 'workspace', icon: <Wand2 className="h-5 w-5" />, label: 'Workspace' },
+    { value: 'research', icon: <GraduationCap className="h-5 w-5" />, label: 'Research' },
+    { value: 'tts', icon: <AudioLines className="h-5 w-5" />, label: 'TTS' },
+];
+
 
 export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps) {
   const [activeTab, setActiveTab] = useState(initialTab || "paraphrase");
@@ -84,6 +107,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
     const isPremiumFeature = !freeFeatures.includes(value);
     return (
       <TabsTrigger 
+        key={value}
         value={value} 
         className="h-auto py-2.5 flex-1 relative"
         onClick={(e) => {
@@ -134,27 +158,22 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
       <CardContent className="p-2 sm:p-8 pt-2">
         <PremiumModal isOpen={isPremiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 mx-auto h-auto p-1.5 flex-wrap">
-            {renderTabTrigger("paraphrase", <Quote className="h-5 w-5" />, "Paraphrase")}
-            {renderTabTrigger("summarize", <BookText className="h-5 w-5" />, "Summarize")}
-            {renderTabTrigger("translate", <Languages className="h-5 w-5" />, "Translate")}
-            {renderTabTrigger("grammar", <SpellCheck className="h-5 w-5" />, "Grammar")}
-            {renderTabTrigger("plagiarism", <ShieldCheck className="h-5 w-5" />, "Plagiarism")}
-            {renderTabTrigger("explainer", <BrainCircuit className="h-5 w-5" />, "Explainer")}
-            {renderTabTrigger("diagrams", <Share2 className="h-5 w-5" />, "Diagrams")}
-            {renderTabTrigger("batch-summary", <Rows3 className="h-5 w-5" />, "Batch Summary")}
-            {renderTabTrigger("style", <Palette className="h-5 w-5" />, "Style")}
-            {renderTabTrigger("assign-mentor", <PenSquare className="h-5 w-5" />, "Assign-mentor")}
-            {renderTabTrigger("note-mentor", <StickyNote className="h-5 w-5" />, "Note-mentor")}
-            {renderTabTrigger("flashcards", <Copy className="h-5 w-5" />, "Flashcards")}
-            {renderTabTrigger("citations", <BookA className="h-5 w-5" />, "Citations")}
-            {renderTabTrigger("formula", <FunctionSquare className="h-5 w-5" />, "Formula")}
-            {renderTabTrigger("video-to-text", <Video className="h-5 w-5" />, "Video to Text")}
-            {renderTabTrigger("workspace", <Wand2 className="h-5 w-5" />, "Workspace")}
-            {renderTabTrigger("research", <GraduationCap className="h-5 w-5" />, "Research")}
-            {renderTabTrigger("tts", <AudioLines className="h-5 w-5" />, "TTS")}
-            {renderTabTrigger("notepad", <Notebook className="h-5 w-5" />, "Notepad")}
-          </TabsList>
+            <div className="flex flex-col gap-4">
+                <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2 text-center">Free Tools</h3>
+                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 mx-auto h-auto p-1.5 flex-wrap">
+                        {allFeatures.filter(f => freeFeatures.includes(f.value)).map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
+                    </TabsList>
+                </div>
+                <Separator />
+                 <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2 text-center">Premium Tools</h3>
+                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 xl:grid-cols-11 mx-auto h-auto p-1.5 flex-wrap">
+                        {allFeatures.filter(f => !freeFeatures.includes(f.value)).map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
+                    </TabsList>
+                </div>
+            </div>
+
           <TabsContent value="paraphrase" className="pt-6">
             <OperationTab operation="paraphrase" onSendTo={handleSendTo} projectId={projectId} />
           </TabsContent>
