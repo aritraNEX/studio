@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useTransition } from "react";
 import { Copy, Loader2, Sparkles, Upload, Download, File as FileIcon, Trash2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
-import jsPDF from "jspdf";
+import { PDFDocument, rgb } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -33,6 +34,7 @@ export function BatchSummaryTab() {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [isParsing, setIsParsing] = useState(false);
 
     const parseFile = async (fileToParse: ProcessedFile): Promise<{ text?: string, dataUri?: string }> => {
         return new Promise((resolve, reject) => {
@@ -84,6 +86,7 @@ export function BatchSummaryTab() {
     };
 
     const handleFileParsing = async (fileToParse: ProcessedFile) => {
+        setIsParsing(true);
         setFiles(prev => prev.map(f => f.id === fileToParse.id ? { ...f, status: 'parsing' } : f));
         try {
             const { text, dataUri } = await parseFile(fileToParse);
@@ -92,6 +95,8 @@ export function BatchSummaryTab() {
             console.error("Failed to parse file", error);
             setFiles(prev => prev.map(f => f.id === fileToParse.id ? { ...f, status: 'error', error: 'Failed to parse' } : f));
             toast({ variant: 'destructive', title: `Could not read file: ${fileToParse.file.name}` });
+        } finally {
+            setIsParsing(false);
         }
     };
   
@@ -157,40 +162,82 @@ export function BatchSummaryTab() {
         setIsBatchProcessing(false);
     };
     
-    const handleDownloadAll = () => {
-        const doc = new jsPDF();
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        doc.text(`Tex.io Summaries`, 14, 22);
-        
-        let yPos = 32;
+    const handleDownloadAll = async () => {
+        try {
+            const pdfDoc = await PDFDocument.create();
+            pdfDoc.registerFontkit(fontkit);
 
-        files.forEach((file) => {
-            if (file.status === 'done' && file.generatedText) {
-                if(yPos > 260) {
-                   doc.addPage();
-                   yPos = 22;
+            const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
+            const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+            const customFont = await pdfDoc.embedFont(fontBytes);
+            const boldFont = await pdfDoc.embedFont(fontBytes);
+
+            let page = pdfDoc.addPage();
+            const { width, height } = page.getSize();
+            const margin = 50;
+            let y = height - margin;
+
+            page.drawText('Tex.io Summaries', {
+                x: margin,
+                y,
+                font: boldFont,
+                size: 18,
+                color: rgb(0, 0, 0),
+            });
+            y -= 30;
+
+            for (const file of files) {
+                if (file.status === 'done' && file.generatedText) {
+                    if (y < margin + 60) {
+                        page = pdfDoc.addPage();
+                        y = height - margin;
+                    }
+                    
+                    page.drawText(`Summary for: ${file.file.name}`, {
+                        x: margin,
+                        y,
+                        font: boldFont,
+                        size: 14,
+                        color: rgb(0, 0, 0),
+                    });
+                    y -= 20;
+
+                    const lines = file.generatedText.split('\n');
+                    for (const line of lines) {
+                        if (y < margin) {
+                            page = pdfDoc.addPage();
+                            y = height - margin;
+                        }
+                        page.drawText(line, {
+                            x: margin,
+                            y,
+                            font: customFont,
+                            size: 10,
+                            lineHeight: 14,
+                            color: rgb(0.2, 0.2, 0.2),
+                        });
+                        y -= 14;
+                    }
+                    y -= 20; // Extra space between summaries
                 }
-                
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(14);
-                doc.text(`Summary for: ${file.file.name}`, 14, yPos);
-                yPos += 8;
-
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(12);
-                
-                const splitText = doc.splitTextToSize(file.generatedText, 180);
-                doc.text(splitText, 14, yPos);
-                yPos += (splitText.length * 5) + 10;
             }
-        });
 
-        doc.save("texio-summaries.pdf");
-        toast({
-            title: "PDF Downloaded",
-            description: "All summaries have been saved as a single PDF.",
-        });
+            const pdfBytes = await pdfDoc.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = "texio-summaries.pdf";
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+            toast({
+                title: "PDF Downloaded",
+                description: "All summaries have been saved as a single PDF.",
+            });
+        } catch (pdfError) {
+            console.error("PDF generation failed:", pdfError);
+            toast({ variant: 'destructive', title: 'PDF Download Failed' });
+        }
     };
     
     const handleCopy = (textToCopy: string) => {
@@ -202,21 +249,54 @@ export function BatchSummaryTab() {
         });
     };
 
-    const handleDownloadPdf = (textToDownload: string, fileName: string) => {
+    const handleDownloadPdf = async (textToDownload: string, fileName: string) => {
         if (!textToDownload) return;
-        const doc = new jsPDF();
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        doc.text(`Tex.io Summary`, 14, 22);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(12);
-        const splitText = doc.splitTextToSize(textToDownload, 180);
-        doc.text(splitText, 14, 32);
-        doc.save(`texio-summary-${fileName}.pdf`);
-        toast({
-            title: "PDF Downloaded",
-            description: "The summary has been saved as a PDF.",
-        });
+        try {
+            const pdfDoc = await PDFDocument.create();
+            pdfDoc.registerFontkit(fontkit);
+
+            const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
+            const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+            const customFont = await pdfDoc.embedFont(fontBytes);
+
+            const page = pdfDoc.addPage();
+            const { width, height } = page.getSize();
+            const margin = 50;
+
+            page.drawText(`Tex.io Summary: ${fileName}`, {
+                x: margin,
+                y: height - margin,
+                font: customFont,
+                size: 18,
+                color: rgb(0, 0, 0),
+            });
+
+            page.drawText(textToDownload, {
+                x: margin,
+                y: height - margin - 30,
+                font: customFont,
+                size: 12,
+                lineHeight: 15,
+                color: rgb(0.2, 0.2, 0.2),
+                maxWidth: width - 2 * margin,
+            });
+
+            const pdfBytes = await pdfDoc.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `texio-summary-${fileName}.pdf`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+            toast({
+                title: "PDF Downloaded",
+                description: "The summary has been saved as a PDF.",
+            });
+        } catch (pdfError) {
+            console.error("PDF generation failed:", pdfError);
+            toast({ variant: 'destructive', title: 'PDF Download Failed' });
+        }
     };
 
     const readyFilesCount = files.filter(f => f.status === 'ready').length;
@@ -237,6 +317,7 @@ export function BatchSummaryTab() {
                     className="sr-only"
                     accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     multiple
+                    disabled={isBatchProcessing || isParsing}
                 />
                  <label
                     htmlFor="batch-upload"
@@ -247,7 +328,8 @@ export function BatchSummaryTab() {
                         "group flex flex-col items-center justify-center w-full min-h-[10rem] border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
                         isDragging 
                             ? "border-primary bg-primary/20"
-                            : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
+                            : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground",
+                        (isBatchProcessing || isParsing) && "cursor-not-allowed opacity-60"
                     )}
                 >
                      <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
@@ -270,7 +352,7 @@ export function BatchSummaryTab() {
                                     </div>
                                     {f.status === 'processing' && <Loader2 className="h-5 w-5 animate-spin" />}
                                     {f.status === 'done' && <CheckCircle className="h-5 w-5 text-green-500" />}
-                                    <Button variant="ghost" size="icon" className="w-6 h-6 shrink-0" onClick={() => handleRemoveFile(f.id)} disabled={isBatchProcessing}>
+                                    <Button variant="ghost" size="icon" className="w-6 h-6 shrink-0" onClick={() => handleRemoveFile(f.id)} disabled={isBatchProcessing || isParsing}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -322,9 +404,10 @@ export function BatchSummaryTab() {
                         </Accordion>
                     ) : (
                          <div className="h-full flex items-center justify-center text-center text-muted-foreground p-4 bg-muted/20 rounded-lg">
-                             {!isBatchProcessing && files.length === 0 && <p>Upload files to begin.</p>}
                              {isBatchProcessing && <p>Processing files...</p>}
-                             {!isBatchProcessing && files.length > 0 && doneFilesCount === 0 && <p>Ready to process. Click "Summarize All".</p>}
+                             {!isBatchProcessing && isParsing && <p>Parsing files...</p>}
+                             {!isBatchProcessing && !isParsing && files.length === 0 && <p>Upload files to begin.</p>}
+                             {!isBatchProcessing && !isParsing && files.length > 0 && doneFilesCount === 0 && <p>Ready to process. Click "Summarize All".</p>}
                         </div>
                     )}
                 </div>
@@ -343,7 +426,7 @@ export function BatchSummaryTab() {
                 <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
                     <Button
                         onClick={handleBatchProcess}
-                        disabled={readyFilesCount === 0 || isBatchProcessing}
+                        disabled={readyFilesCount === 0 || isBatchProcessing || isParsing}
                         size="lg"
                         className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto"
                     >
@@ -360,7 +443,7 @@ export function BatchSummaryTab() {
                             variant="outline"
                             size="lg"
                             className="w-full max-w-xs text-lg font-semibold transition-all duration-300 hover:scale-105 sm:w-auto"
-                            disabled={isBatchProcessing}
+                            disabled={isBatchProcessing || isParsing}
                         >
                             <Download className="mr-2 h-5 w-5" />
                             Download All ({doneFilesCount})
@@ -371,5 +454,7 @@ export function BatchSummaryTab() {
         </div>
     );
 }
+
+    
 
     
