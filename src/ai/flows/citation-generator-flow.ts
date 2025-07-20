@@ -10,7 +10,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {setTrialUsed} from '@/lib/firebase-admin';
 
 const CitationGeneratorInputSchema = z.object({
   text: z.string().describe('The text or topic for which to generate citations.'),
@@ -56,7 +55,7 @@ const citationGeneratorFlow = ai.defineFlow(
       required: true,
       policy(auth, input) {
         if (!auth.isPremium) {
-           setTrialUsed(auth.uid);
+           throw new Error('You must be a premium user to access this feature.');
         }
       }
     }

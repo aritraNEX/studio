@@ -10,7 +10,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {setTrialUsed} from '@/lib/firebase-admin';
 
 const ResearchAssistantInputSchema = z.object({
   text: z.string().describe('The text containing claims to be fact-checked and cited.'),
@@ -63,7 +62,7 @@ const researchAssistantFlow = ai.defineFlow(
       required: true,
       policy(auth, input) {
         if (!auth.isPremium) {
-           setTrialUsed(auth.uid);
+           throw new Error('You must be a premium user to access this feature.');
         }
       }
     }

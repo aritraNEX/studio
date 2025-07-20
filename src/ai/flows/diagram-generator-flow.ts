@@ -10,7 +10,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {setTrialUsed} from '@/lib/firebase-admin';
 
 const DiagramGeneratorInputSchema = z.object({
   topic: z.string().describe('The topic for the diagram.'),
@@ -98,7 +97,7 @@ const diagramGeneratorFlow = ai.defineFlow(
       required: true,
       policy(auth, input) {
         if (!auth.isPremium) {
-           setTrialUsed(auth.uid);
+           throw new Error('You must be a premium user to access this feature.');
         }
       }
     }

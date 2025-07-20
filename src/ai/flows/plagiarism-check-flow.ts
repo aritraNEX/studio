@@ -10,7 +10,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {setTrialUsed} from '@/lib/firebase-admin';
 
 const PlagiarismCheckInputSchema = z.object({
   text: z.string().describe('The text to be checked for plagiarism.'),
@@ -70,7 +69,7 @@ const plagiarismCheckFlow = ai.defineFlow(
       required: true,
       policy(auth, input) {
         if (!auth.isPremium) {
-           setTrialUsed(auth.uid);
+           throw new Error('You must be a premium user to access this feature.');
         }
       }
     }
