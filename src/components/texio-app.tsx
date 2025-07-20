@@ -35,6 +35,7 @@ import { DiagramGeneratorTab } from "./diagram-generator-tab";
 import { useSubscription } from "@/contexts/subscription-context";
 import { PremiumModal } from "./premium-modal";
 import { NoteGeneratorTab } from "./note-generator-tab";
+import { useABTest } from "@/contexts/ab-test-context";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -52,6 +53,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
   const { isPremium } = useSubscription();
   const [isPremiumModalOpen, setPremiumModalOpen] = useState(false);
+  const { group } = useABTest();
 
   useEffect(() => {
       if (initialTab) {
@@ -119,9 +121,11 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
               </svg>
         </div>
         
-        <CardTitle className="text-3xl sm:text-4xl font-bold tracking-tight">Tex.io</CardTitle>
+        <CardTitle className="text-3xl sm:text-4xl font-bold tracking-tight">
+          {group === 'B' ? "Tex.io AI" : "Tex.io"} 
+        </CardTitle>
         <CardDescription className="text-lg text-muted-foreground/80">
-          Your all-in-one AI-powered text and media toolkit.
+          {group === 'B' ? "Your Ultimate AI-Powered Toolkit" : "Your all-in-one AI-powered text and media toolkit."}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-2 sm:p-8 pt-2">
