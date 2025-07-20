@@ -46,7 +46,7 @@ interface TexioAppProps {
   initialTopic?: string | null;
 }
 
-const freeFeatures = ['paraphrase', 'summarize', 'translate', 'style', 'notepad', 'formula'];
+const freeFeatures = ['paraphrase', 'summarize', 'translate', 'style', 'notepad', 'formula', 'plagiarism', 'grammar'];
 
 export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps) {
   const [activeTab, setActiveTab] = useState(initialTab || "paraphrase");
@@ -138,9 +138,10 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
             {renderTabTrigger("paraphrase", <Quote className="h-5 w-5" />, "Paraphrase")}
             {renderTabTrigger("summarize", <BookText className="h-5 w-5" />, "Summarize")}
             {renderTabTrigger("translate", <Languages className="h-5 w-5" />, "Translate")}
+            {renderTabTrigger("grammar", <SpellCheck className="h-5 w-5" />, "Grammar")}
+            {renderTabTrigger("plagiarism", <ShieldCheck className="h-5 w-5" />, "Plagiarism")}
             {renderTabTrigger("explainer", <BrainCircuit className="h-5 w-5" />, "Explainer")}
             {renderTabTrigger("diagrams", <Share2 className="h-5 w-5" />, "Diagrams")}
-            {renderTabTrigger("grammar", <SpellCheck className="h-5 w-5" />, "Grammar")}
             {renderTabTrigger("batch-summary", <Rows3 className="h-5 w-5" />, "Batch Summary")}
             {renderTabTrigger("style", <Palette className="h-5 w-5" />, "Style")}
             {renderTabTrigger("assign-mentor", <PenSquare className="h-5 w-5" />, "Assign-mentor")}
@@ -151,7 +152,6 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
             {renderTabTrigger("video-to-text", <Video className="h-5 w-5" />, "Video to Text")}
             {renderTabTrigger("workspace", <Wand2 className="h-5 w-5" />, "Workspace")}
             {renderTabTrigger("research", <GraduationCap className="h-5 w-5" />, "Research")}
-            {renderTabTrigger("plagiarism", <ShieldCheck className="h-5 w-5" />, "Plagiarism")}
             {renderTabTrigger("tts", <AudioLines className="h-5 w-5" />, "TTS")}
             {renderTabTrigger("notepad", <Notebook className="h-5 w-5" />, "Notepad")}
           </TabsList>
@@ -172,6 +172,9 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
           </TabsContent>
            <TabsContent value="grammar" className="pt-6">
             <GrammarCheckTab />
+          </TabsContent>
+           <TabsContent value="plagiarism" className="pt-6">
+            <PlagiarismTab />
           </TabsContent>
           <TabsContent value="batch-summary" className="pt-6">
             <BatchSummaryTab />
@@ -202,9 +205,6 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
           </TabsContent>
           <TabsContent value="research" className="pt-6">
             <ResearchTab />
-          </TabsContent>
-           <TabsContent value="plagiarism" className="pt-6">
-            <PlagiarismTab />
           </TabsContent>
            <TabsContent value="tts" className="pt-6">
             <TtsTab />
