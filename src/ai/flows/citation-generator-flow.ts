@@ -51,14 +51,6 @@ const citationGeneratorFlow = ai.defineFlow(
     name: 'citationGeneratorFlow',
     inputSchema: CitationGeneratorInputSchema,
     outputSchema: CitationGeneratorOutputSchema,
-    auth: {
-      required: true,
-      policy(auth, input) {
-        if (!auth.isPremium) {
-           throw new Error('You must be a premium user to access this feature.');
-        }
-      }
-    }
   },
   async (input) => {
     if (!input.text.trim()) {

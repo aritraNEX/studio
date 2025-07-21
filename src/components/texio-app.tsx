@@ -32,11 +32,8 @@ import { CitationGeneratorTab } from "./citation-generator-tab";
 import { GrammarCheckTab } from "./grammar-check-tab";
 import { ConceptExplainerTab } from "./concept-explainer-tab";
 import { DiagramGeneratorTab } from "./diagram-generator-tab";
-import { useSubscription } from "@/contexts/subscription-context";
-import { PremiumModal } from "./premium-modal";
 import { NoteGeneratorTab } from "./note-generator-tab";
 import { useABTest } from "@/contexts/ab-test-context";
-import { Separator } from "./ui/separator";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -47,7 +44,6 @@ interface TexioAppProps {
   initialTopic?: string | null;
 }
 
-const freeFeatures = ['paraphrase', 'summarize', 'translate', 'style', 'notepad', 'formula', 'plagiarism', 'grammar', 'tts'];
 const allFeatures = [
     { value: 'paraphrase', icon: <Quote className="h-5 w-5" />, label: 'Paraphrase' },
     { value: 'summarize', icon: <BookText className="h-5 w-5" />, label: 'Summarize' },
@@ -74,8 +70,6 @@ const allFeatures = [
 export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps) {
   const [activeTab, setActiveTab] = useState(initialTab || "paraphrase");
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
-  const { isPremium } = useSubscription();
-  const [isPremiumModalOpen, setPremiumModalOpen] = useState(false);
   const { group } = useABTest();
 
   useEffect(() => {
@@ -85,11 +79,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
   }, [initialTab]);
 
   const handleTabChange = (newTab: string) => {
-    if (!freeFeatures.includes(newTab) && !isPremium) {
-      setPremiumModalOpen(true);
-    } else {
-      setActiveTab(newTab);
-    }
+    setActiveTab(newTab);
   };
 
   const handleSendTo = (text: string, operation: Operation) => {
@@ -104,26 +94,16 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
   };
   
   const renderTabTrigger = (value: string, icon: React.ReactNode, label: string) => {
-    const isPremiumFeature = !freeFeatures.includes(value);
     return (
       <TabsTrigger 
         key={value}
         value={value} 
         className="h-auto py-2.5 flex-1 relative"
-        onClick={(e) => {
-          if (isPremiumFeature && !isPremium) {
-            e.preventDefault();
-            setPremiumModalOpen(true);
-          }
-        }}
       >
         <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
             {icon}
             <span className="text-xs sm:text-sm">{label}</span>
         </div>
-        {isPremiumFeature && (
-            <Crown className="absolute top-1 right-1 h-3 w-3 text-yellow-500" />
-        )}
       </TabsTrigger>
     );
   };
@@ -156,23 +136,10 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
         </CardDescription>
       </CardHeader>
       <CardContent className="p-2 sm:p-8 pt-2">
-        <PremiumModal isOpen={isPremiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <div className="flex flex-col gap-4">
-                <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground mb-2 text-center">Free Tools</h3>
-                    <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 mx-auto h-auto p-1.5 flex-wrap">
-                        {allFeatures.filter(f => freeFeatures.includes(f.value)).map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
-                    </TabsList>
-                </div>
-                <Separator />
-                 <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground mb-2 text-center">Premium Tools</h3>
-                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-10 mx-auto h-auto p-1.5 flex-wrap">
-                        {allFeatures.filter(f => !freeFeatures.includes(f.value)).map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
-                    </TabsList>
-                </div>
-            </div>
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-10 mx-auto h-auto p-1.5 flex-wrap">
+                {allFeatures.map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
+            </TabsList>
 
           <TabsContent value="paraphrase" className="pt-6">
             <OperationTab operation="paraphrase" onSendTo={handleSendTo} projectId={projectId} />

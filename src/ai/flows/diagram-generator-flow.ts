@@ -93,14 +93,6 @@ const diagramGeneratorFlow = ai.defineFlow(
     name: 'diagramGeneratorFlow',
     inputSchema: DiagramGeneratorInputSchema,
     outputSchema: DiagramGeneratorOutputSchema,
-    auth: {
-      required: true,
-      policy(auth, input) {
-        if (!auth.isPremium) {
-           throw new Error('You must be a premium user to access this feature.');
-        }
-      }
-    }
   },
   async (input) => {
     if (!input.topic.trim()) {

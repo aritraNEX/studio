@@ -55,14 +55,6 @@ const assignmentMakerFlow = ai.defineFlow(
     name: 'assignmentMakerFlow',
     inputSchema: AssignmentMakerInputSchema,
     outputSchema: AssignmentMakerOutputSchema,
-    auth: {
-      required: true,
-      policy(auth, input) {
-        if (!auth.isPremium) {
-           throw new Error('You must be a premium user to access this feature.');
-        }
-      }
-    }
   },
   async (input) => {
     const {output} = await assignmentMakerPrompt(input);

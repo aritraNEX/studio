@@ -17,56 +17,13 @@ const SubscriptionContext = createContext<SubscriptionContextType | undefined>(u
 
 export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const { user, loading: authLoading } = useAuth();
-  const [isPremium, setIsPremium] = useState(false);
-  const [hasUsedTrial, setHasUsedTrial] = useState(true); // Default to true
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (user) {
-      const docRef = doc(db, 'users', user.uid);
-      const unsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setIsPremium(data.isPremium === true);
-          setHasUsedTrial(data.hasUsedTrial === true);
-        } else {
-          // Document might not exist yet for new user, defaults are fine
-          setIsPremium(false);
-          setHasUsedTrial(false);
-        }
-        setLoading(false);
-      }, (error) => {
-        console.error("Failed to listen to user subscription status:", error);
-        setIsPremium(false);
-        setHasUsedTrial(true);
-        setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } else {
-      // Not logged in, no premium, no trial
-      setIsPremium(false);
-      setHasUsedTrial(true);
-      setLoading(false);
-    }
-  }, [user, authLoading]);
+  const [isPremium, setIsPremium] = useState(true); // Default to true now
+  const [loading, setLoading] = useState(false); // No need to load subscription status
 
   const makePremium = async () => {
-    if (!user) return;
-    const userRef = doc(db, 'users', user.uid);
-    await updateDoc(userRef, { isPremium: true });
-    setIsPremium(true); // Update local state immediately
+    // This function is now a no-op as everything is free.
+    return Promise.resolve();
   };
-
-  if (loading) {
-     return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <SubscriptionContext.Provider value={{ isPremium, loading, makePremium }}>

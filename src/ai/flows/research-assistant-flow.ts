@@ -58,14 +58,6 @@ const researchAssistantFlow = ai.defineFlow(
     name: 'researchAssistantFlow',
     inputSchema: ResearchAssistantInputSchema,
     outputSchema: ResearchAssistantOutputSchema,
-    auth: {
-      required: true,
-      policy(auth, input) {
-        if (!auth.isPremium) {
-           throw new Error('You must be a premium user to access this feature.');
-        }
-      }
-    }
   },
   async (input) => {
     if (!input.text.trim()) {
