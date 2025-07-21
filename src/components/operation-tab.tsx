@@ -55,6 +55,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const [generatedText, setGeneratedText] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isUploading, setIsUploading] = useState(false);
   const [targetLanguage, setTargetLanguage] = useState<string>('Spanish');
   const [targetStyle, setTargetStyle] = useState<string>('Formal');
   const [customStyle, setCustomStyle] = useState<string>('');
@@ -145,9 +146,8 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     if (!file) return;
 
     // Reset states for a new upload
+    setIsUploading(true);
     setFileUrl(null);
-    setLocalPreviewUrl(null);
-    setExtractedText(null);
     setGeneratedText("");
     setError(null);
     setFileName(file.name);
@@ -167,12 +167,14 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     uploadBytes(storageRef, file).then(snapshot => {
       getDownloadURL(snapshot.ref).then(downloadURL => {
         setFileUrl(downloadURL);
+        setIsUploading(false);
       });
     }).catch(error => {
         console.error("Upload failed", error);
         toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not upload your file to storage.'});
         setLocalPreviewUrl(null);
         setFileName(null);
+        setIsUploading(false);
     });
   };
   
@@ -209,8 +211,8 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     if (!fileUrl) {
         toast({
             variant: 'destructive',
-            title: 'File is still uploading',
-            description: 'Please wait for the file to finish uploading before processing.',
+            title: 'File is missing',
+            description: 'Please ensure a file is uploaded and ready before processing.',
         });
         return;
     }
@@ -384,6 +386,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             onChange={handleFileChange}
             className="sr-only"
             accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            disabled={isUploading}
         />
         <label
             htmlFor={`image-upload-${operation}`}
@@ -394,10 +397,16 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                 "group flex flex-col items-center justify-center w-full h-80 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
                 isDragging
                     ? "border-primary bg-primary/20"
-                    : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
+                    : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground",
+                isUploading && "cursor-not-allowed opacity-70"
             )}
         >
-            {localPreviewUrl ? (
+            {isUploading ? (
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p>Uploading...</p>
+                </div>
+            ) : localPreviewUrl ? (
             <div className="relative w-full h-full p-2">
                 <Image
                 src={localPreviewUrl}
@@ -583,7 +592,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
          <div className="flex flex-wrap items-center justify-center gap-4">
           <Button
             onClick={handleProcess}
-            disabled={!fileName || isPending || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
+            disabled={!fileUrl || isPending || isUploading || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
             className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto"
           >
