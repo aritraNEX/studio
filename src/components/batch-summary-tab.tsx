@@ -9,8 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
-import { PDFDocument, rgb } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -165,12 +164,8 @@ export function BatchSummaryTab() {
     const handleDownloadAll = async () => {
         try {
             const pdfDoc = await PDFDocument.create();
-            pdfDoc.registerFontkit(fontkit);
-
-            const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
-            const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
-            const customFont = await pdfDoc.embedFont(fontBytes);
-            const boldFont = await pdfDoc.embedFont(fontBytes);
+            const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+            const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
             let page = pdfDoc.addPage();
             const { width, height } = page.getSize();
@@ -180,7 +175,7 @@ export function BatchSummaryTab() {
             page.drawText('Tex.io Summaries', {
                 x: margin,
                 y,
-                font: boldFont,
+                font: helveticaBoldFont,
                 size: 18,
                 color: rgb(0, 0, 0),
             });
@@ -196,7 +191,7 @@ export function BatchSummaryTab() {
                     page.drawText(`Summary for: ${file.file.name}`, {
                         x: margin,
                         y,
-                        font: boldFont,
+                        font: helveticaBoldFont,
                         size: 14,
                         color: rgb(0, 0, 0),
                     });
@@ -211,7 +206,7 @@ export function BatchSummaryTab() {
                         page.drawText(line, {
                             x: margin,
                             y,
-                            font: customFont,
+                            font: helveticaFont,
                             size: 10,
                             lineHeight: 14,
                             color: rgb(0.2, 0.2, 0.2),
@@ -253,11 +248,7 @@ export function BatchSummaryTab() {
         if (!textToDownload) return;
         try {
             const pdfDoc = await PDFDocument.create();
-            pdfDoc.registerFontkit(fontkit);
-
-            const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
-            const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
-            const customFont = await pdfDoc.embedFont(fontBytes);
+            const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
             const page = pdfDoc.addPage();
             const { width, height } = page.getSize();
@@ -266,7 +257,7 @@ export function BatchSummaryTab() {
             page.drawText(`Tex.io Summary: ${fileName}`, {
                 x: margin,
                 y: height - margin,
-                font: customFont,
+                font: helveticaFont,
                 size: 18,
                 color: rgb(0, 0, 0),
             });
@@ -274,7 +265,7 @@ export function BatchSummaryTab() {
             page.drawText(textToDownload, {
                 x: margin,
                 y: height - margin - 30,
-                font: customFont,
+                font: helveticaFont,
                 size: 12,
                 lineHeight: 15,
                 color: rgb(0.2, 0.2, 0.2),
@@ -454,7 +445,3 @@ export function BatchSummaryTab() {
         </div>
     );
 }
-
-    
-
-    

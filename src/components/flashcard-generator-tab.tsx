@@ -10,8 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { flashcardGenerator, FlashcardGeneratorOutput } from "@/ai/flows/flashcard-generator-flow";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { PDFDocument, rgb } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 
 type AnimationStyle = 'flip-h' | 'flip-v' | 'fade' | 'slide-up' | 'zoom';
@@ -99,11 +98,7 @@ export function FlashcardGeneratorTab() {
     if (!result) return;
     try {
         const pdfDoc = await PDFDocument.create();
-        pdfDoc.registerFontkit(fontkit);
-
-        const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
-        const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
-        const customFont = await pdfDoc.embedFont(fontBytes);
+        const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
         let page = pdfDoc.addPage();
         const { width, height } = page.getSize();
@@ -120,12 +115,12 @@ export function FlashcardGeneratorTab() {
             let currentY = yPos + cardH / 2 + (lines.length / 2) * (lineHeight / 2); // Simple vertical centering
             
             for (const line of lines) {
-                const textWidth = customFont.widthOfTextAtSize(line, fontSize);
+                const textWidth = helveticaFont.widthOfTextAtSize(line, fontSize);
                 const textX = xPos + (cardW - textWidth) / 2; // Horizontal centering
                 page.drawText(line, {
                     x: textX,
                     y: currentY,
-                    font: customFont,
+                    font: helveticaFont,
                     size: fontSize,
                     color: rgb(colorTheme.pdf.text[0], colorTheme.pdf.text[1], colorTheme.pdf.text[2]),
                 });
@@ -337,5 +332,3 @@ export function FlashcardGeneratorTab() {
     </div>
   );
 }
-
-    

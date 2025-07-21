@@ -11,8 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { PDFDocument, rgb } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
 import {
@@ -278,11 +277,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     
     try {
       const pdfDoc = await PDFDocument.create();
-      pdfDoc.registerFontkit(fontkit);
-
-      const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
-      const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
-      const customFont = await pdfDoc.embedFont(fontBytes);
+      const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
       const page = pdfDoc.addPage();
       const { width, height } = page.getSize();
@@ -291,7 +286,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
       page.drawText(`Tex.io Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, {
           x: margin,
           y: height - margin,
-          font: customFont,
+          font: helveticaFont,
           size: 18,
           color: rgb(0, 0, 0),
       });
@@ -299,7 +294,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
       page.drawText(textToDownload, {
           x: margin,
           y: height - margin - 30,
-          font: customFont,
+          font: helveticaFont,
           size: 12,
           lineHeight: 15,
           color: rgb(0.2, 0.2, 0.2),
@@ -625,5 +620,3 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     </div>
   );
 }
-
-    

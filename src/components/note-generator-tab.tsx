@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
 
 export function NoteGeneratorTab() {
   const [topic, setTopic] = useState<string>("");
@@ -76,11 +75,8 @@ export function NoteGeneratorTab() {
     if (!result) return;
      try {
       const pdfDoc = await PDFDocument.create();
-      pdfDoc.registerFontkit(fontkit);
-
-      const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
-      const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
-      const customFont = await pdfDoc.embedFont(fontBytes);
+      const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       
       let page = pdfDoc.addPage();
       const { width, height } = page.getSize();
@@ -88,48 +84,26 @@ export function NoteGeneratorTab() {
       let y = height - margin;
 
       const drawTextWithWrapping = (text: string, options: any) => {
-          if (y < margin) {
-            page = pdfDoc.addPage();
-            y = height - margin;
-          }
-          const { font, size, color, lineHeight, x, maxWidth } = options;
-          const words = text.split(' ');
-          let currentLine = '';
-
-          for (const word of words) {
-              const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
-              const textWidth = font.widthOfTextAtSize(testLine, size);
-
-              if (textWidth > maxWidth) {
-                  page.drawText(currentLine, { x, y, font, size, color, lineHeight });
-                  y -= lineHeight;
-                  currentLine = word;
-                  if (y < margin) {
-                      page = pdfDoc.addPage();
-                      y = height - margin;
-                  }
-              } else {
-                  currentLine = testLine;
+          const lines = text.split('\n');
+          for (const line of lines) {
+              if (y < margin) {
+                page = pdfDoc.addPage();
+                y = height - margin;
               }
-          }
-          if (currentLine) {
-              page.drawText(currentLine, { x, y, font, size, color, lineHeight });
-              y -= lineHeight;
+              page.drawText(line, { ...options, y });
+              y -= options.lineHeight;
           }
       };
       
       // Draw Title
-      drawTextWithWrapping(result.title, { font: customFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin });
+      drawTextWithWrapping(result.title, { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin });
       y -= 15;
 
-      // Sanitize content for PDF
-      const sanitizedContent = result.content.replace(/\*\*(.*?)\*\*/g, '«$1»'); // Replace **bold** with «bold»
+      // Sanitize content for PDF: replace markdown bold with a placeholder
+      const sanitizedContent = result.content.replace(/\*\*(.*?)\*\*/g, '(bold) $1');
       
       // Draw Content
-      const contentLines = sanitizedContent.split('\n');
-      for (const line of contentLines) {
-        drawTextWithWrapping(line, { font: customFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
-      }
+      drawTextWithWrapping(sanitizedContent, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });

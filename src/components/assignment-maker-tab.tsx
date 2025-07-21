@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
 
 export function AssignmentMakerTab() {
   const [topic, setTopic] = useState<string>("");
@@ -70,11 +69,8 @@ export function AssignmentMakerTab() {
 
     try {
       const pdfDoc = await PDFDocument.create();
-      pdfDoc.registerFontkit(fontkit);
-
-      const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
-      const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
-      const customFont = await pdfDoc.embedFont(fontBytes);
+      const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
       let page = pdfDoc.addPage();
       const { width, height } = page.getSize();
@@ -113,13 +109,13 @@ export function AssignmentMakerTab() {
       };
 
       // Title
-      drawTextWithWrapping(result.title, { font: customFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2*margin });
+      drawTextWithWrapping(result.title, { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2*margin });
       y -= 20;
 
       // Content
       const contentLines = result.content.split('\n');
       for (const line of contentLines) {
-        drawTextWithWrapping(line, { font: customFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2*margin });
+        drawTextWithWrapping(line, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2*margin });
       }
       y -= 10;
       
@@ -129,11 +125,11 @@ export function AssignmentMakerTab() {
             page.addPage();
             y = height - margin;
         }
-        drawTextWithWrapping('References', { font: customFont, size: 14, color: rgb(0,0,0), lineHeight: 18, x: margin, maxWidth: width - 2*margin });
+        drawTextWithWrapping('References', { font: helveticaBoldFont, size: 14, color: rgb(0,0,0), lineHeight: 18, x: margin, maxWidth: width - 2*margin });
         y -= 10;
 
         for (const ref of result.references) {
-           drawTextWithWrapping(`- ${ref}`, { font: customFont, size: 10, color: rgb(0.3, 0.3, 0.3), lineHeight: 12, x: margin, maxWidth: width - 2*margin });
+           drawTextWithWrapping(`- ${ref}`, { font: helveticaFont, size: 10, color: rgb(0.3, 0.3, 0.3), lineHeight: 12, x: margin, maxWidth: width - 2*margin });
         }
       }
 
