@@ -60,7 +60,10 @@ Diagram Type: '{{diagramType}}'
         -   **Correct Mindmap Node:** \`  Node Text\`
         -   **Correct Mindmap Node with parens:** \`  Topic (with details)\`
         -   **INCORRECT Mindmap Node:** \`  A["Node Text"]\` (This syntax is for flowcharts/graphs)
-4.  **Connect Nodes Correctly (for flowcharts/graphs)**: Use arrows like \`-->\` to show relationships. You can add text to connectors like this: \`A-- "description" -->B\`.
+4.  **Connect Nodes with Arrows ONLY**: For flowcharts and graphs, you MUST use arrows like \`-->\` to show relationships. You can add text to connectors like this: \`A-- "description" -->B\`.
+    -   **ABSOLUTELY DO NOT USE** the \`:::\` syntax to connect nodes. This is only for styling classes and is not for linking.
+        -   **Correct Connection:** \`A --> B["Next Step"]\`
+        -   **INCORRECT Connection:** \`A:::B\` or \`A --- B\` without an arrow.
 5.  **Final Output**:
     -   The output must be ONLY the raw Mermaid syntax.
     -   Do NOT include any explanatory text, comments, or Markdown backticks like \`\`\`mermaid ... \`\`\`.
