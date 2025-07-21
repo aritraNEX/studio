@@ -15,13 +15,20 @@ export function AdBanner() {
   const adSlot = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_AD_UNIT_ID;
 
   useEffect(() => {
-    try {
-      if (typeof window !== 'undefined' && window.adsbygoogle) {
-        window.adsbygoogle.push({});
-      }
-    } catch (err) {
-      console.error('AdSense error:', err);
-    }
+    const pushAd = () => {
+        try {
+          if (typeof window !== 'undefined' && window.adsbygoogle) {
+            window.adsbygoogle.push({});
+          }
+        } catch (err) {
+          console.error('AdSense error:', err);
+        }
+    };
+
+    // Delay the ad push slightly to ensure the container has a valid width.
+    const timeout = setTimeout(pushAd, 100);
+
+    return () => clearTimeout(timeout);
   }, []);
 
   if (!adClient || !adSlot) {
