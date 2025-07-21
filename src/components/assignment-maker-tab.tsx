@@ -72,42 +72,54 @@ export function AssignmentMakerTab() {
       const pdfDoc = await PDFDocument.create();
       pdfDoc.registerFontkit(fontkit);
 
-      // Fetch a font that supports a wide range of characters
       const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
       const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
       const customFont = await pdfDoc.embedFont(fontBytes);
 
-      const page = pdfDoc.addPage();
+      let page = pdfDoc.addPage();
       const { width, height } = page.getSize();
       const margin = 50;
       let y = height - margin;
 
+       const drawTextWithWrapping = (text: string, options: any) => {
+          if (y < margin) {
+            page = pdfDoc.addPage();
+            y = height - margin;
+          }
+          const { font, size, color, lineHeight, x, maxWidth } = options;
+          const words = text.split(' ');
+          let currentLine = '';
+
+          for (const word of words) {
+              const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+              const textWidth = font.widthOfTextAtSize(testLine, size);
+
+              if (textWidth > maxWidth) {
+                  page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                  y -= lineHeight;
+                  currentLine = word;
+                  if (y < margin) {
+                      page = pdfDoc.addPage();
+                      y = height - margin;
+                  }
+              } else {
+                  currentLine = testLine;
+              }
+          }
+          if (currentLine) {
+              page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+              y -= lineHeight;
+          }
+      };
+
       // Title
-      page.drawText(result.title, {
-        x: margin,
-        y,
-        font: customFont,
-        size: 18,
-        color: rgb(0, 0, 0),
-      });
-      y -= 30;
+      drawTextWithWrapping(result.title, { font: customFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2*margin });
+      y -= 20;
 
       // Content
       const contentLines = result.content.split('\n');
       for (const line of contentLines) {
-        if (y < margin) {
-            page.addPage();
-            y = height - margin;
-        }
-        page.drawText(line, {
-            x: margin,
-            y,
-            font: customFont,
-            size: 12,
-            color: rgb(0, 0, 0),
-            lineHeight: 15,
-        });
-        y -= 15;
+        drawTextWithWrapping(line, { font: customFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2*margin });
       }
       y -= 10;
       
@@ -117,29 +129,11 @@ export function AssignmentMakerTab() {
             page.addPage();
             y = height - margin;
         }
-        page.drawText('References', {
-            x: margin,
-            y,
-            font: customFont,
-            size: 14,
-            color: rgb(0, 0, 0),
-        });
-        y -= 20;
+        drawTextWithWrapping('References', { font: customFont, size: 14, color: rgb(0,0,0), lineHeight: 18, x: margin, maxWidth: width - 2*margin });
+        y -= 10;
 
         for (const ref of result.references) {
-            if (y < margin) {
-                page.addPage();
-                y = height - margin;
-            }
-            page.drawText(`- ${ref}`, {
-                x: margin,
-                y,
-                font: customFont,
-                size: 10,
-                color: rgb(0.3, 0.3, 0.3),
-                lineHeight: 12,
-            });
-            y -= 12;
+           drawTextWithWrapping(`- ${ref}`, { font: customFont, size: 10, color: rgb(0.3, 0.3, 0.3), lineHeight: 12, x: margin, maxWidth: width - 2*margin });
         }
       }
 

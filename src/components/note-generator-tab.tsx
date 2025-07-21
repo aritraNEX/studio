@@ -81,68 +81,54 @@ export function NoteGeneratorTab() {
       const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
       const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
       const customFont = await pdfDoc.embedFont(fontBytes);
-      const boldFont = await pdfDoc.embedFont(fontBytes, { subset: true });
-
+      
       let page = pdfDoc.addPage();
       const { width, height } = page.getSize();
       const margin = 50;
       let y = height - margin;
 
       const drawTextWithWrapping = (text: string, options: any) => {
+          if (y < margin) {
+            page = pdfDoc.addPage();
+            y = height - margin;
+          }
           const { font, size, color, lineHeight, x, maxWidth } = options;
           const words = text.split(' ');
-          let line = '';
+          let currentLine = '';
 
           for (const word of words) {
-              const testLine = line.length > 0 ? `${line} ${word}` : word;
-              const { width: textWidth } = font.getMetricsForText(testLine);
-              const scaledWidth = (textWidth / font.getUnitsPerEm()) * size;
+              const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+              const textWidth = font.widthOfTextAtSize(testLine, size);
 
-              if (scaledWidth > maxWidth) {
-                  page.drawText(line, { x, y, font, size, color, lineHeight });
+              if (textWidth > maxWidth) {
+                  page.drawText(currentLine, { x, y, font, size, color, lineHeight });
                   y -= lineHeight;
-                  line = word;
+                  currentLine = word;
                   if (y < margin) {
                       page = pdfDoc.addPage();
                       y = height - margin;
                   }
               } else {
-                  line = testLine;
+                  currentLine = testLine;
               }
           }
-          if (line) {
-              page.drawText(line, { x, y, font, size, color, lineHeight });
+          if (currentLine) {
+              page.drawText(currentLine, { x, y, font, size, color, lineHeight });
               y -= lineHeight;
           }
       };
       
-      drawTextWithWrapping(result.title, { font: boldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin });
-      y -= 10;
-      
-      const lines = result.content.split('\n');
-      for (const line of lines) {
-        if (y < margin) {
-            page = pdfDoc.addPage();
-            y = height - margin;
-        }
+      // Draw Title
+      drawTextWithWrapping(result.title, { font: customFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin });
+      y -= 15;
 
-        const parts = line.split('**');
-        let currentX = margin;
-        for (let i = 0; i < parts.length; i++) {
-            const part = parts[i];
-            const isBold = i % 2 === 1;
-            const fontToUse = isBold ? boldFont : customFont;
-            
-            page.drawText(part, {
-                x: currentX,
-                y,
-                font: fontToUse,
-                size: 12,
-                color: rgb(0.1, 0.1, 0.1),
-            });
-            currentX += fontToUse.widthOfTextAtSize(part, 12);
-        }
-        y -= 15;
+      // Sanitize content for PDF
+      const sanitizedContent = result.content.replace(/\*\*(.*?)\*\*/g, '«$1»'); // Replace **bold** with «bold»
+      
+      // Draw Content
+      const contentLines = sanitizedContent.split('\n');
+      for (const line of contentLines) {
+        drawTextWithWrapping(line, { font: customFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
       }
 
       const pdfBytes = await pdfDoc.save();
@@ -266,5 +252,3 @@ export function NoteGeneratorTab() {
     </div>
   );
 }
-
-    
