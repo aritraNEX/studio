@@ -25,7 +25,7 @@ const animationStyles: { name: string; id: AnimationStyle }[] = [
 ];
 
 const colorThemes = [
-    { name: 'Default', id: 'default', bgFrontClass: 'bg-card', bgBackClass: 'bg-muted', textClass: 'text-card-foreground', pdf: { bg: [0.97, 0.98, 0.99], text: [0.06, 0.09, 0.13] } },
+    { name: 'Default', id: 'default', bgFrontClass: 'bg-card', bgBackClass: 'bg-muted', textClass: 'text-card-foreground', pdf: { bg: [0.98, 0.98, 0.98], text: [0.06, 0.09, 0.13] } },
     { name: 'Slate', id: 'slate', bgFrontClass: 'bg-slate-800', bgBackClass: 'bg-slate-700', textClass: 'text-slate-100', pdf: { bg: [0.11, 0.15, 0.21], text: [0.95, 0.96, 0.97] } },
     { name: 'Sky', id: 'sky', bgFrontClass: 'bg-sky-500', bgBackClass: 'bg-sky-400', textClass: 'text-white', pdf: { bg: [0.05, 0.65, 0.91], text: [1, 1, 1] } },
     { name: 'Amber', id: 'amber', bgFrontClass: 'bg-amber-400', bgBackClass: 'bg-amber-300', textClass: 'text-amber-900', pdf: { bg: [0.98, 0.75, 0.14], text: [0.47, 0.21, 0.06] } },
@@ -113,47 +113,46 @@ export function FlashcardGeneratorTab() {
         let y = height - 20 - cardHeight;
         let cardCount = 0;
         
-        const drawCard = (text: string, isFront: boolean) => {
+        const drawCardText = (text: string, xPos: number, yPos: number, cardW: number, cardH: number) => {
+            const lines = text.split('\n');
+            const fontSize = 10;
+            const lineHeight = 12;
+            let currentY = yPos + cardH / 2 + (lines.length / 2) * (lineHeight / 2); // Simple vertical centering
+            
+            for (const line of lines) {
+                const textWidth = customFont.widthOfTextAtSize(line, fontSize);
+                const textX = xPos + (cardW - textWidth) / 2; // Horizontal centering
+                page.drawText(line, {
+                    x: textX,
+                    y: currentY,
+                    font: customFont,
+                    size: fontSize,
+                    color: rgb(colorTheme.pdf.text[0], colorTheme.pdf.text[1], colorTheme.pdf.text[2]),
+                });
+                currentY -= lineHeight;
+            }
+        };
+
+        for (const card of result.flashcards) {
+            // Check if we need a new page
             if (cardCount > 0 && cardCount % 8 === 0) {
                 page = pdfDoc.addPage();
                 x = 20;
                 y = height - 20 - cardHeight;
             }
 
-            // Draw card background
-            const bgColor = isFront ? colorTheme.pdf.bg : [colorTheme.pdf.bg[0] * 0.9, colorTheme.pdf.bg[1] * 0.9, colorTheme.pdf.bg[2] * 0.9];
-            page.drawRectangle({
-                x,
-                y,
-                width: cardWidth,
-                height: cardHeight,
-                color: rgb(bgColor[0], bgColor[1], bgColor[2]),
-                borderColor: rgb(0.8, 0.8, 0.8),
-                borderWidth: 0.5,
-            });
-
-            // Draw text
-            const textColor = rgb(colorTheme.pdf.text[0], colorTheme.pdf.text[1], colorTheme.pdf.text[2]);
-            page.drawText(text, {
-                x: x + 10,
-                y: y + cardHeight / 2, // Simple centering
-                font: customFont,
-                size: 10,
-                color: textColor,
-                maxWidth: cardWidth - 20,
-            });
-
+            // Draw front card
+            page.drawRectangle({ x, y, width: cardWidth, height: cardHeight, color: rgb(colorTheme.pdf.bg[0], colorTheme.pdf.bg[1], colorTheme.pdf.bg[2]), borderWidth: 0.5, borderColor: rgb(0.8, 0.8, 0.8) });
+            drawCardText(card.front, x, y, cardWidth, cardHeight);
             cardCount++;
             x += cardWidth + 20;
-            if (cardCount % 2 === 0) {
-                x = 20;
-                y -= cardHeight + 20;
-            }
-        };
 
-        for (const card of result.flashcards) {
-            drawCard(card.front, true);
-            drawCard(card.back, false);
+            // Draw back card
+            page.drawRectangle({ x, y, width: cardWidth, height: cardHeight, color: rgb(colorTheme.pdf.bg[0] * 0.9, colorTheme.pdf.bg[1] * 0.9, colorTheme.pdf.bg[2] * 0.9), borderWidth: 0.5, borderColor: rgb(0.8, 0.8, 0.8) });
+            drawCardText(card.back, x, y, cardWidth, cardHeight);
+            cardCount++;
+            x = 20;
+            y -= cardHeight + 20;
         }
 
         const pdfBytes = await pdfDoc.save();
@@ -161,7 +160,9 @@ export function FlashcardGeneratorTab() {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = `texio-flashcards-${colorTheme.id}.pdf`;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
         URL.revokeObjectURL(link.href);
 
     } catch (pdfError) {
@@ -336,3 +337,5 @@ export function FlashcardGeneratorTab() {
     </div>
   );
 }
+
+    

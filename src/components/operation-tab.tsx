@@ -311,7 +311,9 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = fileName;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
 
       toast({
@@ -623,3 +625,5 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     </div>
   );
 }
+
+    

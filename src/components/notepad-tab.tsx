@@ -53,27 +53,49 @@ export function NotepadTab() {
         const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
         const customFont = await pdfDoc.embedFont(fontBytes);
         
-        const page = pdfDoc.addPage();
+        let page = pdfDoc.addPage();
         const { width, height } = page.getSize();
         const margin = 50;
+        let y = height - margin;
 
-        page.drawText("Tex.io Notepad", {
-            x: margin,
-            y: height - margin,
-            font: customFont,
-            size: 18,
-            color: rgb(0, 0, 0),
-        });
+        const drawTextWithWrapping = (text: string, options: any) => {
+          const { font, size, color, lineHeight, x, maxWidth } = options;
+          const words = text.split(' ');
+          let line = '';
 
-        page.drawText(notes, {
-            x: margin,
-            y: height - margin - 30,
-            font: customFont,
-            size: 12,
-            lineHeight: 15,
-            color: rgb(0.2, 0.2, 0.2),
-            maxWidth: width - 2 * margin,
-        });
+          for (const word of words) {
+              const testLine = line.length > 0 ? `${line} ${word}` : word;
+              const { width: textWidth } = font.getMetricsForText(testLine);
+              const scaledWidth = (textWidth / font.getUnitsPerEm()) * size;
+
+              if (scaledWidth > maxWidth) {
+                  page.drawText(line, { x, y, font, size, color, lineHeight });
+                  y -= lineHeight;
+                  line = word;
+                  if (y < margin) {
+                      page = pdfDoc.addPage();
+                      y = height - margin;
+                  }
+              } else {
+                  line = testLine;
+              }
+          }
+          if (line) {
+              page.drawText(line, { x, y, font, size, color, lineHeight });
+              y -= lineHeight;
+          }
+        };
+
+        drawTextWithWrapping("Tex.io Notepad", { font: customFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin});
+
+        const lines = notes.split('\n');
+        for (const line of lines) {
+            if (y < margin) {
+                page = pdfDoc.addPage();
+                y = height - margin;
+            }
+            drawTextWithWrapping(line, { font: customFont, size: 12, color: rgb(0.2, 0.2, 0.2), lineHeight: 15, x: margin, maxWidth: width - 2 * margin});
+        }
 
         const pdfBytes = await pdfDoc.save();
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -137,3 +159,5 @@ export function NotepadTab() {
     </div>
   );
 }
+
+    

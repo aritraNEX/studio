@@ -81,74 +81,68 @@ export function NoteGeneratorTab() {
       const fontUrl = 'https://fonts.gstatic.com/s/notosans/v27/o-0IIpQlx3QUlC5A4PNr5TRA.ttf';
       const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
       const customFont = await pdfDoc.embedFont(fontBytes);
-      const boldFont = await pdfDoc.embedFont(fontBytes, { subset: true }); // Assuming same font for bold for simplicity
+      const boldFont = await pdfDoc.embedFont(fontBytes, { subset: true });
 
-      const page = pdfDoc.addPage();
+      let page = pdfDoc.addPage();
       const { width, height } = page.getSize();
       const margin = 50;
       let y = height - margin;
 
-      const drawTextWithWrap = (text: string, options: any) => {
-          const { font, size, color, lineHeight } = options;
-          const textWidth = (txt: string) => font.widthOfTextAtSize(txt, size);
-          
-          let currentLine = '';
+      const drawTextWithWrapping = (text: string, options: any) => {
+          const { font, size, color, lineHeight, x, maxWidth } = options;
           const words = text.split(' ');
+          let line = '';
 
-          for(const word of words) {
-              const lineWithNextWord = currentLine ? `${currentLine} ${word}` : word;
-              if (textWidth(lineWithNextWord) < width - 2 * margin) {
-                  currentLine = lineWithNextWord;
-              } else {
-                  if (y < margin) {
-                    page.addPage();
-                    y = height - margin;
-                  }
-                  page.drawText(currentLine, { x: margin, y, font, size, color, lineHeight });
+          for (const word of words) {
+              const testLine = line.length > 0 ? `${line} ${word}` : word;
+              const { width: textWidth } = font.getMetricsForText(testLine);
+              const scaledWidth = (textWidth / font.getUnitsPerEm()) * size;
+
+              if (scaledWidth > maxWidth) {
+                  page.drawText(line, { x, y, font, size, color, lineHeight });
                   y -= lineHeight;
-                  currentLine = word;
+                  line = word;
+                  if (y < margin) {
+                      page = pdfDoc.addPage();
+                      y = height - margin;
+                  }
+              } else {
+                  line = testLine;
               }
           }
-          if (currentLine) {
-            if (y < margin) {
-                page.addPage();
-                y = height - margin;
-            }
-            page.drawText(currentLine, { x: margin, y, font, size, color, lineHeight });
-            y -= lineHeight;
+          if (line) {
+              page.drawText(line, { x, y, font, size, color, lineHeight });
+              y -= lineHeight;
           }
       };
-
-
-      // Title
-      drawTextWithWrap(result.title, { font: boldFont, size: 18, color: rgb(0,0,0), lineHeight: 22 });
+      
+      drawTextWithWrapping(result.title, { font: boldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin });
       y -= 10;
       
-      // Content
       const lines = result.content.split('\n');
       for (const line of lines) {
-        const parts = line.split('**');
         if (y < margin) {
-            page.addPage();
+            page = pdfDoc.addPage();
             y = height - margin;
         }
 
+        const parts = line.split('**');
         let currentX = margin;
         for (let i = 0; i < parts.length; i++) {
             const part = parts[i];
             const isBold = i % 2 === 1;
             const fontToUse = isBold ? boldFont : customFont;
-
+            
             page.drawText(part, {
                 x: currentX,
                 y,
                 font: fontToUse,
                 size: 12,
-                color: rgb(0, 0, 0),
+                color: rgb(0.1, 0.1, 0.1),
             });
             currentX += fontToUse.widthOfTextAtSize(part, 12);
         }
-        y -= 15; // Move to next line
+        y -= 15;
       }
 
       const pdfBytes = await pdfDoc.save();
@@ -272,3 +266,5 @@ export function NoteGeneratorTab() {
     </div>
   );
 }
+
+    
