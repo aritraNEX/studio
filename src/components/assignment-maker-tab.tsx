@@ -71,14 +71,14 @@ export function AssignmentMakerTab() {
       const pdfDoc = await PDFDocument.create();
       const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
+      
       let page = pdfDoc.addPage();
       const { width, height } = page.getSize();
       const margin = 50;
       let y = height - margin;
 
        const drawTextWithWrapping = (text: string, options: any) => {
-          if (y < margin) {
+          if (y < options.lineHeight + margin) {
             page = pdfDoc.addPage();
             y = height - margin;
           }
@@ -94,7 +94,7 @@ export function AssignmentMakerTab() {
                   page.drawText(currentLine, { x, y, font, size, color, lineHeight });
                   y -= lineHeight;
                   currentLine = word;
-                  if (y < margin) {
+                  if (y < lineHeight + margin) {
                       page = pdfDoc.addPage();
                       y = height - margin;
                   }
@@ -115,14 +115,18 @@ export function AssignmentMakerTab() {
       // Content
       const contentLines = result.content.split('\n');
       for (const line of contentLines) {
-        drawTextWithWrapping(line, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2*margin });
+        if (line.trim().startsWith("#")) { // Simple markdown for headings
+             drawTextWithWrapping(line.replace(/#/g, '').trim(), { font: helveticaBoldFont, size: 14, color: rgb(0,0,0), lineHeight: 18, x: margin, maxWidth: width - 2*margin });
+        } else {
+            drawTextWithWrapping(line, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2*margin });
+        }
       }
       y -= 10;
       
       // References
       if (result.references.length > 0) {
         if (y < margin + 20) {
-            page.addPage();
+            page = pdfDoc.addPage();
             y = height - margin;
         }
         drawTextWithWrapping('References', { font: helveticaBoldFont, size: 14, color: rgb(0,0,0), lineHeight: 18, x: margin, maxWidth: width - 2*margin });

@@ -104,7 +104,7 @@ export function DiagramGeneratorTab() {
     a.href = url;
     a.download = `${topic.replace(/\s+/g, '_')}-${diagramType}.svg`;
     document.body.appendChild(a);
-a.click();
+    a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast({ title: 'Downloaded SVG', description: 'The diagram has been saved as an SVG file.' });
@@ -159,7 +159,7 @@ a.click();
         {error && !isPending && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
       </div>
 
-      <Card className="relative w-full min-h-[500px] bg-muted/30 rounded-2xl p-4 sm:p-8 overflow-hidden">
+      <Card className="relative w-full min-h-[500px] bg-muted/30 rounded-2xl p-4 sm:p-8 overflow-auto">
         <CardContent className="w-full h-full flex items-center justify-center">
              {isPending && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted-foreground animate-in fade-in duration-500">

@@ -2,16 +2,18 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { PenSquare, Loader2, Sparkles, Download, Copy, BookCheck } from "lucide-react";
+import mermaid from 'mermaid';
+import { PenSquare, Loader2, Sparkles, Download, Copy, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { noteGenerator, NoteGeneratorOutput } from "@/ai/flows/note-generator-flow";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { cn } from "@/lib/utils";
 
 export function NoteGeneratorTab() {
   const [topic, setTopic] = useState<string>("");
@@ -33,7 +35,7 @@ export function NoteGeneratorTab() {
 
     setError(null);
     setResult(null);
-
+    
     startTransition(async () => {
       try {
         const noteResult = await noteGenerator({ topic, instructions });
@@ -84,26 +86,47 @@ export function NoteGeneratorTab() {
       let y = height - margin;
 
       const drawTextWithWrapping = (text: string, options: any) => {
-          const lines = text.split('\n');
-          for (const line of lines) {
-              if (y < margin) {
+        const { font, size, color, lineHeight, x, maxWidth } = options;
+        const words = text.split(' ');
+        let currentLine = '';
+        const lines = [];
+
+        for(const word of words) {
+            const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+            if (font.widthOfTextAtSize(testLine, size) > maxWidth) {
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine = testLine;
+            }
+        }
+        lines.push(currentLine);
+
+        for (const line of lines) {
+            if (y < margin) {
                 page = pdfDoc.addPage();
                 y = height - margin;
-              }
-              page.drawText(line, { ...options, y });
-              y -= options.lineHeight;
-          }
+            }
+            page.drawText(line, { x, y, font, size, color, lineHeight });
+            y -= lineHeight;
+        }
+        return y;
       };
-      
+
       // Draw Title
-      drawTextWithWrapping(result.title, { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin });
+      y = drawTextWithWrapping(result.title, { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin });
       y -= 15;
 
-      // Sanitize content for PDF: replace markdown bold with a placeholder
-      const sanitizedContent = result.content.replace(/\*\*(.*?)\*\*/g, '(bold) $1');
-      
       // Draw Content
-      drawTextWithWrapping(sanitizedContent, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
+      const contentParts = result.content.split(/(\*\*.*?\*\*)/g);
+      for(const part of contentParts) {
+        if (part.startsWith('**') && part.endsWith('**')) {
+            const boldText = part.slice(2, -2);
+            y = drawTextWithWrapping(boldText, { font: helveticaBoldFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
+        } else {
+            y = drawTextWithWrapping(part, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
+        }
+      }
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
