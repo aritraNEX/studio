@@ -35,7 +35,6 @@ import { ConceptExplainerTab } from "./concept-explainer-tab";
 import { DiagramGeneratorTab } from "./diagram-generator-tab";
 import { NoteGeneratorTab } from "./note-generator-tab";
 import { useABTest } from "@/contexts/ab-test-context";
-import { AdBanner } from "./ad-banner";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -226,9 +225,6 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
             </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter>
-        <AdBanner />
-      </CardFooter>
     </Card>
   );
 }
