@@ -192,7 +192,7 @@ export default function LoginPage() {
             <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit mb-4 shadow-lg shadow-primary/30">
                 <Sparkles className="h-8 w-8" />
             </div>
-            <h1 className="text-4xl font-bold tracking-tight">Welcome to Tex.io</h1>
+            <h1 className="text-4xl font-bold tracking-tight">Welcome to Tex AI</h1>
             <p className="text-lg text-muted-foreground/80 mt-2">Sign in or create an account to continue</p>
         </div>
         <TabsList className="grid w-full grid-cols-3">

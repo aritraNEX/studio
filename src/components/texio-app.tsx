@@ -75,7 +75,6 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
   const [activeMainTab, setActiveMainTab] = useState("most-used");
   const [activeSubTab, setActiveSubTab] = useState(initialTab || "paraphrase");
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
-  const { group } = useABTest();
 
   useEffect(() => {
     if (initialTab) {
@@ -138,10 +137,10 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
         </div>
         
         <CardTitle className="text-3xl sm:text-4xl font-bold tracking-tight">
-          {group === 'B' ? "Tex.io AI" : "Tex.io"} 
+          Tex AI
         </CardTitle>
         <CardDescription className="text-lg text-muted-foreground/80">
-          {group === 'B' ? "Your Ultimate AI-Powered Toolkit" : "Your all-in-one AI-powered text and media toolkit."}
+          Your Ultimate AI-Powered Toolkit
         </CardDescription>
       </CardHeader>
       <CardContent className="p-2 sm:p-8 pt-2">

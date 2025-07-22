@@ -11,8 +11,8 @@ import type {ReactNode} from 'react';
 // Metadata is not supported in client components. 
 // We can move this to a parent layout if needed, but for now, we'll keep it simple.
 // export const metadata: Metadata = {
-//   title: 'Tex.io',
-//   description: 'Paraphrase text from any image.',
+//   title: 'Tex AI',
+//   description: 'Your personal AI text assistant.',
 // };
 
 export default function RootLayout({
@@ -23,8 +23,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>Tex.io</title>
-        <meta name="description" content="Paraphrase text from any image." />
+        <title>Tex AI</title>
+        <meta name="description" content="Your personal AI text assistant." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Caveat&family=Cormorant+Garamond&family=Dancing+Script&family=Indie+Flower&family=Josefin+Sans&family=Lobster&family=Lora&family=Merriweather&family=Montserrat&family=Nunito&family=Oswald&family=Pacifico&family=Playfair+Display&family=Poppins:wght@400;600;700;800&family=Quattrocento&family=Raleway&family=Shadows+Into+Light&family=Ubuntu&display=swap" rel="stylesheet" />

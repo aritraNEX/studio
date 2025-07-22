@@ -123,7 +123,7 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
               </svg>
           </div>
           <div className="animate-text-reveal">
-            <h1 className="text-5xl font-bold tracking-tight text-foreground">Tex.io</h1>
+            <h1 className="text-5xl font-bold tracking-tight text-foreground">Tex AI</h1>
             <p className="mt-2 text-lg text-muted-foreground">Preparing the magic...</p>
           </div>
       </div>
