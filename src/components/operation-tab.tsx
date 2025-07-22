@@ -285,7 +285,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
       const { width, height } = page.getSize();
       const margin = 50;
 
-      page.drawText(`Tex.io Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, {
+      page.drawText(`Tex AI Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, {
           x: margin,
           y: height - margin,
           font: helveticaFont,
@@ -330,7 +330,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const handleShare = (platform: 'twitter' | 'facebook' | 'linkedin' | 'whatsapp' | 'email', text: string) => {
     const encodedText = encodeURIComponent(text);
     const encodedUrl = encodeURIComponent(appUrl);
-    const title = `Result from Tex.io - ${operation}`;
+    const title = `Result from Tex AI - ${operation}`;
 
     let url = '';
     switch (platform) {
@@ -560,7 +560,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground hover:text-foreground"
-                onClick={() => handleDownloadPdf(generatedText, `texio-result-${operation}.pdf`)}
+                onClick={() => handleDownloadPdf(generatedText, `tex-ai-result-${operation}.pdf`)}
                 disabled={!generatedText || isPending}
                 aria-label="Download as PDF"
                 >

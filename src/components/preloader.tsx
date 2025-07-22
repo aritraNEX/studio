@@ -13,7 +13,7 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
     // Set a timer for the minimum display duration of the animation.
     const minTimeTimer = setTimeout(() => {
       setMinimumTimeElapsed(true);
-    }, 2000); // Reduced time for a quicker feel
+    }, 1500); // Adjusted time
 
     // Listen for the event that signals the app's content is ready.
     const hidePreloader = () => setAppIsReady(true);
@@ -39,7 +39,7 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
     if (!show) {
         const fadeOutTimer = setTimeout(() => {
             onAnimationComplete();
-        }, 700);
+        }, 500); // Match duration of opacity transition
         return () => clearTimeout(fadeOutTimer);
     }
   }, [show, onAnimationComplete]);
@@ -48,7 +48,7 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
   return (
     <div
       className={cn(
-        'fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background transition-opacity duration-700',
+        'fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background transition-opacity duration-500',
         show ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
@@ -62,10 +62,10 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-16 w-16"
               >
-                <circle cx="40" cy="40" r="30" fill="#2E8B57" />
-                <circle cx="70" cy="35" r="20" fill="#3CB371" />
-                <circle cx="65" cy="75" r="25" fill="#20B2AA" />
-                <circle cx="80" cy="70" r="10" fill="#2E8B57" />
+                <circle cx="40" cy="40" r="30" className="fill-primary" />
+                <circle cx="70" cy="35" r="20" className="fill-primary/70" />
+                <circle cx="65" cy="75" r="25" className="fill-accent" />
+                <circle cx="80" cy="70" r="10" className="fill-primary" />
               </svg>
           </div>
           <div>

@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "@/contexts/auth-context";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
@@ -86,10 +87,19 @@ export function WorkspaceTab() {
   return (
     <div>
       <div className="flex justify-end mb-4">
-        <Button onClick={handleShare} disabled={isSharing}>
-          {isSharing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
-          {isSharing ? "Generating Link..." : "Share Workspace"}
-        </Button>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button onClick={handleShare} disabled={isSharing}>
+                        {isSharing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
+                        {isSharing ? "Generating Link..." : "Share Workspace"}
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Share this workspace for real-time collaboration.</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
       </div>
       <OperationTab
         key={`${workspaceOperation}-${workspaceText.length}`} // Force re-mount on change

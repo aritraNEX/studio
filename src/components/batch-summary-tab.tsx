@@ -172,7 +172,7 @@ export function BatchSummaryTab() {
             const margin = 50;
             let y = height - margin;
 
-            page.drawText('Tex.io Summaries', {
+            page.drawText('Tex AI Summaries', {
                 x: margin,
                 y,
                 font: helveticaBoldFont,
@@ -221,7 +221,7 @@ export function BatchSummaryTab() {
             const blob = new Blob([pdfBytes], { type: 'application/pdf' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = "texio-summaries.pdf";
+            link.download = "tex-ai-summaries.pdf";
             link.click();
             URL.revokeObjectURL(link.href);
 
@@ -254,7 +254,7 @@ export function BatchSummaryTab() {
             const { width, height } = page.getSize();
             const margin = 50;
 
-            page.drawText(`Tex.io Summary: ${fileName}`, {
+            page.drawText(`Tex AI Summary: ${fileName}`, {
                 x: margin,
                 y: height - margin,
                 font: helveticaFont,
@@ -276,7 +276,7 @@ export function BatchSummaryTab() {
             const blob = new Blob([pdfBytes], { type: 'application/pdf' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `texio-summary-${fileName}.pdf`;
+            link.download = `tex-ai-summary-${fileName}.pdf`;
             link.click();
             URL.revokeObjectURL(link.href);
 

@@ -129,10 +129,10 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-12 w-12"
               >
-                <circle cx="40" cy="40" r="30" fill="#2E8B57" />
-                <circle cx="70" cy="35" r="20" fill="#3CB371" />
-                <circle cx="65" cy="75" r="25" fill="#20B2AA" />
-                <circle cx="80" cy="70" r="10" fill="#2E8B57" />
+                <circle cx="40" cy="40" r="30" className="fill-primary" />
+                <circle cx="70" cy="35" r="20" className="fill-primary/70" />
+                <circle cx="65" cy="75" r="25" className="fill-accent" />
+                <circle cx="80" cy="70" r="10" className="fill-primary" />
               </svg>
         </div>
         
