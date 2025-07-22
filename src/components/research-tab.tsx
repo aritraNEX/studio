@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { researchAssistant, ResearchAssistantOutput } from "@/ai/flows/research-assistant-flow";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "./ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 export function ResearchTab() {
   const [inputText, setInputText] = useState<string>("");
@@ -139,14 +140,17 @@ export function ResearchTab() {
           onClick={handleResearch}
           disabled={!inputText.trim() || isPending}
           size="lg"
-          className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto"
+          className={cn(
+            "w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto",
+            isPending && "animate-sparkle"
+          )}
         >
           {isPending ? (
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
           ) : (
             <Sparkles className="mr-2 h-5 w-5" />
           )}
-          {isPending ? "Researching..." : "Start Research"}
+          <span>{isPending ? "Researching..." : "Start Research"}</span>
         </Button>
         {error && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
       </div>

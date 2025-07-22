@@ -11,6 +11,7 @@ import { citationGenerator, CitationGeneratorOutput } from "@/ai/flows/citation-
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "./ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 type CitationStyle = 'APA' | 'MLA' | 'Chicago';
 
@@ -148,14 +149,17 @@ export function CitationGeneratorTab() {
                 onClick={handleGenerate}
                 disabled={!inputText.trim() || isPending}
                 size="lg"
-                className="w-full sm:w-auto text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95"
+                className={cn(
+                  "w-full sm:w-auto text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95",
+                  isPending && "animate-sparkle"
+                )}
             >
                 {isPending ? (
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 ) : (
                     <Sparkles className="mr-2 h-5 w-5" />
                 )}
-                {isPending ? "Generating..." : "Generate"}
+                <span>{isPending ? "Generating..." : "Generate"}</span>
             </Button>
         </div>
         {error && <p className="text-sm text-destructive text-center mt-4">{error}</p>}

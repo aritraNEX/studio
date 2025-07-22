@@ -263,14 +263,17 @@ export function GrammarCheckTab() {
           onClick={handleGrammarCheck}
           disabled={!fileName || isPending}
           size="lg"
-          className="w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto"
+          className={cn(
+            "w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto",
+            isPending && "animate-sparkle"
+          )}
         >
           {isPending ? (
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
           ) : (
             <SpellCheck className="mr-2 h-5 w-5" />
           )}
-          {isPending ? "Checking..." : "Check Grammar"}
+          <span>{isPending ? "Checking..." : "Check Grammar"}</span>
         </Button>
         {error && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
       </div>

@@ -146,14 +146,17 @@ export function DiagramGeneratorTab() {
                 onClick={handleGenerate}
                 disabled={!topic.trim() || isPending}
                 size="lg"
-                className="h-12 text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 w-full sm:w-auto"
+                className={cn(
+                    "h-12 text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 w-full sm:w-auto",
+                    isPending && "animate-sparkle"
+                )}
             >
             {isPending ? (
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             ) : (
                 <Sparkles className="mr-2 h-5 w-5" />
             )}
-            {isPending ? "Generating..." : "Generate"}
+            <span>{isPending ? "Generating..." : "Generate"}</span>
             </Button>
         </div>
         {error && !isPending && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
