@@ -88,7 +88,11 @@ const processImageTextFlow = ai.defineFlow(
         if (!input.targetStyle) {
           throw new Error('Target style is required for rewriting.');
         }
-        instruction = `Rewrite the extracted text to match the following style: "${input.targetStyle}". If the style mentions a famous author, adopt their distinct writing style, including their typical vocabulary, sentence structure, and tone. Preserve the original formatting, including line breaks, lists, and bullet points.`;
+        if (input.targetStyle === 'original') {
+          instruction = `Extract all text from this document, in the correct sequence, preserving the original structure like lists and line breaks. Output only the extracted text.`;
+        } else {
+          instruction = `Rewrite the extracted text to match the following style: "${input.targetStyle}". If the style mentions a famous author, adopt their distinct writing style, including their typical vocabulary, sentence structure, and tone. Preserve the original formatting, including line breaks, lists, and bullet points.`;
+        }
         break;
       case 'grammar':
         instruction = `You are a grammar correction expert. Analyze the following text and correct any and all grammatical errors, spelling mistakes, and punctuation issues. Your goal is to improve the text's clarity and correctness without altering its original meaning, style, or tone. Preserve the original formatting, including line breaks and lists. Only output the corrected text.`;

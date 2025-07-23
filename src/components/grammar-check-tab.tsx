@@ -27,6 +27,7 @@ export function GrammarCheckTab() {
   const [result, setResult] = useState<ProcessImageTextOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,6 +41,7 @@ export function GrammarCheckTab() {
     }
     if (!file) return;
 
+    setIsUploading(true);
     setFileUrl(null);
     setLocalPreviewUrl(null);
     setInputText("");
@@ -58,10 +60,12 @@ export function GrammarCheckTab() {
     uploadBytes(storageRef, file).then(snapshot => {
       getDownloadURL(snapshot.ref).then(downloadURL => {
         setFileUrl(downloadURL);
+        setIsUploading(false);
       });
     }).catch(error => {
         console.error("Upload failed", error);
         toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not upload your file to storage.'});
+        setIsUploading(false);
     });
   };
 
@@ -97,7 +101,7 @@ export function GrammarCheckTab() {
   const handleGrammarCheck = () => {
     if (!fileUrl) {
       toast({
-        title: "File is still uploading",
+        title: "File not ready",
         description: "Please wait for the file to finish uploading before checking.",
         variant: "destructive",
       });
@@ -109,22 +113,19 @@ export function GrammarCheckTab() {
 
     startTransition(async () => {
       try {
-        const payload = { operation: 'grammar' as const, fileUrl: fileUrl! };
-        
-        // Fetch original text first to create a diff later
-        const originalTextResult = await processImageText({ fileUrl: fileUrl!, operation: 'style', targetStyle: 'original' });
-        if (originalTextResult && originalTextResult.processedText) {
-          setInputText(originalTextResult.processedText);
-        } else {
+        // First, get the original text from the document.
+        const originalTextResult = await processImageText({ fileUrl: fileUrl, operation: 'style', targetStyle: 'original' });
+        if (!originalTextResult || !originalTextResult.processedText) {
           throw new Error("Could not extract original text from the document.");
         }
+        setInputText(originalTextResult.processedText);
         
-        const checkResult = await processImageText(payload);
-
+        // Then, get the grammar-corrected version.
+        const checkResult = await processImageText({ operation: 'grammar', fileUrl: fileUrl });
         if (checkResult && checkResult.processedText) {
           setResult(checkResult);
         } else {
-          throw new Error("The AI returned an empty result.");
+          throw new Error("The AI returned an empty result for grammar check.");
         }
       } catch (e) {
         console.error(e);
@@ -181,6 +182,7 @@ export function GrammarCheckTab() {
                 onChange={handleFileChange}
                 className="sr-only"
                 accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                disabled={isUploading}
             />
             <label
                 htmlFor="grammar-upload"
@@ -191,10 +193,16 @@ export function GrammarCheckTab() {
                     "group flex flex-col items-center justify-center w-full h-80 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
                     isDragging
                         ? "border-primary bg-primary/20"
-                        : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
+                        : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground",
+                    isUploading && "cursor-not-allowed opacity-70"
                 )}
             >
-                {localPreviewUrl ? (
+                {isUploading ? (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p>Uploading...</p>
+                    </div>
+                ) : localPreviewUrl ? (
                 <div className="relative w-full h-full p-2">
                     <Image
                     src={localPreviewUrl}
@@ -261,7 +269,7 @@ export function GrammarCheckTab() {
       <div className="flex flex-col items-center justify-center gap-4 py-4">
         <Button
           onClick={handleGrammarCheck}
-          disabled={!fileName || isPending}
+          disabled={isUploading || !fileName || isPending}
           size="lg"
           className={cn(
             "w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto",

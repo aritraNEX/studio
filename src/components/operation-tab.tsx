@@ -51,7 +51,6 @@ interface OperationTabProps {
 export function OperationTab({ operation, onSendTo, initialText, projectId }: OperationTabProps) {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
-  const [extractedText, setExtractedText] = useState<string | null>(initialText ?? null);
   const [generatedText, setGeneratedText] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -74,11 +73,6 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
 
   useEffect(() => {
     setAppUrl(window.location.origin); // Use origin instead of href
-    try {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-    } catch (error) {
-      console.error("Failed to set pdf.js worker source", error);
-    }
   }, []);
 
   useEffect(() => {
@@ -95,7 +89,6 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
           }
           if (projectData.operation === operation) {
             setGeneratedText(projectData.outputText);
-            // This is a saved project, the 'inputText' is the fileUrl
             const savedFileUrl = projectData.inputText;
             if (savedFileUrl && savedFileUrl.startsWith('https://firebasestorage.googleapis.com')) {
                 setFileUrl(savedFileUrl);
@@ -155,7 +148,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     const fileType = file.type;
     const isImage = fileType.startsWith("image/");
 
-    // Instant local preview
+    // Instant local preview for images
     if (isImage) {
         setLocalPreviewUrl(URL.createObjectURL(file));
     } else {
@@ -211,8 +204,8 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     if (!fileUrl) {
         toast({
             variant: 'destructive',
-            title: 'File is missing',
-            description: 'Please ensure a file is uploaded and ready before processing.',
+            title: 'File not ready',
+            description: 'Please wait for the file to finish uploading before processing.',
         });
         return;
     }
@@ -281,27 +274,38 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
       const pdfDoc = await PDFDocument.create();
       const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-      const page = pdfDoc.addPage();
+      let page = pdfDoc.addPage();
       const { width, height } = page.getSize();
       const margin = 50;
+      let y = height - margin;
 
       page.drawText(`Tex AI Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, {
           x: margin,
-          y: height - margin,
+          y: y,
           font: helveticaFont,
           size: 18,
           color: rgb(0, 0, 0),
       });
-
-      page.drawText(textToDownload, {
-          x: margin,
-          y: height - margin - 30,
-          font: helveticaFont,
-          size: 12,
-          lineHeight: 15,
-          color: rgb(0.2, 0.2, 0.2),
-          maxWidth: width - 2 * margin,
-      });
+      y -= 30;
+      
+      const lines = textToDownload.split('\n');
+      for (const line of lines) {
+        // This is a simplified text wrapping logic. For complex cases, a library would be better.
+        if (y < margin) {
+            page = pdfDoc.addPage();
+            y = height - margin;
+        }
+        page.drawText(line, {
+            x: margin,
+            y: y,
+            font: helveticaFont,
+            size: 12,
+            lineHeight: 15,
+            color: rgb(0.2, 0.2, 0.2),
+            maxWidth: width - 2 * margin,
+        });
+        y -= 15;
+      }
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -592,7 +596,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
          <div className="flex flex-wrap items-center justify-center gap-4">
           <Button
             onClick={handleProcess}
-            disabled={!fileUrl || isPending || isUploading || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
+            disabled={isUploading || !fileUrl || isPending || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
             className={cn(
                 "w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto",
