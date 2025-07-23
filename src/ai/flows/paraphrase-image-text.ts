@@ -62,7 +62,7 @@ const processImageTextFlow = ai.defineFlow(
     outputSchema: ProcessImageTextOutputSchema,
   },
   async (input) => {
-    if (!input.fileUrl && input.text && !input.text.trim()) {
+    if (!input.fileUrl && (!input.text || !input.text.trim())) {
         return { processedText: "" };
     }
     
@@ -97,30 +97,40 @@ const processImageTextFlow = ai.defineFlow(
         throw new Error('Invalid operation specified.');
     }
 
-    try {
-        const {output} = await processImageTextPrompt({
-        fileUrl: input.fileUrl,
-        text: input.text,
-        instruction: instruction,
-        });
-        
-        if (!output) {
-        throw new Error('The model did not return any output.');
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            const {output} = await processImageTextPrompt({
+                fileUrl: input.fileUrl,
+                text: input.text,
+                instruction: instruction,
+            });
+            
+            if (!output) {
+                throw new Error('The model did not return any output.');
+            }
+            
+            return output; // Success, exit the loop
+        } catch (e: any) {
+            if (e.message?.includes('overloaded') && i < maxRetries - 1) {
+                console.log(`Model overloaded, retrying... (${i + 1}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+                continue;
+            }
+            if (e.message?.includes('overloaded')) {
+                throw new Error('The AI model is currently busy. Please try again in a moment.');
+            }
+            if (e.message?.includes('API key not valid')) {
+                throw new Error('The AI service API key is not valid. Please check your configuration.');
+            }
+            if (e.message?.includes('Deadline exceeded')) {
+                throw new Error('The request to the AI model timed out. Please try again.');
+            }
+            // Re-throw other errors
+            throw e;
         }
-        
-        return output;
-    } catch (e: any) {
-        if (e.message?.includes('overloaded')) {
-            throw new Error('The AI model is currently busy. Please try again in a moment.');
-        }
-        if (e.message?.includes('API key not valid')) {
-            throw new Error('The AI service API key is not valid. Please check your configuration.');
-        }
-         if (e.message?.includes('Deadline exceeded')) {
-            throw new Error('The request to the AI model timed out. Please try again.');
-        }
-        // Re-throw other errors
-        throw e;
     }
+    // This part should not be reachable, but as a fallback:
+    throw new Error('The AI model is currently busy. Please try again after a few moments.');
   }
 );
