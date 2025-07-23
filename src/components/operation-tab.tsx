@@ -12,8 +12,6 @@ import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import * as pdfjsLib from "pdfjs-dist";
-import mammoth from "mammoth";
 import {
   Select,
   SelectContent,
@@ -23,8 +21,7 @@ import {
 } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
-import { db, storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useRouter } from "next/navigation";
@@ -48,13 +45,22 @@ interface OperationTabProps {
   projectId?: string | null;
 }
 
+const fileToDataUri = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+};
+
+
 export function OperationTab({ operation, onSendTo, initialText, projectId }: OperationTabProps) {
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [fileDataUri, setFileDataUri] = useState<string | null>(null);
   const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
   const [generatedText, setGeneratedText] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [isUploading, setIsUploading] = useState(false);
   const [targetLanguage, setTargetLanguage] = useState<string>('Spanish');
   const [targetStyle, setTargetStyle] = useState<string>('Formal');
   const [customStyle, setCustomStyle] = useState<string>('');
@@ -89,10 +95,12 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
           }
           if (projectData.operation === operation) {
             setGeneratedText(projectData.outputText);
-            const savedFileUrl = projectData.inputText;
-            if (savedFileUrl && savedFileUrl.startsWith('https://firebasestorage.googleapis.com')) {
-                setFileUrl(savedFileUrl);
-                setLocalPreviewUrl(savedFileUrl);
+            const savedFileData = projectData.inputText;
+            if (savedFileData && savedFileData.startsWith('data:')) {
+                setFileDataUri(savedFileData);
+                if (savedFileData.startsWith('data:image')) {
+                    setLocalPreviewUrl(savedFileData);
+                }
             }
           }
         } else {
@@ -117,7 +125,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     try {
       await addDoc(collection(db, 'projects'), {
         userId: user.uid,
-        inputText: fileUrl || fileName || '',
+        inputText: fileDataUri || '',
         outputText: generatedText,
         operation: operation,
         createdAt: serverTimestamp(),
@@ -131,44 +139,28 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     }
   };
 
-  const handleFileUpload = (file: File) => {
-    if (!user) {
-      toast({ variant: 'destructive', title: 'Authentication required', description: 'You must be signed in to upload files.' });
-      return;
-    }
+  const handleFileUpload = async (file: File) => {
     if (!file) return;
 
     // Reset states for a new upload
-    setIsUploading(true);
-    setFileUrl(null);
+    setFileDataUri(null);
+    setLocalPreviewUrl(null);
     setGeneratedText("");
     setError(null);
     setFileName(file.name);
     
-    const fileType = file.type;
-    const isImage = fileType.startsWith("image/");
+    try {
+        const dataUri = await fileToDataUri(file);
+        setFileDataUri(dataUri);
 
-    // Instant local preview for images
-    if (isImage) {
-        setLocalPreviewUrl(URL.createObjectURL(file));
-    } else {
-        setLocalPreviewUrl(null); // No preview for non-image files
-    }
-    
-    // Background upload
-    const storageRef = ref(storage, `uploads/${user.uid}/${Date.now()}-${file.name}`);
-    uploadBytes(storageRef, file).then(snapshot => {
-      getDownloadURL(snapshot.ref).then(downloadURL => {
-        setFileUrl(downloadURL);
-        setIsUploading(false);
-      });
-    }).catch(error => {
-        console.error("Upload failed", error);
-        toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not upload your file to storage.'});
-        setLocalPreviewUrl(null);
+        if (file.type.startsWith("image/")) {
+            setLocalPreviewUrl(dataUri);
+        }
+    } catch (err) {
+        console.error("File processing failed", err);
+        toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not process the selected file.' });
         setFileName(null);
-        setIsUploading(false);
-    });
+    }
   };
   
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,11 +193,11 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   };
 
   const handleProcess = () => {
-    if (!fileUrl) {
+    if (!fileDataUri) {
         toast({
             variant: 'destructive',
-            title: 'File not ready',
-            description: 'Please wait for the file to finish uploading before processing.',
+            title: 'No File Selected',
+            description: 'Please upload a file before processing.',
         });
         return;
     }
@@ -236,7 +228,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
       try {
         const result = await processImageText({
             operation,
-            fileUrl: fileUrl,
+            fileUrl: fileDataUri,
             ...(operation === 'translate' ? { targetLanguage } : {}),
             ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
         });
@@ -390,7 +382,6 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             onChange={handleFileChange}
             className="sr-only"
             accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            disabled={isUploading}
         />
         <label
             htmlFor={`image-upload-${operation}`}
@@ -401,24 +392,18 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                 "group flex flex-col items-center justify-center w-full h-80 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
                 isDragging
                     ? "border-primary bg-primary/20"
-                    : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground",
-                isUploading && "cursor-not-allowed opacity-70"
+                    : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
             )}
         >
-            {isUploading ? (
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p>Uploading...</p>
+            {localPreviewUrl ? (
+                <div className="relative w-full h-full p-2">
+                    <Image
+                    src={localPreviewUrl}
+                    alt="Uploaded content"
+                    fill
+                    className="rounded-lg object-contain"
+                    />
                 </div>
-            ) : localPreviewUrl ? (
-            <div className="relative w-full h-full p-2">
-                <Image
-                src={localPreviewUrl}
-                alt="Uploaded content"
-                fill
-                className="rounded-lg object-contain"
-                />
-            </div>
             ) : fileName ? (
              <div className="flex flex-col items-center justify-center text-center p-4">
                 <FileText className="w-16 h-16 mb-4 text-primary" />
@@ -596,7 +581,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
          <div className="flex flex-wrap items-center justify-center gap-4">
           <Button
             onClick={handleProcess}
-            disabled={isUploading || !fileUrl || isPending || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
+            disabled={!fileDataUri || isPending || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
             className={cn(
                 "w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto",

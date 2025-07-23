@@ -15,7 +15,7 @@ const BaseProcessImageTextInputSchema = z.object({
   fileUrl: z
     .string()
     .describe(
-      'A publicly accessible URL to a file (image, PDF, etc.) to be processed.'
+      "A file (image, PDF, etc.) to be processed, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ).optional(),
   text: z.string().describe("Raw text to be processed.").optional(),
   operation: z.enum(['paraphrase', 'summarize', 'translate', 'style', 'grammar']).describe('The operation to perform on the text.'),
@@ -52,9 +52,9 @@ const processImageTextPrompt = ai.definePrompt({
   name: 'processImageTextPrompt',
   input: {schema: promptInputSchema},
   output: {schema: ProcessImageTextOutputSchema},
-  prompt: `{{#if fileUrl}}You will be given a URL to a document (image, PDF, etc.). Extract all text from this document, in the correct sequence, preserving the original structure like lists and line breaks. Then, follow this instruction: '{{{instruction}}}'. Place the final result in the 'processedText' field. Ensure the output formatting matches the original text's structure (e.g., lists, paragraphs). Do not add any extra commentary or explanation.
+  prompt: `{{#if fileUrl}}You will be given a document (image, PDF, etc.). Extract all text from this document, in the correct sequence, preserving the original structure like lists and line breaks. Then, follow this instruction: '{{{instruction}}}'. Place the final result in the 'processedText' field. Ensure the output formatting matches the original text's structure (e.g., lists, paragraphs). Do not add any extra commentary or explanation.
 
-Document URL: {{media url=fileUrl}}{{else}}You will be given text to process. Follow this instruction: '{{{instruction}}}'. Place the final result in the 'processedText' field. Ensure the output formatting matches the original text's structure (e.g., lists, paragraphs). Do not add any extra commentary or explanation.
+Document: {{media url=fileUrl}}{{else}}You will be given text to process. Follow this instruction: '{{{instruction}}}'. Place the final result in the 'processedText' field. Ensure the output formatting matches the original text's structure (e.g., lists, paragraphs). Do not add any extra commentary or explanation.
 
 Text: {{{text}}}{{/if}}`
 });
