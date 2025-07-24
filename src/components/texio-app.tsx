@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, Crown, StickyNote } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, Crown, StickyNote, Gauge } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -34,6 +34,7 @@ import { GrammarCheckTab } from "./grammar-check-tab";
 import { ConceptExplainerTab } from "./concept-explainer-tab";
 import { DiagramGeneratorTab } from "./diagram-generator-tab";
 import { NoteGeneratorTab } from "./note-generator-tab";
+import { ToneDetectionTab } from "./tone-detection-tab";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -60,6 +61,7 @@ const highQualityFeatures = [
     { value: 'note-mentor', icon: <StickyNote className="h-5 w-5" />, label: 'Note-mentor' },
     { value: 'flashcards', icon: <Copy className="h-5 w-5" />, label: 'Flashcards' },
     { value: 'citations', icon: <BookA className="h-5 w-5" />, label: 'Citations' },
+    { value: 'tone', icon: <Gauge className="h-5 w-5" />, label: 'Tone' },
     { value: 'video-to-text', icon: <Video className="h-5 w-5" />, label: 'Video to Text' },
     { value: 'research', icon: <GraduationCap className="h-5 w-5" />, label: 'Research' },
     { value: 'plagiarism', icon: <ShieldCheck className="h-5 w-5" />, label: 'Plagiarism' },
@@ -177,7 +179,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
             
             <TabsContent value="high-quality">
                 <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full pt-4">
-                    <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10 xl:grid-cols-13 mx-auto h-auto p-1.5 flex-wrap">
+                    <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10 xl:grid-cols-14 mx-auto h-auto p-1.5 flex-wrap">
                         {highQualityFeatures.map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
                     </TabsList>
                     <TabsContent value="explainer" className="pt-6">
@@ -197,6 +199,9 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                     </TabsContent>
                     <TabsContent value="citations" className="pt-6">
                         <CitationGeneratorTab />
+                    </TabsContent>
+                    <TabsContent value="tone" className="pt-6">
+                        <ToneDetectionTab />
                     </TabsContent>
                     <TabsContent value="video-to-text" className="pt-6">
                         <TranscriptionTab />
