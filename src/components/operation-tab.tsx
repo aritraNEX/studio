@@ -15,7 +15,9 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -44,15 +46,6 @@ interface OperationTabProps {
   initialText?: string;
   projectId?: string | null;
 }
-
-const fileToDataUri = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-};
 
 
 export function OperationTab({ operation, onSendTo, initialText, projectId }: OperationTabProps) {
@@ -150,15 +143,24 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     setFileName(file.name);
     
     try {
-        const dataUri = await fileToDataUri(file);
-        setFileDataUri(dataUri);
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUri = reader.result as string;
+            setFileDataUri(dataUri);
+            if (file.type.startsWith("image/")) {
+                setLocalPreviewUrl(dataUri);
+            }
+        };
+        reader.onerror = (err) => {
+             console.error("File processing failed", err);
+            toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not process the selected file.' });
+            setFileName(null);
+        };
+        reader.readAsDataURL(file);
 
-        if (file.type.startsWith("image/")) {
-            setLocalPreviewUrl(dataUri);
-        }
     } catch (err) {
-        console.error("File processing failed", err);
-        toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not process the selected file.' });
+        console.error("File upload failed", err);
+        toast({ variant: 'destructive', title: 'File Upload Error', description: 'Could not upload the selected file.' });
         setFileName(null);
     }
   };
@@ -271,7 +273,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
       const margin = 50;
       let y = height - margin;
 
-      page.drawText(`Tex AI Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, {
+      page.drawText(`Vesper Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, {
           x: margin,
           y: y,
           font: helveticaFont,
@@ -282,7 +284,6 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
       
       const lines = textToDownload.split('\n');
       for (const line of lines) {
-        // This is a simplified text wrapping logic. For complex cases, a library would be better.
         if (y < margin) {
             page = pdfDoc.addPage();
             y = height - margin;
@@ -326,7 +327,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const handleShare = (platform: 'twitter' | 'facebook' | 'linkedin' | 'whatsapp' | 'email', text: string) => {
     const encodedText = encodeURIComponent(text);
     const encodedUrl = encodeURIComponent(appUrl);
-    const title = `Result from Tex AI - ${operation}`;
+    const title = `Result from Vesper - ${operation}`;
 
     let url = '';
     switch (platform) {
@@ -449,10 +450,24 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                     <SelectValue placeholder="Select a style" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="Formal">Formal</SelectItem>
-                        <SelectItem value="Casual">Casual</SelectItem>
-                        <SelectItem value="Confident">Confident</SelectItem>
-                        <SelectItem value="Poetic">Poetic</SelectItem>
+                        <SelectGroup>
+                            <SelectLabel>General Tone</SelectLabel>
+                            <SelectItem value="Formal">Formal</SelectItem>
+                            <SelectItem value="Casual">Casual</SelectItem>
+                            <SelectItem value="Confident">Confident</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                            <SelectLabel>Genre</SelectLabel>
+                            <SelectItem value="Academic">Academic</SelectItem>
+                            <SelectItem value="Business">Business</SelectItem>
+                            <SelectItem value="Technical">Technical</SelectItem>
+                            <SelectItem value="Creative">Creative</SelectItem>
+                        </SelectGroup>
+                         <SelectGroup>
+                            <SelectLabel>Literary</SelectLabel>
+                            <SelectItem value="Poetic">Poetic</SelectItem>
+                            <SelectItem value="Dramatic">Dramatic</SelectItem>
+                        </SelectGroup>
                     </SelectContent>
                 </Select>
             </div>
@@ -463,13 +478,13 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             </div>
              <div className="flex flex-col gap-2">
                 <Label htmlFor={`custom-style-input-${operation}`} className="font-semibold text-md">
-                    Enter a Famous Author
+                    Enter Custom Style or Author
                 </Label>
                 <Input 
                     id={`custom-style-input-${operation}`}
                     value={customStyle}
                     onChange={(e) => setCustomStyle(e.target.value)}
-                    placeholder="e.g., William Shakespeare, Jane Austen"
+                    placeholder="e.g., William Shakespeare, Scientific Journal"
                     className="bg-background/50 focus-visible:ring-accent"
                 />
             </div>
@@ -549,7 +564,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground hover:text-foreground"
-                onClick={() => handleDownloadPdf(generatedText, `tex-ai-result-${operation}.pdf`)}
+                onClick={() => handleDownloadPdf(generatedText, `vesper-result-${operation}.pdf`)}
                 disabled={!generatedText || isPending}
                 aria-label="Download as PDF"
                 >

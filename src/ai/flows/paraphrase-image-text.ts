@@ -21,7 +21,10 @@ const ProcessImageTextInputSchema = z.object({
   operation: z.enum(['paraphrase', 'summarize', 'translate', 'style', 'grammar']).describe('The operation to perform on the text.'),
   targetLanguage: z.string().optional().describe('The target language for translation. Required if operation is "translate".'),
   targetStyle: z.string().optional().describe('The target style for rewriting. Required if operation is "style".'),
+}).refine(data => data.fileUrl || data.text, {
+    message: "Either fileUrl or text must be provided.",
 });
+
 
 export type ProcessImageTextInput = z.infer<typeof ProcessImageTextInputSchema>;
 
@@ -87,7 +90,7 @@ const processImageTextFlow = ai.defineFlow(
         if (input.targetStyle === 'original') {
           instruction = `Extract all text from this document, in the correct sequence, preserving the original structure like lists and line breaks. Output only the extracted text.`;
         } else {
-          instruction = `Rewrite the extracted text to match the following style: "${input.targetStyle}". If the style mentions a famous author, adopt their distinct writing style, including their typical vocabulary, sentence structure, and tone. Preserve the original formatting, including line breaks, lists, and bullet points.`;
+          instruction = `Rewrite the extracted text to match the following style: "${input.targetStyle}". If the style is a specific genre like 'Academic' or 'Business', adopt the conventions of that genre (e.g., formal tone, specific vocabulary, structured arguments). If the style mentions a famous author, adopt their distinct writing style, including their typical vocabulary, sentence structure, and tone. Preserve the original formatting, including line breaks, lists, and bullet points.`;
         }
         break;
       case 'grammar':
