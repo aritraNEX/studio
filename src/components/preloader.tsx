@@ -69,7 +69,7 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
               </svg>
           </div>
           <div>
-            <h1 className="text-5xl font-bold tracking-tight text-foreground">Tex AI</h1>
+            <h1 className="text-5xl font-bold tracking-tight text-foreground">Vesper</h1>
             <p className="mt-2 text-lg text-muted-foreground">Preparing the magic...</p>
           </div>
       </div>
