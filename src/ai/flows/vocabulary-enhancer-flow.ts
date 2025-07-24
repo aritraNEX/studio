@@ -75,8 +75,8 @@ const vocabularyEnhancerFlow = ai.defineFlow(
       return { suggestions: [] };
     }
     const {output} = await vocabularyEnhancerPrompt(input);
-    if (!output) {
-      throw new Error("The model did not return any output.");
+    if (!output || !output.suggestions) {
+      return { suggestions: [] };
     }
     // Sort by start index to ensure proper processing order on the client
     output.suggestions.sort((a, b) => a.startIndex - b.startIndex);

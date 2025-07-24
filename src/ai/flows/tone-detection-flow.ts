@@ -66,8 +66,8 @@ const toneDetectionFlow = ai.defineFlow(
         return { tones: [] };
     }
     const {output} = await toneDetectionPrompt(input);
-    if (!output) {
-        throw new Error("The model did not return any output.");
+    if (!output || !output.tones) {
+        return { tones: [] };
     }
     // Sort tones by score in descending order
     output.tones.sort((a, b) => b.score - a.score);
