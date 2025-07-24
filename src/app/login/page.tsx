@@ -193,10 +193,22 @@ export default function LoginPage() {
       <div id="recaptcha-container"></div>
       <Tabs defaultValue="login" className="w-full max-w-sm">
         <div className="text-center mb-6">
-            <div className="mx-auto bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-xl p-3 w-fit mb-4 shadow-lg shadow-primary/30">
-                <Sparkles className="h-8 w-8" />
+            <div className="mx-auto w-fit mb-4">
+                <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 100 100"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-12 w-12"
+                    >
+                    <circle cx="40" cy="40" r="30" className="fill-primary" />
+                    <circle cx="70" cy="35" r="20" className="fill-primary/70" />
+                    <circle cx="65" cy="75" r="25" className="fill-accent" />
+                    <circle cx="80" cy="70" r="10" className="fill-primary" />
+                </svg>
             </div>
-            <h1 className="text-4xl font-bold tracking-tight">Welcome to Tex AI</h1>
+            <h1 className="text-4xl font-bold tracking-tight">Welcome to Vesper</h1>
             <p className="text-lg text-muted-foreground/80 mt-2">Sign in or create an account to continue</p>
         </div>
         <TabsList className="grid w-full grid-cols-3">
