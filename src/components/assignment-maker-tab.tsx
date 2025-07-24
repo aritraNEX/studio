@@ -205,9 +205,19 @@ export function AssignmentMakerTab() {
                         <ScrollArea className="h-[32rem] w-full">
                             <div className="w-full flex flex-col gap-4 animate-in fade-in duration-500 pr-4">
                                 <h2 className="text-2xl font-bold tracking-tight">{result.title}</h2>
-                                <p className="text-base text-foreground whitespace-pre-wrap font-serif">
-                                    {result.content}
-                                </p>
+                                <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none text-foreground whitespace-pre-wrap font-serif">
+                                  {result.content.split(/(\*\*.*?\*\*|#{1,6}\s.*)/g).map((text, index) => {
+                                      if (text.startsWith('**') && text.endsWith('**')) {
+                                          return <strong key={index}>{text.slice(2,-2)}</strong>;
+                                      }
+                                      if (text.match(/^#+\s/)) {
+                                          const level = text.match(/^#+/)?.[0].length || 1;
+                                          const content = text.replace(/^#+\s/, '');
+                                          return React.createElement(`h${level > 6 ? 6 : level}`, { key: index, className: 'font-bold' }, content);
+                                      }
+                                      return <span key={index}>{text}</span>
+                                  })}
+                                </div>
                                 <div>
                                     <h3 className="text-lg font-semibold flex items-center gap-2 mt-4 mb-2"><BookCheck className="h-5 w-5"/> References</h3>
                                     <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5 font-mono">

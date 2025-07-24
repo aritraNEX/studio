@@ -14,6 +14,7 @@ import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { cn } from "@/lib/utils";
+import React from "react";
 
 export function NoteGeneratorTab() {
   const [topic, setTopic] = useState<string>("");
@@ -85,7 +86,7 @@ export function NoteGeneratorTab() {
       const margin = 50;
       let y = height - margin;
 
-      const drawTextWithWrapping = (text: string, options: any) => {
+      const drawTextWithWrapping = async (text: string, options: any) => {
         const { font, size, color, lineHeight, x, maxWidth } = options;
         const words = text.split(' ');
         let currentLine = '';
@@ -103,28 +104,29 @@ export function NoteGeneratorTab() {
         lines.push(currentLine);
 
         for (const line of lines) {
-            if (y < margin) {
+            if (y < margin + lineHeight) {
                 page = pdfDoc.addPage();
                 y = height - margin;
             }
             page.drawText(line, { x, y, font, size, color, lineHeight });
             y -= lineHeight;
         }
-        return y;
       };
 
       // Draw Title
-      y = drawTextWithWrapping(result.title, { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin });
+      await drawTextWithWrapping(result.title, { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin });
       y -= 15;
 
       // Draw Content
-      const contentParts = result.content.split(/(\*\*.*?\*\*)/g);
+      const contentParts = result.content.split(/(\*\*.*?\*\*)/g).filter(Boolean);
+      let currentX = margin;
+      
       for(const part of contentParts) {
         if (part.startsWith('**') && part.endsWith('**')) {
             const boldText = part.slice(2, -2);
-            y = drawTextWithWrapping(boldText, { font: helveticaBoldFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
+            await drawTextWithWrapping(boldText, { font: helveticaBoldFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
         } else {
-            y = drawTextWithWrapping(part, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
+            await drawTextWithWrapping(part, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
         }
       }
 
@@ -197,8 +199,8 @@ export function NoteGeneratorTab() {
                                 <h2 className="text-2xl font-bold tracking-tight">{result.title}</h2>
                                 {/* A simple way to render markdown bolding */}
                                 <div className="text-base text-foreground whitespace-pre-wrap font-serif">
-                                  {result.content.split('**').map((text, index) => 
-                                    index % 2 === 1 ? <strong key={index}>{text}</strong> : <span key={index}>{text}</span>
+                                  {result.content.split(/(\*\*.*?\*\*)/g).map((text, index) => 
+                                    text.startsWith('**') ? <strong key={index}>{text.slice(2, -2)}</strong> : <span key={index}>{text}</span>
                                   )}
                                 </div>
                             </div>
