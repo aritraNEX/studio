@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import React from "react";
 import { BookUp, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
