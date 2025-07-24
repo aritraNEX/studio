@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, Crown, StickyNote, Gauge } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, Crown, StickyNote, Gauge, BookUp } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -35,6 +35,7 @@ import { ConceptExplainerTab } from "./concept-explainer-tab";
 import { DiagramGeneratorTab } from "./diagram-generator-tab";
 import { NoteGeneratorTab } from "./note-generator-tab";
 import { ToneDetectionTab } from "./tone-detection-tab";
+import { VocabularyEnhancerTab } from "./vocabulary-enhancer-tab";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -61,6 +62,7 @@ const highQualityFeatures = [
     { value: 'note-mentor', icon: <StickyNote className="h-5 w-5" />, label: 'Note-mentor' },
     { value: 'flashcards', icon: <Copy className="h-5 w-5" />, label: 'Flashcards' },
     { value: 'citations', icon: <BookA className="h-5 w-5" />, label: 'Citations' },
+    { value: 'vocabulary', icon: <BookUp className="h-5 w-5" />, label: 'Vocabulary' },
     { value: 'tone', icon: <Gauge className="h-5 w-5" />, label: 'Tone' },
     { value: 'video-to-text', icon: <Video className="h-5 w-5" />, label: 'Video to Text' },
     { value: 'research', icon: <GraduationCap className="h-5 w-5" />, label: 'Research' },
@@ -199,6 +201,9 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                     </TabsContent>
                     <TabsContent value="citations" className="pt-6">
                         <CitationGeneratorTab />
+                    </TabsContent>
+                    <TabsContent value="vocabulary" className="pt-6">
+                        <VocabularyEnhancerTab />
                     </TabsContent>
                     <TabsContent value="tone" className="pt-6">
                         <ToneDetectionTab />

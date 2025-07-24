@@ -14,3 +14,4 @@ import '@/ai/flows/concept-explainer-flow.ts';
 import '@/ai/flows/diagram-generator-flow.ts';
 import '@/ai/flows/note-generator-flow.ts';
 import '@/ai/flows/tone-detection-flow.ts';
+import '@/ai/flows/vocabulary-enhancer-flow.ts';
