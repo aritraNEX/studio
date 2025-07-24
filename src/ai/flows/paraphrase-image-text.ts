@@ -11,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const ProcessImageTextInputSchema = z.object({
+const ProcessImageTextInputObject = z.object({
   fileUrl: z
     .string()
     .describe(
@@ -21,7 +21,9 @@ const ProcessImageTextInputSchema = z.object({
   operation: z.enum(['paraphrase', 'summarize', 'translate', 'style', 'grammar']).describe('The operation to perform on the text.'),
   targetLanguage: z.string().optional().describe('The target language for translation. Required if operation is "translate".'),
   targetStyle: z.string().optional().describe('The target style for rewriting. Required if operation is "style".'),
-}).refine(data => data.fileUrl || data.text, {
+});
+
+const ProcessImageTextInputSchema = ProcessImageTextInputObject.refine(data => data.fileUrl || data.text, {
     message: "Either fileUrl or text must be provided.",
 });
 
@@ -42,8 +44,8 @@ export async function processImageText(
 }
 
 const promptInputSchema = z.object({
-    fileUrl: ProcessImageTextInputSchema.shape.fileUrl,
-    text: ProcessImageTextInputSchema.shape.text,
+    fileUrl: ProcessImageTextInputObject.shape.fileUrl,
+    text: ProcessImageTextInputObject.shape.text,
     instruction: z.string()
 });
 
