@@ -464,7 +464,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                             <SelectItem value="Creative">Creative</SelectItem>
                         </SelectGroup>
                          <SelectGroup>
-                            <SelectLabel>Literary</SelectLabel>
+                             <SelectLabel>Famous Authors</SelectLabel>
                             <SelectItem value="Poetic">Poetic</SelectItem>
                             <SelectItem value="Dramatic">Dramatic</SelectItem>
                         </SelectGroup>

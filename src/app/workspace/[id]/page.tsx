@@ -5,11 +5,12 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Loader2, ServerCrash, Home, Wand2 } from 'lucide-react';
+import { Loader2, ServerCrash, Home, Wand2, ShieldAlert } from 'lucide-react';
 import { OperationTab } from '@/components/operation-tab';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
+import { useToast } from '@/hooks/use-toast';
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
 
@@ -27,6 +28,7 @@ function SharedWorkspacePage() {
   const [data, setData] = useState<WorkspaceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
   
   const { user, loading: authLoading } = useAuth();
   
@@ -67,6 +69,15 @@ function SharedWorkspacePage() {
       });
       router.push('/login');
       return;
+    }
+    
+    if (user.uid !== data?.ownerId) {
+        toast({
+            variant: 'destructive',
+            title: 'Permission Denied',
+            description: 'You are not the owner of this workspace and cannot make changes.',
+        });
+        return;
     }
     
     try {
@@ -115,6 +126,7 @@ function SharedWorkspacePage() {
   }
 
   if (data) {
+    const isOwner = user?.uid === data.ownerId;
     return (
       <main className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4 sm:p-8">
           <Card className="w-full max-w-5xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
@@ -125,6 +137,12 @@ function SharedWorkspacePage() {
                     You are viewing a shared workspace. Changes are reflected in real-time.
                     {!user && " Sign in to collaborate."}
                   </CardDescription>
+                  {!isOwner && user && (
+                    <div className="mt-2 mx-auto flex items-center gap-2 p-2 rounded-md bg-yellow-500/10 text-yellow-700 border border-yellow-500/30">
+                        <ShieldAlert className="h-5 w-5"/>
+                        <p className="text-sm font-medium">You are in view-only mode.</p>
+                    </div>
+                  )}
               </CardHeader>
               <CardContent className="p-4 sm:p-8 pt-2">
                  <OperationTab
