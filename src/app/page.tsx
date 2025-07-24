@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Loader2 } from 'lucide-react';
 import UserMenu from '@/components/user-menu';
 import { WorkspaceProvider } from '@/contexts/workspace-context';
+import WelcomeBanner from '@/components/welcome-banner';
 
 function EditorContent() {
   const [isAppLoading, setAppLoading] = useState(true);
@@ -19,6 +20,7 @@ function EditorContent() {
   const projectId = searchParams.get('projectId');
   const tab = searchParams.get('tab');
   const topic = searchParams.get('topic');
+  const welcome = searchParams.get('welcome');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -44,6 +46,7 @@ function EditorContent() {
     <WorkspaceProvider>
       <Preloader onAnimationComplete={() => {}} />
       <div className={cn("transition-opacity duration-700", isAppLoading ? "opacity-0" : "opacity-100")}>
+        {welcome && user && <WelcomeBanner user={user} />}
         <div className="absolute top-4 right-4 z-50">
           <UserMenu />
         </div>

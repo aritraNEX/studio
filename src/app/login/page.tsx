@@ -71,12 +71,16 @@ export default function LoginPage() {
     }
   }, []);
 
+  const handleSuccessfulAuth = () => {
+    router.push('/?welcome=true');
+  };
+
   const handleLogin = async () => {
     setIsPending(true);
     try {
       await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
       toast({ title: 'Successfully logged in!' });
-      router.push('/');
+      handleSuccessfulAuth();
     } catch (error: any) {
       let description = error.message;
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
@@ -98,7 +102,7 @@ export default function LoginPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
       await createUserDocument(userCredential.user);
       toast({ title: 'Successfully signed up!' });
-      router.push('/');
+      handleSuccessfulAuth();
     } catch (error: any) {
       let description = error.message;
       if (error.code === 'auth/email-already-in-use') {
@@ -140,7 +144,7 @@ export default function LoginPage() {
         const userCredential = await signInWithPopup(auth, provider);
         await createUserDocument(userCredential.user);
         toast({ title: 'Successfully signed in with Google!' });
-        router.push('/');
+        handleSuccessfulAuth();
     } catch (error: any) {
          toast({
             variant: 'destructive',
@@ -175,7 +179,7 @@ export default function LoginPage() {
         const userCredential = await confirmationResult.confirm(otp);
         await createUserDocument(userCredential.user);
         toast({ title: 'Successfully signed in!' });
-        router.push('/');
+        handleSuccessfulAuth();
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Invalid OTP', description: 'The OTP you entered is incorrect. Please try again.' });
     } finally {
