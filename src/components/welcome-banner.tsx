@@ -54,16 +54,16 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
           : "opacity-0 -translate-y-full"
       )}
     >
-      <div className="relative flex items-center gap-4 rounded-full bg-gradient-to-r from-primary to-accent p-4 pl-6 pr-10 shadow-2xl shadow-primary/30 text-white">
-        <Sparkles className="h-6 w-6 flex-shrink-0 animate-pulse" />
-        <p className="text-md sm:text-lg font-semibold whitespace-nowrap">
+      <div className="relative flex items-center gap-2 sm:gap-4 rounded-full bg-gradient-to-r from-primary to-accent p-3 sm:p-4 sm:pl-6 sm:pr-10 shadow-2xl shadow-primary/30 text-white">
+        <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0 animate-pulse" />
+        <p className="text-sm sm:text-lg font-semibold text-center">
           Welcome {firstName}, we are setting up your workspace!
         </p>
         <button
           onClick={handleClose}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-white/20"
+          className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-white/20"
         >
-          <X className="h-5 w-5" />
+          <X className="h-4 w-4 sm:h-5 sm:w-5" />
           <span className="sr-only">Close</span>
         </button>
       </div>

@@ -34,12 +34,11 @@ import { GrammarCheckTab } from "./grammar-check-tab";
 import { ConceptExplainerTab } from "./concept-explainer-tab";
 import { DiagramGeneratorTab } from "./diagram-generator-tab";
 import { NoteGeneratorTab } from "./note-generator-tab";
-import { useABTest } from "@/contexts/ab-test-context";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
 
-interface TexioAppProps {
+interface VesperAppProps {
   projectId?: string | null;
   initialTab?: string | null;
   initialTopic?: string | null;
@@ -71,7 +70,7 @@ const highQualityFeatures = [
 ];
 
 
-export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps) {
+export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProps) {
   const [activeMainTab, setActiveMainTab] = useState("most-used");
   const [activeSubTab, setActiveSubTab] = useState(initialTab || "paraphrase");
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
@@ -137,7 +136,7 @@ export function TexioApp({ projectId, initialTab, initialTopic }: TexioAppProps)
         </div>
         
         <CardTitle className="text-3xl sm:text-4xl font-bold tracking-tight">
-          Tex AI
+          Vesper
         </CardTitle>
         <CardDescription className="text-lg text-muted-foreground/80">
           Your Ultimate AI-Powered Toolkit

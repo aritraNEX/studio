@@ -3,7 +3,7 @@
 
 import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { TexioApp } from '@/components/texio-app';
+import { VesperApp } from '@/components/texio-app';
 import Preloader from '@/components/preloader';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
@@ -21,6 +21,7 @@ function EditorContent() {
   const tab = searchParams.get('tab');
   const topic = searchParams.get('topic');
   const welcome = searchParams.get('welcome');
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -42,11 +43,17 @@ function EditorContent() {
     }
   }, [authLoading]);
 
+  const handlePreloaderComplete = () => {
+    if (welcome && user) {
+        setShowWelcome(true);
+    }
+  }
+
   return (
     <WorkspaceProvider>
-      <Preloader onAnimationComplete={() => {}} />
+      <Preloader onAnimationComplete={handlePreloaderComplete} />
       <div className={cn("transition-opacity duration-700", isAppLoading ? "opacity-0" : "opacity-100")}>
-        {welcome && user && <WelcomeBanner user={user} />}
+        {showWelcome && <WelcomeBanner user={user} />}
         <div className="absolute top-4 right-4 z-50">
           <UserMenu />
         </div>
@@ -55,7 +62,7 @@ function EditorContent() {
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
             ) : (
                 <div className={cn("transition-transform duration-700", isAppLoading ? "scale-95" : "scale-100")}>
-                    <TexioApp 
+                    <VesperApp
                         key={projectId || topic || 'new'} 
                         projectId={projectId} 
                         initialTab={tab}
