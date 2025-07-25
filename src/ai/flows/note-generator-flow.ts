@@ -10,7 +10,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {setTrialUsed} from '@/lib/firebase-admin';
 
 const NoteGeneratorInputSchema = z.object({
   topic: z.string().describe('The topic for the notes.'),
