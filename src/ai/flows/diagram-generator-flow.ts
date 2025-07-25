@@ -50,20 +50,18 @@ Diagram Type: '{{diagramType}}'
     -   For **concept**: Start with \`graph TD;\`.
     -   For **timeline**: Start with \`timeline\`.
 3.  **Define Nodes Correctly (MOST IMPORTANT RULE)**:
-    -   **Node Text MUST be in quotes**: All descriptive text for a node MUST be enclosed in double quotes.
+    -   **Flowchart/Graph Node Text MUST be in quotes**: For flowcharts, all descriptive text for a node MUST be enclosed in double quotes.
         -   **Correct:** \`A["This is the node text"]\`
         -   **INCORRECT:** \`A[This is the node text]\`
-    -   **Node IDs MUST NOT contain special characters**: Node IDs should be simple alphanumeric strings (e.g., \`A\`, \`B1\`, \`Node_1\`).
+    -   **Node IDs MUST be simple**: For flowcharts, node IDs must be simple alphanumeric strings (e.g., \`A\`, \`B1\`). Do not use the descriptive text as an ID.
         -   **Correct:** \`A --> B\`
-        -   **INCORRECT:** \`"Node A" --> "Node B"\` (Using full text as ID is wrong)
-    -   **Mindmap Format is DIFFERENT**: For mindmaps, you do not declare node IDs. The structure is defined by indentation.
+        -   **INCORRECT:** \`"Node A" --> "Node B"\`
+    -   **Mindmap Format is DIFFERENT**: For mindmaps, you do not declare node IDs or use brackets/quotes for text. The structure is defined by indentation.
         -   **Correct Mindmap Node:** \`  Node Text\`
         -   **Correct Mindmap Node with parens:** \`  Topic (with details)\`
-        -   **INCORRECT Mindmap Node:** \`  A["Node Text"]\` (This syntax is for flowcharts/graphs)
-4.  **Connect Nodes with Arrows ONLY**: For flowcharts and graphs, you MUST use arrows like \`-->\` to show relationships. You can add text to connectors like this: \`A-- "description" -->B\`.
+        -   **INCORRECT Mindmap Node:** \`  A["Node Text"]\` (This syntax is for flowcharts, do NOT use it for mindmaps)
+4.  **Connect Nodes with Arrows ONLY (for Flowcharts/Graphs)**: You MUST use arrows like \`-->\` to show relationships. You can add text to connectors like this: \`A-- "description" -->B\`.
     -   **ABSOLUTELY DO NOT USE** the \`:::\` syntax to connect nodes. This is only for styling classes and is not for linking.
-        -   **Correct Connection:** \`A --> B["Next Step"]\`
-        -   **INCORRECT Connection:** \`A:::B\` or \`A --- B\` without an arrow.
 5.  **Final Output**:
     -   The output must be ONLY the raw Mermaid syntax.
     -   Do NOT include any explanatory text, comments, or Markdown backticks like \`\`\`mermaid ... \`\`\`.
