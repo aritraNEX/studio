@@ -36,6 +36,8 @@ import { DiagramGeneratorTab } from "./diagram-generator-tab";
 import { NoteGeneratorTab } from "./note-generator-tab";
 import { ToneDetectionTab } from "./tone-detection-tab";
 import { VocabularyEnhancerTab } from "./vocabulary-enhancer-tab";
+import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -46,16 +48,13 @@ interface VesperAppProps {
   initialTopic?: string | null;
 }
 
-const mostUsedFeatures = [
+const allFeatures = [
     { value: 'paraphrase', icon: <Quote className="h-5 w-5" />, label: 'Paraphrase' },
     { value: 'summarize', icon: <BookText className="h-5 w-5" />, label: 'Summarize' },
     { value: 'grammar', icon: <SpellCheck className="h-5 w-5" />, label: 'Grammar' },
     { value: 'batch-summary', icon: <Rows3 className="h-5 w-5" />, label: 'Batch Summary' },
     { value: 'translate', icon: <Languages className="h-5 w-5" />, label: 'Translate' },
     { value: 'style', icon: <Palette className="h-5 w-5" />, label: 'Style' },
-];
-
-const highQualityFeatures = [
     { value: 'explainer', icon: <BrainCircuit className="h-5 w-5" />, label: 'Explainer' },
     { value: 'diagrams', icon: <Share2 className="h-5 w-5" />, label: 'Diagrams' },
     { value: 'assign-mentor', icon: <PenSquare className="h-5 w-5" />, label: 'Assign-mentor' },
@@ -75,31 +74,23 @@ const highQualityFeatures = [
 const workspaceFeature = { value: 'workspace', icon: <Wand2 className="h-5 w-5" />, label: 'Workspace' };
 
 export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProps) {
-  const [activeMainTab, setActiveMainTab] = useState("most-used");
-  const [activeSubTab, setActiveSubTab] = useState(initialTab || "paraphrase");
+  const [activeTab, setActiveTab] = useState(initialTab || "paraphrase");
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
 
   useEffect(() => {
     if (initialTab) {
-      if (mostUsedFeatures.some(f => f.value === initialTab)) {
-        setActiveMainTab("most-used");
-        setActiveSubTab(initialTab);
-      } else if (highQualityFeatures.some(f => f.value === initialTab)) {
-        setActiveMainTab("high-quality");
-        setActiveSubTab(initialTab);
-      }
+        setActiveTab(initialTab);
     }
   }, [initialTab]);
 
   const handleSendTo = (text: string, operation: Operation) => {
     if (operation === 'tts') {
         setWorkspaceText(text);
-        setActiveMainTab("high-quality");
-        setActiveSubTab("tts");
+        setActiveTab("tts");
     } else {
         setWorkspaceText(text);
         setWorkspaceOperation(operation);
-        setActiveSubTab("workspace"); // This will now work as workspace is a sub-tab
+        setActiveTab("workspace");
     }
   };
   
@@ -117,7 +108,6 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
       </TabsTrigger>
     );
   };
-
 
   return (
      <Card className="w-full max-w-6xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
@@ -146,106 +136,90 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
         </CardDescription>
       </CardHeader>
       <CardContent className="p-2 sm:p-8 pt-2">
-        <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="most-used">Most Used AI Tools</TabsTrigger>
-                <TabsTrigger value="high-quality">High Quality Tools</TabsTrigger>
-            </TabsList>
-            <div className="border-t-2 border-primary/20 mt-4 pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="md:col-span-1">
-                      <Tabs value={activeSubTab} onValueChange={setActiveSubTab} orientation="vertical" className="w-full">
-                          <TabsList className="grid w-full h-auto">
-                              {renderTabTrigger(workspaceFeature.value, workspaceFeature.icon, workspaceFeature.label)}
-                          </TabsList>
-                      </Tabs>
-                  </div>
-                  <div className="md:col-span-3">
-                    <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
-                      <TabsContent value={workspaceFeature.value} className="m-0">
-                          <WorkspaceTab />
-                      </TabsContent>
-                      <TabsContent value="paraphrase" className="m-0">
-                          <OperationTab operation="paraphrase" onSendTo={handleSendTo} projectId={projectId} />
-                      </TabsContent>
-                      <TabsContent value="summarize" className="m-0">
-                          <OperationTab operation="summarize" onSendTo={handleSendTo} projectId={projectId} />
-                      </TabsContent>
-                      <TabsContent value="grammar" className="m-0">
-                          <GrammarCheckTab />
-                      </TabsContent>
-                      <TabsContent value="batch-summary" className="m-0">
-                          <BatchSummaryTab />
-                      </TabsContent>
-                      <TabsContent value="translate" className="m-0">
-                          <OperationTab operation="translate" onSendTo={handleSendTo} projectId={projectId} />
-                      </TabsContent>
-                      <TabsContent value="style" className="m-0">
-                          <OperationTab operation="style" onSendTo={handleSendTo} projectId={projectId} />
-                      </TabsContent>
-                      <TabsContent value="explainer" className="m-0">
-                          <ConceptExplainerTab />
-                      </TabsContent>
-                      <TabsContent value="diagrams" className="m-0">
-                          <DiagramGeneratorTab />
-                      </TabsContent>
-                      <TabsContent value="assign-mentor" className="m-0">
-                          <AssignmentMakerTab />
-                      </TabsContent>
-                      <TabsContent value="note-mentor" className="m-0">
-                          <NoteGeneratorTab />
-                      </TabsContent>
-                      <TabsContent value="flashcards" className="m-0">
-                          <FlashcardGeneratorTab />
-                      </TabsContent>
-                      <TabsContent value="citations" className="m-0">
-                          <CitationGeneratorTab />
-                      </TabsContent>
-                      <TabsContent value="vocabulary" className="m-0">
-                          <VocabularyEnhancerTab />
-                      </TabsContent>
-                      <TabsContent value="tone" className="m-0">
-                          <ToneDetectionTab />
-                      </TabsContent>
-                      <TabsContent value="video-to-text" className="m-0">
-                          <TranscriptionTab />
-                      </TabsContent>
-                      <TabsContent value="research" className="m-0">
-                          <ResearchTab />
-                      </TabsContent>
-                      <TabsContent value="plagiarism" className="m-0">
-                          <PlagiarismTab />
-                      </TabsContent>
-                      <TabsContent value="tts" className="m-0">
-                          <TtsTab />
-                      </TabsContent>
-                      <TabsContent value="formula" className="m-0">
-                          <FormulaTab />
-                      </TabsContent>
-                      <TabsContent value="notepad" className="m-0">
-                          <NotepadTab />
-                      </TabsContent>
-                    </Tabs>
-                  </div>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
+            <div className="flex md:flex-col gap-2">
+                 <Button
+                    onClick={() => setActiveTab('workspace')}
+                    variant={activeTab === 'workspace' ? 'default' : 'outline'}
+                    className="w-full justify-start text-base py-6"
+                 >
+                    <Wand2 className="h-5 w-5 mr-3" />
+                    Workspace
+                 </Button>
             </div>
 
-            <TabsContent value="most-used">
-                <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full pt-4">
-                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 mx-auto h-auto p-1.5 flex-wrap">
-                        {mostUsedFeatures.map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
-                    </TabsList>
-                </Tabs>
-            </TabsContent>
-            
-            <TabsContent value="high-quality">
-                <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full pt-4">
-                    <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-8 mx-auto h-auto p-1.5 flex-wrap">
-                        {highQualityFeatures.map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
-                    </TabsList>
-                </Tabs>
-            </TabsContent>
-        </Tabs>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                 <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 mx-auto h-auto p-1.5 flex-wrap">
+                    {allFeatures.map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
+                 </TabsList>
+                 
+                <div className="mt-6">
+                    <TabsContent value="workspace" className="m-0">
+                        <WorkspaceTab />
+                    </TabsContent>
+                    <TabsContent value="paraphrase" className="m-0">
+                        <OperationTab operation="paraphrase" onSendTo={handleSendTo} projectId={projectId} />
+                    </TabsContent>
+                    <TabsContent value="summarize" className="m-0">
+                        <OperationTab operation="summarize" onSendTo={handleSendTo} projectId={projectId} />
+                    </TabsContent>
+                    <TabsContent value="grammar" className="m-0">
+                        <GrammarCheckTab />
+                    </TabsContent>
+                    <TabsContent value="batch-summary" className="m-0">
+                        <BatchSummaryTab />
+                    </TabsContent>
+                    <TabsContent value="translate" className="m-0">
+                        <OperationTab operation="translate" onSendTo={handleSendTo} projectId={projectId} />
+                    </TabsContent>
+                    <TabsContent value="style" className="m-0">
+                        <OperationTab operation="style" onSendTo={handleSendTo} projectId={projectId} />
+                    </TabsContent>
+                    <TabsContent value="explainer" className="m-0">
+                        <ConceptExplainerTab />
+                    </TabsContent>
+                    <TabsContent value="diagrams" className="m-0">
+                        <DiagramGeneratorTab />
+                    </TabsContent>
+                    <TabsContent value="assign-mentor" className="m-0">
+                        <AssignmentMakerTab />
+                    </TabsContent>
+                    <TabsContent value="note-mentor" className="m-0">
+                        <NoteGeneratorTab />
+                    </TabsContent>
+                    <TabsContent value="flashcards" className="m-0">
+                        <FlashcardGeneratorTab />
+                    </TabsContent>
+                    <TabsContent value="citations" className="m-0">
+                        <CitationGeneratorTab />
+                    </TabsContent>
+                    <TabsContent value="vocabulary" className="m-0">
+                        <VocabularyEnhancerTab />
+                    </TabsContent>
+                    <TabsContent value="tone" className="m-0">
+                        <ToneDetectionTab />
+                    </TabsContent>
+                    <TabsContent value="video-to-text" className="m-0">
+                        <TranscriptionTab />
+                    </TabsContent>
+                    <TabsContent value="research" className="m-0">
+                        <ResearchTab />
+                    </TabsContent>
+                    <TabsContent value="plagiarism" className="m-0">
+                        <PlagiarismTab />
+                    </TabsContent>
+                    <TabsContent value="tts" className="m-0">
+                        <TtsTab />
+                    </TabsContent>
+                    <TabsContent value="formula" className="m-0">
+                        <FormulaTab />
+                    </TabsContent>
+                    <TabsContent value="notepad" className="m-0">
+                        <NotepadTab />
+                    </TabsContent>
+                </div>
+            </Tabs>
+        </div>
       </CardContent>
     </Card>
   );
