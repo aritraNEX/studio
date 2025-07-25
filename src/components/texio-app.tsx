@@ -69,10 +69,10 @@ const highQualityFeatures = [
     { value: 'plagiarism', icon: <ShieldCheck className="h-5 w-5" />, label: 'Plagiarism' },
     { value: 'tts', icon: <AudioLines className="h-5 w-5" />, label: 'TTS' },
     { value: 'formula', icon: <FunctionSquare className="h-5 w-5" />, label: 'Formula' },
-    { value: 'workspace', icon: <Wand2 className="h-5 w-5" />, label: 'Workspace' },
     { value: 'notepad', icon: <Notebook className="h-5 w-5" />, label: 'Notepad' },
 ];
 
+const workspaceFeature = { value: 'workspace', icon: <Wand2 className="h-5 w-5" />, label: 'Workspace' };
 
 export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProps) {
   const [activeMainTab, setActiveMainTab] = useState("most-used");
@@ -99,8 +99,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
     } else {
         setWorkspaceText(text);
         setWorkspaceOperation(operation);
-        setActiveMainTab("high-quality");
-        setActiveSubTab("workspace");
+        setActiveSubTab("workspace"); // This will now work as workspace is a sub-tab
     }
   };
   
@@ -152,83 +151,98 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                 <TabsTrigger value="most-used">Most Used AI Tools</TabsTrigger>
                 <TabsTrigger value="high-quality">High Quality Tools</TabsTrigger>
             </TabsList>
+            <div className="border-t-2 border-primary/20 mt-4 pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="md:col-span-1">
+                      <Tabs value={activeSubTab} onValueChange={setActiveSubTab} orientation="vertical" className="w-full">
+                          <TabsList className="grid w-full h-auto">
+                              {renderTabTrigger(workspaceFeature.value, workspaceFeature.icon, workspaceFeature.label)}
+                          </TabsList>
+                      </Tabs>
+                  </div>
+                  <div className="md:col-span-3">
+                    <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
+                      <TabsContent value={workspaceFeature.value} className="m-0">
+                          <WorkspaceTab />
+                      </TabsContent>
+                      <TabsContent value="paraphrase" className="m-0">
+                          <OperationTab operation="paraphrase" onSendTo={handleSendTo} projectId={projectId} />
+                      </TabsContent>
+                      <TabsContent value="summarize" className="m-0">
+                          <OperationTab operation="summarize" onSendTo={handleSendTo} projectId={projectId} />
+                      </TabsContent>
+                      <TabsContent value="grammar" className="m-0">
+                          <GrammarCheckTab />
+                      </TabsContent>
+                      <TabsContent value="batch-summary" className="m-0">
+                          <BatchSummaryTab />
+                      </TabsContent>
+                      <TabsContent value="translate" className="m-0">
+                          <OperationTab operation="translate" onSendTo={handleSendTo} projectId={projectId} />
+                      </TabsContent>
+                      <TabsContent value="style" className="m-0">
+                          <OperationTab operation="style" onSendTo={handleSendTo} projectId={projectId} />
+                      </TabsContent>
+                      <TabsContent value="explainer" className="m-0">
+                          <ConceptExplainerTab />
+                      </TabsContent>
+                      <TabsContent value="diagrams" className="m-0">
+                          <DiagramGeneratorTab />
+                      </TabsContent>
+                      <TabsContent value="assign-mentor" className="m-0">
+                          <AssignmentMakerTab />
+                      </TabsContent>
+                      <TabsContent value="note-mentor" className="m-0">
+                          <NoteGeneratorTab />
+                      </TabsContent>
+                      <TabsContent value="flashcards" className="m-0">
+                          <FlashcardGeneratorTab />
+                      </TabsContent>
+                      <TabsContent value="citations" className="m-0">
+                          <CitationGeneratorTab />
+                      </TabsContent>
+                      <TabsContent value="vocabulary" className="m-0">
+                          <VocabularyEnhancerTab />
+                      </TabsContent>
+                      <TabsContent value="tone" className="m-0">
+                          <ToneDetectionTab />
+                      </TabsContent>
+                      <TabsContent value="video-to-text" className="m-0">
+                          <TranscriptionTab />
+                      </TabsContent>
+                      <TabsContent value="research" className="m-0">
+                          <ResearchTab />
+                      </TabsContent>
+                      <TabsContent value="plagiarism" className="m-0">
+                          <PlagiarismTab />
+                      </TabsContent>
+                      <TabsContent value="tts" className="m-0">
+                          <TtsTab />
+                      </TabsContent>
+                      <TabsContent value="formula" className="m-0">
+                          <FormulaTab />
+                      </TabsContent>
+                      <TabsContent value="notepad" className="m-0">
+                          <NotepadTab />
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+              </div>
+            </div>
 
             <TabsContent value="most-used">
                 <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full pt-4">
                     <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 mx-auto h-auto p-1.5 flex-wrap">
                         {mostUsedFeatures.map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
                     </TabsList>
-                    <TabsContent value="paraphrase" className="pt-6">
-                        <OperationTab operation="paraphrase" onSendTo={handleSendTo} projectId={projectId} />
-                    </TabsContent>
-                    <TabsContent value="summarize" className="pt-6">
-                        <OperationTab operation="summarize" onSendTo={handleSendTo} projectId={projectId} />
-                    </TabsContent>
-                    <TabsContent value="grammar" className="pt-6">
-                        <GrammarCheckTab />
-                    </TabsContent>
-                    <TabsContent value="batch-summary" className="pt-6">
-                        <BatchSummaryTab />
-                    </TabsContent>
-                    <TabsContent value="translate" className="pt-6">
-                        <OperationTab operation="translate" onSendTo={handleSendTo} projectId={projectId} />
-                    </TabsContent>
-                    <TabsContent value="style" className="pt-6">
-                        <OperationTab operation="style" onSendTo={handleSendTo} projectId={projectId} />
-                    </TabsContent>
                 </Tabs>
             </TabsContent>
             
             <TabsContent value="high-quality">
                 <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full pt-4">
-                    <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10 xl:grid-cols-14 mx-auto h-auto p-1.5 flex-wrap">
+                    <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-8 mx-auto h-auto p-1.5 flex-wrap">
                         {highQualityFeatures.map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
                     </TabsList>
-                    <TabsContent value="explainer" className="pt-6">
-                        <ConceptExplainerTab />
-                    </TabsContent>
-                    <TabsContent value="diagrams" className="pt-6">
-                        <DiagramGeneratorTab />
-                    </TabsContent>
-                    <TabsContent value="assign-mentor" className="pt-6">
-                        <AssignmentMakerTab />
-                    </TabsContent>
-                    <TabsContent value="note-mentor" className="pt-6">
-                        <NoteGeneratorTab />
-                    </TabsContent>
-                    <TabsContent value="flashcards" className="pt-6">
-                        <FlashcardGeneratorTab />
-                    </TabsContent>
-                    <TabsContent value="citations" className="pt-6">
-                        <CitationGeneratorTab />
-                    </TabsContent>
-                    <TabsContent value="vocabulary" className="pt-6">
-                        <VocabularyEnhancerTab />
-                    </TabsContent>
-                    <TabsContent value="tone" className="pt-6">
-                        <ToneDetectionTab />
-                    </TabsContent>
-                    <TabsContent value="video-to-text" className="pt-6">
-                        <TranscriptionTab />
-                    </TabsContent>
-                    <TabsContent value="research" className="pt-6">
-                        <ResearchTab />
-                    </TabsContent>
-                    <TabsContent value="plagiarism" className="pt-6">
-                        <PlagiarismTab />
-                    </TabsContent>
-                    <TabsContent value="tts" className="pt-6">
-                        <TtsTab />
-                    </TabsContent>
-                    <TabsContent value="formula" className="pt-6">
-                        <FormulaTab />
-                    </TabsContent>
-                    <TabsContent value="workspace" className="pt-6">
-                        <WorkspaceTab />
-                    </TabsContent>
-                    <TabsContent value="notepad" className="pt-6">
-                        <NotepadTab />
-                    </TabsContent>
                 </Tabs>
             </TabsContent>
         </Tabs>

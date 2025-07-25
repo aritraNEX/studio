@@ -7,7 +7,7 @@ import { useWorkspace } from "@/contexts/workspace-context";
 import { OperationTab } from "./operation-tab";
 import { Wand2, Share2, Loader2, Copy } from "lucide-react";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +17,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 
-type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
+type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
 
 export function WorkspaceTab() {
   const { workspaceText, setWorkspaceText, workspaceOperation, setWorkspaceOperation } = useWorkspace();
@@ -119,7 +119,7 @@ export function WorkspaceTab() {
             <Label htmlFor="share-link">Shareable Link</Label>
             <div className="flex items-center gap-2">
               <Input id="share-link" value={sharedLink} readOnly />
-              <Button onClick={handleCopyToClipboard} size="icon">
+              <Button onClick={handleCopyToClipboard} size="icon" aria-label="Copy link">
                 <Copy className="h-4 w-4" />
               </Button>
             </div>

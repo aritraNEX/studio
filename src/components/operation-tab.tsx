@@ -49,9 +49,9 @@ interface OperationTabProps {
 
 
 export function OperationTab({ operation, onSendTo, initialText, projectId }: OperationTabProps) {
-  const [fileDataUri, setFileDataUri] = useState<string | null>(null);
-  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
-  const [generatedText, setGeneratedText] = useState<string>("");
+  const [fileDataUri, setFileDataUri] = useState<string | null>(initialText && initialText.startsWith('data:') ? initialText : null);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(initialText && initialText.startsWith('data:image') ? initialText : null);
+  const [generatedText, setGeneratedText] = useState<string>(initialText && !initialText.startsWith('data:') ? initialText : "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [targetLanguage, setTargetLanguage] = useState<string>('Spanish');

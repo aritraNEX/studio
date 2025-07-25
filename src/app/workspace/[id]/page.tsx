@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 
-type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts';
+type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
 
 interface WorkspaceData {
   id: string;

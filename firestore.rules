@@ -4,21 +4,24 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users: Can read their own user data.
+    // Users can only manage their own user document
     match /users/{userId} {
-      allow read, update: if request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Projects: Users can only CUD their own projects.
+    // Users can only manage their own projects
     match /projects/{projectId} {
-      allow read, create, update, delete: if request.auth.uid == request.resource.data.userId;
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
 
-    // Workspaces: Can be read by anyone (for sharing), but only updated/created by the owner.
+    // Workspaces can be read by anyone, but only created and updated by the owner.
+    // Deletion is disallowed to prevent abuse of shared links.
     match /workspaces/{workspaceId} {
-      allow read: if true;
-      allow create, update: if request.auth.uid == request.resource.data.ownerId;
-      allow delete: if false; // Disallow deletion for now to prevent abuse
+        allow read: if true;
+        allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+        allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
+        allow delete: if false;
     }
   }
 }
