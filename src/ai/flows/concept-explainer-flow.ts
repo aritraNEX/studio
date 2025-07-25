@@ -65,10 +65,15 @@ const conceptExplainerFlow = ai.defineFlow(
     if (!input.topic.trim()) {
         throw new Error('Topic is empty. Please provide a topic to explain.');
     }
-    const {output} = await conceptExplainerPrompt(input);
-    if (!output) {
-        throw new Error("The model did not return any output.");
+    try {
+        const {output} = await conceptExplainerPrompt(input);
+        if (!output) {
+            throw new Error("The model did not return any output.");
+        }
+        return output;
+    } catch (e: any) {
+        console.error("Error in conceptExplainerFlow: ", e);
+        throw new Error('The AI model is currently busy. Please try again.');
     }
-    return output;
   }
 );

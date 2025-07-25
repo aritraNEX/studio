@@ -67,32 +67,38 @@ const textToSpeechFlow = ai.defineFlow(
     if (!text.trim()) {
         throw new Error('Input text was empty.');
     }
-    const { media } = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash-preview-tts'),
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: voice as any },
+    
+    try {
+        const { media } = await ai.generate({
+          model: googleAI.model('gemini-2.5-flash-preview-tts'),
+          config: {
+            responseModalities: ['AUDIO'],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: voice as any },
+              },
+            },
           },
-        },
-      },
-      prompt: text,
-    });
+          prompt: text,
+        });
 
-    if (!media) {
-      throw new Error('no media returned');
+        if (!media) {
+          throw new Error('no media returned');
+        }
+        
+        const audioBuffer = Buffer.from(
+          media.url.substring(media.url.indexOf(',') + 1),
+          'base64'
+        );
+        
+        const wavBase64 = await toWav(audioBuffer);
+
+        return {
+          audioDataUri: 'data:audio/wav;base64,' + wavBase64,
+        };
+    } catch (e: any) {
+        console.error("Error in textToSpeechFlow: ", e);
+        throw new Error('The AI model is currently busy. Please try again.');
     }
-    
-    const audioBuffer = Buffer.from(
-      media.url.substring(media.url.indexOf(',') + 1),
-      'base64'
-    );
-    
-    const wavBase64 = await toWav(audioBuffer);
-
-    return {
-      audioDataUri: 'data:audio/wav;base64,' + wavBase64,
-    };
   }
 );

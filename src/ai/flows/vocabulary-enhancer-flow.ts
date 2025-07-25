@@ -74,12 +74,17 @@ const vocabularyEnhancerFlow = ai.defineFlow(
     if (!input.text.trim()) {
       return { suggestions: [] };
     }
-    const {output} = await vocabularyEnhancerPrompt(input);
-    if (!output || !output.suggestions) {
-      return { suggestions: [] };
+    try {
+        const {output} = await vocabularyEnhancerPrompt(input);
+        if (!output || !output.suggestions) {
+          return { suggestions: [] };
+        }
+        // Sort by start index to ensure proper processing order on the client
+        output.suggestions.sort((a, b) => a.startIndex - b.startIndex);
+        return output;
+    } catch (e: any) {
+        console.error("Error in vocabularyEnhancerFlow: ", e);
+        throw new Error('The AI model is currently busy. Please try again.');
     }
-    // Sort by start index to ensure proper processing order on the client
-    output.suggestions.sort((a, b) => a.startIndex - b.startIndex);
-    return output;
   }
 );

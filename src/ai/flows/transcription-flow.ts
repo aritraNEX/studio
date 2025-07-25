@@ -80,20 +80,25 @@ const transcriptionFlow = ai.defineFlow(
     outputSchema: GenerateTranscriptionOutputSchema,
   },
   async (input) => {
-    // Run language detection first
-    const languageResult = await languageDetectionPrompt({ videoDataUri: input.videoDataUri });
-    const detectedLanguage = languageResult.output?.detectedLanguage;
-    if (!detectedLanguage) {
-      throw new Error('The model did not detect a language.');
+    try {
+        // Run language detection first
+        const languageResult = await languageDetectionPrompt({ videoDataUri: input.videoDataUri });
+        const detectedLanguage = languageResult.output?.detectedLanguage;
+        if (!detectedLanguage) {
+          throw new Error('The model did not detect a language.');
+        }
+        
+        // Then run transcription, potentially with translation
+        const transcriptionResult = await transcriptionPrompt(input);
+        const vtt = transcriptionResult.output?.vtt;
+        if (!vtt) {
+          throw new Error('The model did not return any VTT transcription.');
+        }
+        
+        return { vtt, detectedLanguage };
+    } catch (e: any) {
+        console.error("Error in transcriptionFlow: ", e);
+        throw new Error('The AI model is currently busy. Please try again.');
     }
-    
-    // Then run transcription, potentially with translation
-    const transcriptionResult = await transcriptionPrompt(input);
-    const vtt = transcriptionResult.output?.vtt;
-    if (!vtt) {
-      throw new Error('The model did not return any VTT transcription.');
-    }
-    
-    return { vtt, detectedLanguage };
   }
 );

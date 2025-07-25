@@ -66,10 +66,15 @@ const researchAssistantFlow = ai.defineFlow(
             citations: [],
         };
     }
-    const {output} = await researchAssistantPrompt(input);
-    if (!output) {
-        throw new Error("The model did not return any output.");
+    try {
+        const {output} = await researchAssistantPrompt(input);
+        if (!output) {
+            throw new Error("The model did not return any output.");
+        }
+        return output;
+    } catch (e: any) {
+        console.error("Error in researchAssistantFlow: ", e);
+        throw new Error('The AI model is currently busy. Please try again.');
     }
-    return output;
   }
 );

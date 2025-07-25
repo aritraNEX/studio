@@ -74,10 +74,15 @@ const plagiarismCheckFlow = ai.defineFlow(
             report: 'Input text was empty. Please provide text to check.',
         };
     }
-    const {output} = await plagiarismCheckPrompt(input);
-    if (!output) {
-        throw new Error("The model did not return any output.");
+    try {
+        const {output} = await plagiarismCheckPrompt(input);
+        if (!output) {
+            throw new Error("The model did not return any output.");
+        }
+        return output;
+    } catch (e: any) {
+        console.error("Error in plagiarismCheckFlow: ", e);
+        throw new Error('The AI model is currently busy. Please try again.');
     }
-    return output;
   }
 );

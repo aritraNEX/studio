@@ -65,12 +65,17 @@ const toneDetectionFlow = ai.defineFlow(
     if (!input.text.trim()) {
         return { tones: [] };
     }
-    const {output} = await toneDetectionPrompt(input);
-    if (!output || !output.tones) {
-        return { tones: [] };
+    try {
+        const {output} = await toneDetectionPrompt(input);
+        if (!output || !output.tones) {
+            return { tones: [] };
+        }
+        // Sort tones by score in descending order
+        output.tones.sort((a, b) => b.score - a.score);
+        return output;
+    } catch (e: any) {
+        console.error("Error in toneDetectionFlow: ", e);
+        throw new Error('The AI model is currently busy. Please try again.');
     }
-    // Sort tones by score in descending order
-    output.tones.sort((a, b) => b.score - a.score);
-    return output;
   }
 );

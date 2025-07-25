@@ -100,12 +100,17 @@ const diagramGeneratorFlow = ai.defineFlow(
         throw new Error('Topic is empty. Please provide a topic for the diagram.');
     }
     
-    const {output} = await diagramGeneratorPrompt(input);
-    
-    if (!output || !output.mermaidSyntax) {
-        throw new Error("The model did not return any Mermaid syntax.");
-    }
+    try {
+        const {output} = await diagramGeneratorPrompt(input);
+        
+        if (!output || !output.mermaidSyntax) {
+            throw new Error("The model did not return any Mermaid syntax.");
+        }
 
-    return output;
+        return output;
+    } catch (e: any) {
+        console.error("Error in diagramGeneratorFlow: ", e);
+        throw new Error('The AI model is currently busy. Please try again.');
+    }
   }
 );

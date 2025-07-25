@@ -56,10 +56,15 @@ const citationGeneratorFlow = ai.defineFlow(
     if (!input.text.trim()) {
         return { citations: [] };
     }
-    const {output} = await citationGeneratorPrompt(input);
-    if (!output) {
-        throw new Error("The model did not return any output.");
+    try {
+        const {output} = await citationGeneratorPrompt(input);
+        if (!output) {
+            throw new Error("The model did not return any output.");
+        }
+        return output;
+    } catch (e: any) {
+        console.error("Error in citationGeneratorFlow: ", e);
+        throw new Error('The AI model is currently busy. Please try again.');
     }
-    return output;
   }
 );
