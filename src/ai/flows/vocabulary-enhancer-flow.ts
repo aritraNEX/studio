@@ -10,13 +10,21 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { processImageText } from './paraphrase-image-text';
 
-const VocabularyEnhancerInputSchema = z.object({
-  text: z.string().describe('The text to be analyzed for vocabulary enhancement.'),
+const VocabularyEnhancerInputObject = z.object({
+  text: z.string().describe('The text to be analyzed for vocabulary enhancement.').optional(),
+  fileUrl: z.string().describe('A file to be processed, as a data URI.').optional(),
 });
+
+const VocabularyEnhancerInputSchema = VocabularyEnhancerInputObject.refine(data => data.fileUrl || data.text, {
+    message: "Either fileUrl or text must be provided.",
+});
+
 export type VocabularyEnhancerInput = z.infer<typeof VocabularyEnhancerInputSchema>;
 
 const VocabularyEnhancerOutputSchema = z.object({
+  enhancedText: z.string().describe('The full original text provided by the user for context.'),
   suggestions: z
     .array(
       z.object({
@@ -44,10 +52,17 @@ export async function vocabularyEnhancer(
   return vocabularyEnhancerFlow(input);
 }
 
+const PromptInputSchema = z.object({
+    text: z.string().describe('The text to be analyzed for vocabulary enhancement.'),
+});
+
+const PromptOutputSchema = VocabularyEnhancerOutputSchema.omit({ enhancedText: true });
+
+
 const vocabularyEnhancerPrompt = ai.definePrompt({
   name: 'vocabularyEnhancerPrompt',
-  input: {schema: VocabularyEnhancerInputSchema},
-  output: {schema: VocabularyEnhancerOutputSchema},
+  input: {schema: PromptInputSchema},
+  output: {schema: PromptOutputSchema},
   prompt: `You are an expert editor and writing coach. Your task is to analyze the provided text and suggest vocabulary enhancements to improve its quality, clarity, and impact.
 
 Analyze the following text:
@@ -71,17 +86,32 @@ const vocabularyEnhancerFlow = ai.defineFlow(
     outputSchema: VocabularyEnhancerOutputSchema,
   },
   async (input) => {
-    if (!input.text.trim()) {
-      return { suggestions: [] };
+    let textToProcess = input.text;
+
+    if (input.fileUrl) {
+      const extractionResult = await processImageText({
+        operation: 'style',
+        targetStyle: 'original',
+        fileUrl: input.fileUrl,
+      });
+      textToProcess = extractionResult.processedText;
     }
+    
+    if (!textToProcess || !textToProcess.trim()) {
+      return { enhancedText: "", suggestions: [] };
+    }
+
     try {
-        const {output} = await vocabularyEnhancerPrompt(input);
+        const {output} = await vocabularyEnhancerPrompt({ text: textToProcess });
         if (!output || !output.suggestions) {
-          return { suggestions: [] };
+          return { enhancedText: textToProcess, suggestions: [] };
         }
         // Sort by start index to ensure proper processing order on the client
         output.suggestions.sort((a, b) => a.startIndex - b.startIndex);
-        return output;
+        return {
+          enhancedText: textToProcess,
+          suggestions: output.suggestions,
+        };
     } catch (e: any) {
         console.error("Error in vocabularyEnhancerFlow: ", e);
         throw new Error('The AI model is currently busy. Please try again.');

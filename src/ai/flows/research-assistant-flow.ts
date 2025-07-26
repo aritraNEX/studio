@@ -10,10 +10,17 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { processImageText } from './paraphrase-image-text';
 
-const ResearchAssistantInputSchema = z.object({
-  text: z.string().describe('The text containing claims to be fact-checked and cited.'),
+const ResearchAssistantInputObject = z.object({
+  text: z.string().describe('The text containing claims to be fact-checked and cited.').optional(),
+  fileUrl: z.string().describe('A file to be processed, as a data URI.').optional(),
 });
+
+const ResearchAssistantInputSchema = ResearchAssistantInputObject.refine(data => data.fileUrl || data.text, {
+    message: "Either fileUrl or text must be provided.",
+});
+
 export type ResearchAssistantInput = z.infer<typeof ResearchAssistantInputSchema>;
 
 const ResearchAssistantOutputSchema = z.object({
@@ -36,9 +43,13 @@ export async function researchAssistant(
   return researchAssistantFlow(input);
 }
 
+const PromptInputSchema = z.object({
+    text: z.string().describe('The text containing claims to be fact-checked and cited.'),
+});
+
 const researchAssistantPrompt = ai.definePrompt({
   name: 'researchAssistantPrompt',
-  input: {schema: ResearchAssistantInputSchema},
+  input: {schema: PromptInputSchema},
   output: {schema: ResearchAssistantOutputSchema},
   prompt: `You are a meticulous research assistant. Your task is to analyze the provided text, identify all factual claims, and verify their accuracy based on your extensive training data.
 
@@ -60,14 +71,26 @@ const researchAssistantFlow = ai.defineFlow(
     outputSchema: ResearchAssistantOutputSchema,
   },
   async (input) => {
-    if (!input.text.trim()) {
+    let textToProcess = input.text;
+
+    if (input.fileUrl) {
+      const extractionResult = await processImageText({
+        operation: 'style',
+        targetStyle: 'original',
+        fileUrl: input.fileUrl,
+      });
+      textToProcess = extractionResult.processedText;
+    }
+
+    if (!textToProcess || !textToProcess.trim()) {
         return {
             report: 'Input text was empty. Please provide text to analyze.',
             citations: [],
         };
     }
+    
     try {
-        const {output} = await researchAssistantPrompt(input);
+        const {output} = await researchAssistantPrompt({ text: textToProcess });
         if (!output) {
             throw new Error("The model did not return any output.");
         }

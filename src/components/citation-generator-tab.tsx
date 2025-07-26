@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
-import { Loader2, Sparkles, Copy, BookA, Download } from "lucide-react";
+import { useState, useTransition, useRef } from "react";
+import { Loader2, Sparkles, Copy, BookA, Download, Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,22 +13,79 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import * as pdfjsLib from "pdfjs-dist";
+import mammoth from "mammoth";
 
 type CitationStyle = 'APA' | 'MLA' | 'Chicago';
 
+const fileToDataUri = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+};
+
 export function CitationGeneratorTab() {
   const [inputText, setInputText] = useState<string>("");
+  const [fileDataUri, setFileDataUri] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [citationStyle, setCitationStyle] = useState<CitationStyle>("APA");
   const [result, setResult] = useState<CitationGeneratorOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    setInputText("");
+    setFileDataUri(null);
+    setFileName(null);
+
+    const dataUri = await fileToDataUri(file);
+    setFileDataUri(dataUri);
+    setFileName(file.name);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+    if (event.target) {
+      event.target.value = "";
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
 
   const handleGenerate = () => {
-    if (!inputText.trim()) {
+    if (!inputText.trim() && !fileDataUri) {
       toast({
-        title: "Text is empty",
-        description: "Please enter text or a topic to generate citations for.",
+        title: "Input is empty",
+        description: "Please enter text or upload a file to generate citations for.",
         variant: "destructive",
       });
       return;
@@ -39,7 +96,11 @@ export function CitationGeneratorTab() {
 
     startTransition(async () => {
       try {
-        const generationResult = await citationGenerator({ text: inputText, style: citationStyle });
+        const generationResult = await citationGenerator({
+          text: inputText,
+          fileUrl: fileDataUri || undefined,
+          style: citationStyle
+        });
         if (generationResult && generationResult.citations.length > 0) {
           setResult(generationResult);
         } else {
@@ -141,17 +202,49 @@ export function CitationGeneratorTab() {
     <div className="flex flex-col gap-8">
       <div className="grid md:grid-cols-2 gap-8 items-start">
         <div className="flex flex-col gap-4">
-          <Label htmlFor="citation-input" className="font-semibold text-md">
-            Enter Text or Topic
-          </Label>
-          <Textarea
-            id="citation-input"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder="e.g., The history of artificial intelligence, or paste a paragraph here..."
-            className="h-96 resize-y bg-background focus-visible:ring-accent"
-            disabled={isPending}
-          />
+            <Label className="font-semibold text-md">Input</Label>
+            <div
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onDragLeave={handleDragLeave}
+                className={cn(
+                    "flex flex-col items-center justify-center w-full p-4 border-2 border-dashed rounded-xl transition-all duration-300",
+                    isDragging 
+                        ? "border-primary bg-primary/20"
+                        : "border-primary/20 hover:border-primary bg-primary/10",
+                    fileName ? "border-solid border-primary/50" : ""
+                )}
+            >
+                <div className="flex flex-col items-center justify-center text-center p-4">
+                    <Upload className="w-10 h-10 mb-3 text-muted-foreground transition-transform duration-300 group-hover:scale-110 group-hover:text-primary" />
+                    <p className="mb-2 text-sm text-muted-foreground">
+                        <span className="font-semibold text-primary cursor-pointer" onClick={() => fileInputRef.current?.click()}>Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-muted-foreground">PDF, DOCX, TXT files</p>
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="sr-only" accept=".pdf,.docx,.txt" />
+                </div>
+                {fileName && (
+                    <div className="flex items-center gap-2 text-sm font-medium bg-muted p-2 rounded-md">
+                        <FileText className="h-4 w-4" />
+                        <span className="truncate">{fileName}</span>
+                    </div>
+                )}
+            </div>
+
+            <div className="relative flex items-center justify-center my-2">
+                <div className="flex-grow border-t border-muted-foreground/20"></div>
+                <span className="flex-shrink mx-4 text-xs uppercase text-muted-foreground">Or</span>
+                <div className="flex-grow border-t border-muted-foreground/20"></div>
+            </div>
+
+            <Textarea
+                id="citation-input"
+                value={inputText}
+                onChange={(e) => { setInputText(e.target.value); setFileDataUri(null); setFileName(null); }}
+                placeholder="e.g., The history of artificial intelligence, or paste a paragraph here..."
+                className="h-60 resize-y bg-background focus-visible:ring-accent"
+                disabled={isPending || !!fileDataUri}
+            />
         </div>
         <div className="flex flex-col gap-4">
           <Label className="font-semibold text-md">Generated Citations</Label>
@@ -226,7 +319,7 @@ export function CitationGeneratorTab() {
             </div>
             <Button
                 onClick={handleGenerate}
-                disabled={!inputText.trim() || isPending}
+                disabled={(!inputText.trim() && !fileDataUri) || isPending}
                 size="lg"
                 className={cn(
                   "w-full sm:w-auto text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95",

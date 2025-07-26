@@ -10,10 +10,17 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { processImageText } from './paraphrase-image-text';
 
-const FlashcardGeneratorInputSchema = z.object({
-  text: z.string().describe('The source text from which to generate flashcards.'),
+const FlashcardGeneratorInputObject = z.object({
+  text: z.string().describe('The source text from which to generate flashcards.').optional(),
+  fileUrl: z.string().describe('A file to be processed, as a data URI.').optional(),
 });
+
+const FlashcardGeneratorInputSchema = FlashcardGeneratorInputObject.refine(data => data.fileUrl || data.text, {
+    message: "Either fileUrl or text must be provided.",
+});
+
 export type FlashcardGeneratorInput = z.infer<typeof FlashcardGeneratorInputSchema>;
 
 const FlashcardGeneratorOutputSchema = z.object({
@@ -34,9 +41,13 @@ export async function flashcardGenerator(
   return flashcardGeneratorFlow(input);
 }
 
+const PromptInputSchema = z.object({
+    text: z.string().describe('The source text from which to generate flashcards.'),
+});
+
 const flashcardGeneratorPrompt = ai.definePrompt({
   name: 'flashcardGeneratorPrompt',
-  input: {schema: FlashcardGeneratorInputSchema},
+  input: {schema: PromptInputSchema},
   output: {schema: FlashcardGeneratorOutputSchema},
   prompt: `You are an expert at creating study materials. Your task is to analyze the following text and generate a set of flashcards for studying.
 
@@ -59,11 +70,23 @@ const flashcardGeneratorFlow = ai.defineFlow(
     outputSchema: FlashcardGeneratorOutputSchema,
   },
   async (input) => {
-    if (!input.text.trim()) {
-        return { flashcards: [] };
+    let textToProcess = input.text;
+
+    if (input.fileUrl) {
+      const extractionResult = await processImageText({
+        operation: 'style',
+        targetStyle: 'original',
+        fileUrl: input.fileUrl,
+      });
+      textToProcess = extractionResult.processedText;
     }
+
+    if (!textToProcess || !textToProcess.trim()) {
+      return { flashcards: [] };
+    }
+    
     try {
-        const {output} = await flashcardGeneratorPrompt(input);
+        const {output} = await flashcardGeneratorPrompt({ text: textToProcess });
         if (!output) {
             throw new Error("The model did not return any output.");
         }

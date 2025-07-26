@@ -10,10 +10,17 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { processImageText } from './paraphrase-image-text';
 
-const ToneDetectionInputSchema = z.object({
-  text: z.string().describe('The text to be analyzed for tone.'),
+const ToneDetectionInputObject = z.object({
+  text: z.string().describe('The text to be analyzed for tone.').optional(),
+  fileUrl: z.string().describe('A file to be processed, as a data URI.').optional(),
 });
+
+const ToneDetectionInputSchema = ToneDetectionInputObject.refine(data => data.fileUrl || data.text, {
+    message: "Either fileUrl or text must be provided.",
+});
+
 export type ToneDetectionInput = z.infer<typeof ToneDetectionInputSchema>;
 
 const ToneDetectionOutputSchema = z.object({
@@ -37,9 +44,13 @@ export async function toneDetection(
   return toneDetectionFlow(input);
 }
 
+const PromptInputSchema = z.object({
+    text: z.string().describe('The text to be analyzed for tone.'),
+});
+
 const toneDetectionPrompt = ai.definePrompt({
   name: 'toneDetectionPrompt',
-  input: {schema: ToneDetectionInputSchema},
+  input: {schema: PromptInputSchema},
   output: {schema: ToneDetectionOutputSchema},
   prompt: `You are an expert in communication and linguistic analysis. Your task is to analyze the provided text and identify its primary tones.
 
@@ -62,11 +73,23 @@ const toneDetectionFlow = ai.defineFlow(
     outputSchema: ToneDetectionOutputSchema,
   },
   async (input) => {
-    if (!input.text.trim()) {
-        return { tones: [] };
+    let textToProcess = input.text;
+
+    if (input.fileUrl) {
+      const extractionResult = await processImageText({
+        operation: 'style',
+        targetStyle: 'original',
+        fileUrl: input.fileUrl,
+      });
+      textToProcess = extractionResult.processedText;
     }
+
+    if (!textToProcess || !textToProcess.trim()) {
+      return { tones: [] };
+    }
+    
     try {
-        const {output} = await toneDetectionPrompt(input);
+        const {output} = await toneDetectionPrompt({ text: textToProcess });
         if (!output || !output.tones) {
             return { tones: [] };
         }

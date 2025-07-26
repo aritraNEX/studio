@@ -10,11 +10,18 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { processImageText } from './paraphrase-image-text';
 
-const CitationGeneratorInputSchema = z.object({
-  text: z.string().describe('The text or topic for which to generate citations.'),
+const CitationGeneratorInputObject = z.object({
+  text: z.string().describe('The text or topic for which to generate citations.').optional(),
+  fileUrl: z.string().describe('A file to be processed, as a data URI.').optional(),
   style: z.enum(['APA', 'MLA', 'Chicago']).describe('The citation style to use.'),
 });
+
+const CitationGeneratorInputSchema = CitationGeneratorInputObject.refine(data => data.fileUrl || data.text, {
+    message: "Either fileUrl or text must be provided.",
+});
+
 export type CitationGeneratorInput = z.infer<typeof CitationGeneratorInputSchema>;
 
 const CitationGeneratorOutputSchema = z.object({
@@ -30,9 +37,14 @@ export async function citationGenerator(
   return citationGeneratorFlow(input);
 }
 
+const PromptInputSchema = z.object({
+    text: z.string().describe('The text or topic for which to generate citations.'),
+    style: z.enum(['APA', 'MLA', 'Chicago']).describe('The citation style to use.'),
+});
+
 const citationGeneratorPrompt = ai.definePrompt({
   name: 'citationGeneratorPrompt',
-  input: {schema: CitationGeneratorInputSchema},
+  input: {schema: PromptInputSchema},
   output: {schema: CitationGeneratorOutputSchema},
   prompt: `You are an expert academic librarian specializing in generating accurate citations. Your task is to analyze the provided text or topic and generate a list of citations in the specified format.
 
@@ -53,18 +65,33 @@ const citationGeneratorFlow = ai.defineFlow(
     outputSchema: CitationGeneratorOutputSchema,
   },
   async (input) => {
-    if (!input.text.trim()) {
-        return { citations: [] };
+    let textToProcess = input.text;
+
+    if (input.fileUrl) {
+      const extractionResult = await processImageText({
+        operation: 'style',
+        targetStyle: 'original',
+        fileUrl: input.fileUrl,
+      });
+      textToProcess = extractionResult.processedText;
     }
+
+    if (!textToProcess || !textToProcess.trim()) {
+      return { citations: [] };
+    }
+
     try {
-        const {output} = await citationGeneratorPrompt(input);
-        if (!output) {
-            throw new Error("The model did not return any output.");
-        }
-        return output;
+      const {output} = await citationGeneratorPrompt({
+        text: textToProcess,
+        style: input.style,
+      });
+      if (!output) {
+        throw new Error("The model did not return any output.");
+      }
+      return output;
     } catch (e: any) {
-        console.error("Error in citationGeneratorFlow: ", e);
-        throw new Error('The AI model is currently busy. Please try again.');
+      console.error("Error in citationGeneratorFlow: ", e);
+      throw new Error('The AI model is currently busy. Please try again.');
     }
   }
 );

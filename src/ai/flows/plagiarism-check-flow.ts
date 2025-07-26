@@ -10,10 +10,17 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { processImageText } from './paraphrase-image-text';
 
-const PlagiarismCheckInputSchema = z.object({
-  text: z.string().describe('The text to be checked for plagiarism.'),
+const PlagiarismCheckInputObject = z.object({
+  text: z.string().describe('The text to be checked for plagiarism.').optional(),
+  fileUrl: z.string().describe('A file to be processed, as a data URI.').optional(),
 });
+
+const PlagiarismCheckInputSchema = PlagiarismCheckInputObject.refine(data => data.fileUrl || data.text, {
+    message: "Either fileUrl or text must be provided.",
+});
+
 export type PlagiarismCheckInput = z.infer<typeof PlagiarismCheckInputSchema>;
 
 const PlagiarismCheckOutputSchema = z.object({
@@ -43,9 +50,13 @@ export async function plagiarismCheck(
   return plagiarismCheckFlow(input);
 }
 
+const PromptInputSchema = z.object({
+    text: z.string().describe('The text to be checked for plagiarism.'),
+});
+
 const plagiarismCheckPrompt = ai.definePrompt({
   name: 'plagiarismCheckPrompt',
-  input: {schema: PlagiarismCheckInputSchema},
+  input: {schema: PromptInputSchema},
   output: {schema: PlagiarismCheckOutputSchema},
   prompt: `You are a highly skilled plagiarism detection expert. Your task is to analyze the following text and assess the likelihood that it contains plagiarized content from well-known sources like books, academic papers, news articles, and famous websites.
 
@@ -67,15 +78,27 @@ const plagiarismCheckFlow = ai.defineFlow(
     outputSchema: PlagiarismCheckOutputSchema,
   },
   async (input) => {
-    if (!input.text.trim()) {
+    let textToProcess = input.text;
+
+    if (input.fileUrl) {
+      const extractionResult = await processImageText({
+        operation: 'style',
+        targetStyle: 'original',
+        fileUrl: input.fileUrl,
+      });
+      textToProcess = extractionResult.processedText;
+    }
+
+    if (!textToProcess || !textToProcess.trim()) {
         return {
             plagiarismScore: 0,
             isPlagiarized: false,
             report: 'Input text was empty. Please provide text to check.',
         };
     }
+    
     try {
-        const {output} = await plagiarismCheckPrompt(input);
+        const {output} = await plagiarismCheckPrompt({ text: textToProcess });
         if (!output) {
             throw new Error("The model did not return any output.");
         }

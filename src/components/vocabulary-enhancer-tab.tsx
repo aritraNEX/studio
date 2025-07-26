@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import React from "react";
-import { BookUp, Loader2, Sparkles, Download } from "lucide-react";
+import { BookUp, Loader2, Sparkles, Download, Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,19 +13,75 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import * as pdfjsLib from "pdfjs-dist";
+import mammoth from "mammoth";
+
+const fileToDataUri = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+};
 
 export function VocabularyEnhancerTab() {
   const [inputText, setInputText] = useState<string>("");
+  const [fileDataUri, setFileDataUri] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [result, setResult] = useState<VocabularyEnhancerOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    setInputText("");
+    setFileDataUri(null);
+    setFileName(null);
+    const dataUri = await fileToDataUri(file);
+    setFileDataUri(dataUri);
+    setFileName(file.name);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+    if (event.target) {
+      event.target.value = "";
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
 
   const handleEnhanceVocabulary = () => {
-    if (!inputText.trim()) {
+    if (!inputText.trim() && !fileDataUri) {
       toast({
-        title: "Text is empty",
-        description: "Please enter some text to enhance.",
+        title: "Input is empty",
+        description: "Please enter some text or upload a file to enhance.",
         variant: "destructive",
       });
       return;
@@ -36,7 +92,10 @@ export function VocabularyEnhancerTab() {
 
     startTransition(async () => {
       try {
-        const enhancementResult = await vocabularyEnhancer({ text: inputText });
+        const enhancementResult = await vocabularyEnhancer({
+          text: inputText,
+          fileUrl: fileDataUri || undefined,
+        });
         setResult(enhancementResult);
         if (enhancementResult.suggestions.length === 0) {
             toast({
@@ -69,7 +128,7 @@ export function VocabularyEnhancerTab() {
         const margin = 50;
         let y = height - margin;
 
-        await helveticaFont.drawText('Vocabulary Enhanced Text', {
+        await page.drawText('Vocabulary Enhanced Text', {
             x: margin,
             y: y,
             font: helveticaBoldFont,
@@ -135,14 +194,14 @@ export function VocabularyEnhancerTab() {
   };
 
   const getEnhancedTextParts = () => {
-    if (!result) return [<p key="orig">{inputText}</p>];
+    if (!result?.enhancedText) return [];
     
     let lastIndex = 0;
     const parts = [];
 
     result.suggestions.forEach((suggestion, i) => {
       if (suggestion.startIndex > lastIndex) {
-        parts.push(inputText.substring(lastIndex, suggestion.startIndex));
+        parts.push(result.enhancedText.substring(lastIndex, suggestion.startIndex));
       }
       parts.push(
         <Popover key={`popover-${i}`}>
@@ -168,8 +227,8 @@ export function VocabularyEnhancerTab() {
       lastIndex = suggestion.endIndex;
     });
 
-    if (lastIndex < inputText.length) {
-      parts.push(inputText.substring(lastIndex));
+    if (lastIndex < result.enhancedText.length) {
+      parts.push(result.enhancedText.substring(lastIndex));
     }
     return parts;
   };
@@ -183,17 +242,49 @@ export function VocabularyEnhancerTab() {
     <div className="flex flex-col gap-8">
       <div className="grid md:grid-cols-2 gap-8 items-start">
         <div className="flex flex-col gap-4">
-          <Label htmlFor="vocab-input" className="font-semibold text-md">
-            Enter Your Text
-          </Label>
-          <Textarea
-            id="vocab-input"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder="Paste your text here to get vocabulary suggestions..."
-            className="h-96 resize-y bg-background focus-visible:ring-accent"
-            disabled={isPending}
-          />
+            <Label className="font-semibold text-md">Input</Label>
+            <div
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onDragLeave={handleDragLeave}
+                className={cn(
+                    "flex flex-col items-center justify-center w-full p-4 border-2 border-dashed rounded-xl transition-all duration-300",
+                    isDragging
+                        ? "border-primary bg-primary/20"
+                        : "border-primary/20 hover:border-primary bg-primary/10",
+                    fileName ? "border-solid border-primary/50" : ""
+                )}
+            >
+                <div className="flex flex-col items-center justify-center text-center p-4">
+                    <Upload className="w-10 h-10 mb-3 text-muted-foreground transition-transform duration-300 group-hover:scale-110 group-hover:text-primary" />
+                    <p className="mb-2 text-sm text-muted-foreground">
+                        <span className="font-semibold text-primary cursor-pointer" onClick={() => fileInputRef.current?.click()}>Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-muted-foreground">PDF, DOCX, TXT files</p>
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="sr-only" accept=".pdf,.docx,.txt" />
+                </div>
+                {fileName && (
+                    <div className="flex items-center gap-2 text-sm font-medium bg-muted p-2 rounded-md">
+                        <FileText className="h-4 w-4" />
+                        <span className="truncate">{fileName}</span>
+                    </div>
+                )}
+            </div>
+
+            <div className="relative flex items-center justify-center my-2">
+                <div className="flex-grow border-t border-muted-foreground/20"></div>
+                <span className="flex-shrink mx-4 text-xs uppercase text-muted-foreground">Or</span>
+                <div className="flex-grow border-t border-muted-foreground/20"></div>
+            </div>
+
+            <Textarea
+                id="vocab-input"
+                value={inputText}
+                onChange={(e) => { setInputText(e.target.value); setFileDataUri(null); setFileName(null); }}
+                placeholder="Paste your text here to get vocabulary suggestions..."
+                className="h-60 resize-y bg-background focus-visible:ring-accent"
+                disabled={isPending || !!fileDataUri}
+            />
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex justify-between items-center">
@@ -228,7 +319,7 @@ export function VocabularyEnhancerTab() {
       <div className="flex flex-col items-center justify-center gap-4 py-4">
         <Button
           onClick={handleEnhanceVocabulary}
-          disabled={!inputText.trim() || isPending}
+          disabled={(!inputText.trim() && !fileDataUri) || isPending}
           size="lg"
           className={cn(
             "w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto",
