@@ -13,6 +13,7 @@ import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { cn } from "@/lib/utils";
+import React from 'react';
 
 export function AssignmentMakerTab() {
   const [topic, setTopic] = useState<string>("");

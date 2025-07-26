@@ -2,12 +2,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, Crown, StickyNote, Gauge, BookUp } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp } from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -70,8 +69,6 @@ const allFeatures = [
     { value: 'formula', icon: <FunctionSquare className="h-5 w-5" />, label: 'Formula' },
     { value: 'notepad', icon: <Notebook className="h-5 w-5" />, label: 'Notepad' },
 ];
-
-const workspaceFeature = { value: 'workspace', icon: <Wand2 className="h-5 w-5" />, label: 'Workspace' };
 
 export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProps) {
   const [activeTab, setActiveTab] = useState(initialTab || "paraphrase");

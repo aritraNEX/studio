@@ -176,7 +176,7 @@ export function BatchSummaryTab() {
             const margin = 50;
             let y = height - margin;
 
-            page.drawText('Tex AI Summaries', {
+            page.drawText('Vesper Summaries', {
                 x: margin,
                 y,
                 font: helveticaBoldFont,
@@ -225,7 +225,7 @@ export function BatchSummaryTab() {
             const blob = new Blob([pdfBytes], { type: 'application/pdf' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = "tex-ai-summaries.pdf";
+            link.download = "vesper-summaries.pdf";
             link.click();
             URL.revokeObjectURL(link.href);
 
@@ -258,7 +258,7 @@ export function BatchSummaryTab() {
             const { width, height } = page.getSize();
             const margin = 50;
 
-            page.drawText(`Tex AI Summary: ${fileName}`, {
+            page.drawText(`Vesper Summary: ${fileName}`, {
                 x: margin,
                 y: height - margin,
                 font: helveticaFont,
@@ -280,7 +280,7 @@ export function BatchSummaryTab() {
             const blob = new Blob([pdfBytes], { type: 'application/pdf' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `tex-ai-summary-${fileName}.pdf`;
+            link.download = `vesper-summary-${fileName}.pdf`;
             link.click();
             URL.revokeObjectURL(link.href);
 

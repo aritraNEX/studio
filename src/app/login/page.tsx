@@ -43,7 +43,7 @@ const countryCodes = [
 async function createUserDocument(user: UserCredential['user']) {
     const userRef = doc(db, 'users', user.uid);
     // Use set with merge: true to create or update without overwriting
-    await setDoc(userRef, { hasUsedTrial: false, isPremium: false }, { merge: true });
+    await setDoc(userRef, { hasUsedTrial: false }, { merge: true });
 }
 
 export default function LoginPage() {
