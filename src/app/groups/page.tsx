@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Group {
   id: string;
@@ -33,6 +34,29 @@ interface Group {
   };
   memberCount: number;
 }
+
+function GroupsPageSkeleton() {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+                <Card key={i} className="flex flex-col">
+                    <CardHeader>
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-4 w-1/2 mt-2" />
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                        <Skeleton className="h-5 w-1/4" />
+                    </CardContent>
+                    <CardFooter className="flex justify-between items-center">
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <Skeleton className="h-10 w-28 rounded-md" />
+                    </CardFooter>
+                </Card>
+            ))}
+        </div>
+    );
+}
+
 
 export default function GroupsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -127,7 +151,7 @@ export default function GroupsPage() {
     }
   }
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -179,7 +203,9 @@ export default function GroupsPage() {
         </div>
       </header>
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {groups.length === 0 ? (
+        {loading ? (
+            <GroupsPageSkeleton />
+        ) : groups.length === 0 ? (
           <div className="text-center py-20 bg-background/50 rounded-xl">
             <h2 className="text-2xl font-semibold">You're not in any groups yet.</h2>
             <p className="text-muted-foreground mt-2 mb-6">
