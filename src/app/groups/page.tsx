@@ -75,14 +75,10 @@ export default function GroupsPage() {
       return;
     }
 
+    // Optimized query using the new `memberIds` array
     const q = query(
       collection(db, 'groups'),
-      where('members', 'array-contains', { 
-          uid: user.uid, 
-          email: user.email,
-          name: user.displayName || user.email,
-          photoURL: user.photoURL || '',
-      }),
+      where('memberIds', 'array-contains', user.uid),
       orderBy('createdAt', 'desc')
     );
 
@@ -129,6 +125,7 @@ export default function GroupsPage() {
             name: newGroupName,
             ownerId: user.uid,
             members: [initialMember],
+            memberIds: [user.uid], // Add the initial member's ID to the new array
             createdAt: serverTimestamp(),
         });
         toast({ title: "Group Created!", description: `The group "${newGroupName}" has been created.` });
@@ -151,10 +148,30 @@ export default function GroupsPage() {
     }
   }
 
-  if (authLoading) {
+  if (authLoading || loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/50">
+         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+                <div className="flex items-center gap-3">
+                    <Users className="h-7 w-7 text-primary" />
+                    <h1 className="text-2xl font-bold tracking-tight">My Groups</h1>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button disabled>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create New Group
+                    </Button>
+                    <Button variant="outline" onClick={() => router.push('/')}>
+                        <Home className="mr-2 h-4 w-4" />
+                        Back to Editor
+                    </Button>
+                </div>
+            </div>
+         </header>
+         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <GroupsPageSkeleton />
+         </main>
       </div>
     );
   }
@@ -203,9 +220,7 @@ export default function GroupsPage() {
         </div>
       </header>
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {loading ? (
-            <GroupsPageSkeleton />
-        ) : groups.length === 0 ? (
+        {groups.length === 0 ? (
           <div className="text-center py-20 bg-background/50 rounded-xl">
             <h2 className="text-2xl font-semibold">You're not in any groups yet.</h2>
             <p className="text-muted-foreground mt-2 mb-6">

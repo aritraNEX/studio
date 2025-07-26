@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, getDoc, query, collection, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader2, ServerCrash, Home, Users, Settings, Mail, Clipboard, ClipboardCheck, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +36,7 @@ interface GroupData {
   name: string;
   ownerId: string;
   members: Member[];
-  // Other group data will eventually go here.
+  memberIds: string[];
 }
 
 function GroupPage() {
@@ -51,18 +51,22 @@ function GroupPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const isOwner = user && groupData && user.uid === groupData.ownerId;
-  const isMember = user && groupData && groupData.members.some(m => m.uid === user.uid);
+  const isMember = user && groupData && groupData.memberIds.includes(user.uid);
 
   useEffect(() => {
     if (!groupId) return;
     if (authLoading) return;
+    if (!user) {
+        router.push('/login');
+        return;
+    }
 
     const docRef = doc(db, 'groups', groupId as string);
     
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        const currentUserIsMember = data.members.some((m: Member) => m.uid === user?.uid);
+        const currentUserIsMember = data.memberIds.includes(user?.uid);
 
         if (!currentUserIsMember) {
           setError('Access denied. You are not a member of this group.');
@@ -75,6 +79,7 @@ function GroupPage() {
           name: data.name,
           ownerId: data.ownerId,
           members: data.members,
+          memberIds: data.memberIds,
         });
         setError(null);
       } else {
@@ -88,13 +93,12 @@ function GroupPage() {
     });
 
     return () => unsubscribe();
-  }, [groupId, user, authLoading]);
+  }, [groupId, user, authLoading, router]);
 
   const handleInvite = async () => {
     if (!inviteEmail || !isOwner) return;
     setIsSubmitting(true);
     
-    // Simple email validation
     if (!/\S+@\S+\.\S+/.test(inviteEmail)) {
         toast({ variant: "destructive", title: "Invalid Email", description: "Please enter a valid email address." });
         setIsSubmitting(false);
@@ -111,10 +115,11 @@ function GroupPage() {
             return;
         }
         
-        const invitedUser = querySnapshot.docs[0].data();
-        const invitedUserId = querySnapshot.docs[0].id;
+        const invitedUserDoc = querySnapshot.docs[0];
+        const invitedUser = invitedUserDoc.data();
+        const invitedUserId = invitedUserDoc.id;
         
-        if (groupData?.members.some(m => m.uid === invitedUserId)) {
+        if (groupData?.memberIds.includes(invitedUserId)) {
             toast({ variant: "destructive", title: "Already a member", description: "This user is already in the group." });
             setIsSubmitting(false);
             return;
@@ -129,13 +134,15 @@ function GroupPage() {
         
         const groupRef = doc(db, 'groups', groupId as string);
         await updateDoc(groupRef, {
-            members: arrayUnion(newMember)
+            members: arrayUnion(newMember),
+            memberIds: arrayUnion(invitedUserId)
         });
         
         toast({ title: "Invitation Sent!", description: `${inviteEmail} has been added to the group.` });
         setInviteEmail("");
 
     } catch (e) {
+        console.error("Invite error: ", e);
         toast({ variant: "destructive", title: "Invitation Failed", description: "An error occurred while sending the invite." });
     } finally {
         setIsSubmitting(false);
@@ -151,7 +158,8 @@ function GroupPage() {
     try {
         const groupRef = doc(db, 'groups', groupId as string);
         await updateDoc(groupRef, {
-            members: arrayRemove(memberToRemove)
+            members: arrayRemove(memberToRemove),
+            memberIds: arrayRemove(memberUid)
         });
         toast({ title: "Member Removed", description: `${memberToRemove.email} has been removed from the group.` });
     } catch(e) {
