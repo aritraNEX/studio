@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp, Users } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -73,6 +74,7 @@ const allFeatures = [
 export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProps) {
   const [activeTab, setActiveTab] = useState(initialTab || "paraphrase");
   const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
+  const router = useRouter();
 
   useEffect(() => {
     if (initialTab) {
@@ -136,12 +138,12 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
         <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
             <div className="flex md:flex-col gap-2">
                  <Button
-                    onClick={() => setActiveTab('workspace')}
-                    variant={activeTab === 'workspace' ? 'default' : 'outline'}
+                    onClick={() => router.push('/groups')}
+                    variant={'outline'}
                     className="w-full justify-start text-base py-6"
                  >
-                    <Wand2 className="h-5 w-5 mr-3" />
-                    Workspace
+                    <Users className="h-5 w-5 mr-3" />
+                    Groups
                  </Button>
             </div>
 

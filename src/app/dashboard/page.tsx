@@ -146,10 +146,15 @@ export default function DashboardPage() {
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           <h1 className="text-2xl font-bold tracking-tight">My Projects</h1>
-          <Button variant="outline" onClick={() => router.push('/')}>
-            <Home className="mr-2 h-4 w-4" />
-            Back to Editor
-          </Button>
+           <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => router.push('/groups')}>
+              Groups
+            </Button>
+            <Button variant="outline" onClick={() => router.push('/')}>
+              <Home className="mr-2 h-4 w-4" />
+              Editor
+            </Button>
+          </div>
         </div>
       </header>
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
