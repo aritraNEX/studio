@@ -3,7 +3,7 @@
 
 import { useState, useTransition } from "react";
 import Image from "next/image";
-import { GraduationCap, Loader2, Sparkles, Copy, FileText, BookCheck } from "lucide-react";
+import { GraduationCap, Loader2, Sparkles, Copy, FileText, BookCheck, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import { researchAssistant, ResearchAssistantOutput } from "@/ai/flows/research-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 export function ResearchTab() {
   const [inputText, setInputText] = useState<string>("");
@@ -63,6 +64,91 @@ export function ResearchTab() {
     });
   };
 
+  const handleDownloadPdf = async () => {
+    if (!result) return;
+     try {
+      const pdfDoc = await PDFDocument.create();
+      const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      
+      let page = pdfDoc.addPage();
+      const { width, height } = page.getSize();
+      const margin = 50;
+      let y = height - margin;
+
+      const drawTextWithWrapping = async (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; isBold?: boolean; }) => {
+        const { font, size, color, lineHeight, x, maxWidth } = options;
+        const words = text.split(' ');
+        let currentLine = '';
+
+        for (const word of words) {
+            const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+            const textWidth = font.widthOfTextAtSize(testLine, size);
+
+            if (textWidth > maxWidth) {
+                 if (y < lineHeight + margin) {
+                    page = pdfDoc.addPage();
+                    y = height - margin;
+                }
+                page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                y -= lineHeight;
+                currentLine = word;
+            } else {
+                currentLine = testLine;
+            }
+        }
+        if (currentLine) {
+             if (y < lineHeight + margin) {
+                page = pdfDoc.addPage();
+                y = height - margin;
+            }
+            page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+            y -= lineHeight;
+        }
+      };
+      
+      await drawTextWithWrapping('Research Report', { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2*margin });
+      y -= 20;
+
+      // Report
+      await drawTextWithWrapping('Fact-Check Report', { font: helveticaBoldFont, size: 14, color: rgb(0,0,0), lineHeight: 18, x: margin, maxWidth: width - 2*margin });
+      y -= 5;
+      await drawTextWithWrapping(result.report, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
+      y -= 20;
+
+      // Citations
+      if (result.citations.length > 0) {
+        if (y < margin + 40) {
+            page = pdfDoc.addPage();
+            y = height - margin;
+        }
+        await drawTextWithWrapping('Generated Citations (APA)', { font: helveticaBoldFont, size: 14, color: rgb(0,0,0), lineHeight: 18, x: margin, maxWidth: width - 2*margin });
+        y -= 10;
+
+        for (const ref of result.citations) {
+           await drawTextWithWrapping(`- ${ref}`, { font: helveticaFont, size: 10, color: rgb(0.3, 0.3, 0.3), lineHeight: 14, x: margin, maxWidth: width - 2*margin });
+           y -= 5;
+        }
+      }
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `vesper-research-report.pdf`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+    } catch (pdfError) {
+        console.error("Failed to generate PDF:", pdfError);
+        toast({
+            variant: "destructive",
+            title: "PDF Generation Failed",
+            description: "Could not create the PDF file. Please try again."
+        });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <div className="grid md:grid-cols-2 gap-8 items-start">
@@ -100,6 +186,12 @@ export function ResearchTab() {
                     {!isPending && result && (
                         <ScrollArea className="h-[24rem] w-full">
                             <div className="w-full flex flex-col gap-6 animate-in fade-in duration-500 pr-4">
+                                 <div className="flex justify-end">
+                                    <Button onClick={handleDownloadPdf} variant="outline" size="sm">
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Download Report PDF
+                                    </Button>
+                                 </div>
                                 <div>
                                     <div className="flex justify-between items-center mb-2">
                                         <h3 className="text-lg font-semibold flex items-center gap-2"><FileText className="h-5 w-5"/> Fact-Check Report</h3>

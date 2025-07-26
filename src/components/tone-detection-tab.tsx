@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Gauge, Loader2, Sparkles } from "lucide-react";
+import { Gauge, Loader2, Sparkles, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +16,8 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/components/ui/tooltip";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 const toneColors: Record<string, string> = {
     "formal": "bg-blue-500",
@@ -77,6 +78,77 @@ export function ToneDetectionTab() {
     });
   };
 
+  const handleDownloadPdf = async () => {
+    if (!result) return;
+    try {
+        const pdfDoc = await PDFDocument.create();
+        const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        
+        let page = pdfDoc.addPage();
+        const { width, height } = page.getSize();
+        const margin = 50;
+        let y = height - margin;
+
+        const drawTextWithWrapping = async (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; }) => {
+            const { font, size, color, lineHeight, x, maxWidth } = options;
+            const words = text.split(' ');
+            let currentLine = '';
+
+            for (const word of words) {
+                const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+                const textWidth = font.widthOfTextAtSize(testLine, size);
+
+                if (textWidth > maxWidth) {
+                    if (y < lineHeight + margin) {
+                        page = pdfDoc.addPage();
+                        y = height - margin;
+                    }
+                    page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                    y -= lineHeight;
+                    currentLine = word;
+                } else {
+                    currentLine = testLine;
+                }
+            }
+            if (currentLine) {
+                if (y < lineHeight + margin) {
+                    page = pdfDoc.addPage();
+                    y = height - margin;
+                }
+                page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                y -= lineHeight;
+            }
+        };
+        
+        await drawTextWithWrapping('Tone Analysis Report', { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2*margin });
+        y -= 20;
+        
+        for (const tone of result.tones) {
+            await drawTextWithWrapping(`${tone.tone} (${tone.score}%)`, { font: helveticaBoldFont, size: 14, color: rgb(0,0,0), lineHeight: 18, x: margin, maxWidth: width - 2*margin });
+            y -= 5;
+            await drawTextWithWrapping(tone.explanation, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2*margin });
+            y -= 15;
+        }
+        
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = "vesper-tone-analysis.pdf";
+        link.click();
+        URL.revokeObjectURL(link.href);
+
+    } catch (pdfError) {
+        console.error("Failed to generate PDF:", pdfError);
+        toast({
+            variant: "destructive",
+            title: "PDF Generation Failed",
+            description: "Could not create the PDF file. Please try again."
+        });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <div className="grid md:grid-cols-2 gap-8 items-start">
@@ -99,7 +171,15 @@ export function ToneDetectionTab() {
             </Label>
             <Card className="min-h-96 bg-background/50 flex flex-col">
                 <CardHeader>
-                    <CardTitle className="text-lg">Detected Tones</CardTitle>
+                    <div className="flex justify-between items-center">
+                        <CardTitle className="text-lg">Detected Tones</CardTitle>
+                        {result && (
+                             <Button onClick={handleDownloadPdf} variant="outline" size="sm">
+                                <Download className="mr-2 h-4 w-4" />
+                                Download PDF
+                            </Button>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent className="flex-grow flex items-center justify-center p-6">
                     {isPending && (

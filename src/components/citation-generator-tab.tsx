@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Loader2, Sparkles, Copy, BookA } from "lucide-react";
+import { Loader2, Sparkles, Copy, BookA, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 type CitationStyle = 'APA' | 'MLA' | 'Chicago';
 
@@ -67,6 +68,75 @@ export function CitationGeneratorTab() {
     });
   };
 
+  const handleDownloadPdf = async () => {
+    if (!result) return;
+     try {
+      const pdfDoc = await PDFDocument.create();
+      const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      
+      let page = pdfDoc.addPage();
+      const { width, height } = page.getSize();
+      const margin = 50;
+      let y = height - margin;
+
+      const drawTextWithWrapping = async (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; isBold?: boolean; }) => {
+        const { font, size, color, lineHeight, x, maxWidth } = options;
+        const words = text.split(' ');
+        let currentLine = '';
+
+        for (const word of words) {
+            const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+            const textWidth = font.widthOfTextAtSize(testLine, size);
+
+            if (textWidth > maxWidth) {
+                 if (y < lineHeight + margin) {
+                    page = pdfDoc.addPage();
+                    y = height - margin;
+                }
+                page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                y -= lineHeight;
+                currentLine = word;
+            } else {
+                currentLine = testLine;
+            }
+        }
+        if (currentLine) {
+             if (y < lineHeight + margin) {
+                page = pdfDoc.addPage();
+                y = height - margin;
+            }
+            page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+            y -= lineHeight;
+        }
+      };
+
+      await drawTextWithWrapping(`Citations (${citationStyle})`, { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin });
+      y -= 15;
+
+      for (const citation of result.citations) {
+        await drawTextWithWrapping(citation, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
+        y -= 10;
+      }
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `vesper-citations-${citationStyle}.pdf`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+    } catch (pdfError) {
+        console.error("Failed to generate PDF:", pdfError);
+        toast({
+            variant: "destructive",
+            title: "PDF Generation Failed",
+            description: "Could not create the PDF file. Please try again."
+        });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <div className="grid md:grid-cols-2 gap-8 items-start">
@@ -101,16 +171,25 @@ export function CitationGeneratorTab() {
               {!isPending && result && (
                 <ScrollArea className="h-[24rem] w-full">
                   <div className="relative w-full flex flex-col gap-4 animate-in fade-in duration-500 pr-4">
-                    <Button
-                        onClick={handleCopy}
-                        variant="outline"
-                        size="sm"
-                        className="absolute top-0 right-4"
-                    >
-                        <Copy className="mr-2 h-4 w-4" />
-                        Copy All
-                    </Button>
-                    <ul className="text-sm text-muted-foreground space-y-4 list-none font-mono">
+                    <div className="absolute top-0 right-4 flex gap-2">
+                        <Button
+                            onClick={handleCopy}
+                            variant="outline"
+                            size="sm"
+                        >
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copy
+                        </Button>
+                         <Button
+                            onClick={handleDownloadPdf}
+                            variant="outline"
+                            size="sm"
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            PDF
+                        </Button>
+                    </div>
+                    <ul className="text-sm text-muted-foreground space-y-4 list-none font-mono mt-12">
                       {result.citations.map((citation, index) => (
                         <li key={index} className="pl-4 border-l-2 border-primary/50">
                             {citation}

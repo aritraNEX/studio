@@ -3,7 +3,7 @@
 
 import { useState, useTransition } from "react";
 import React from "react";
-import { BookUp, Loader2, Sparkles } from "lucide-react";
+import { BookUp, Loader2, Sparkles, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import { vocabularyEnhancer, VocabularyEnhancerOutput } from "@/ai/flows/vocabul
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 export function VocabularyEnhancerTab() {
   const [inputText, setInputText] = useState<string>("");
@@ -56,21 +57,95 @@ export function VocabularyEnhancerTab() {
     });
   };
 
-  const renderEnhancedText = () => {
-    if (!result) return <p>{inputText}</p>;
+  const handleDownloadPdf = async () => {
+    if (!result) return;
+    try {
+        const pdfDoc = await PDFDocument.create();
+        const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        
+        let page = pdfDoc.addPage();
+        const { width, height } = page.getSize();
+        const margin = 50;
+        let y = height - margin;
+
+        await helveticaFont.drawText('Vocabulary Enhanced Text', {
+            x: margin,
+            y: y,
+            font: helveticaBoldFont,
+            size: 18,
+            color: rgb(0, 0, 0),
+        });
+        y -= 30;
+
+        const enhancedParts = getEnhancedTextParts();
+        const textFlow = [];
+        for (const part of enhancedParts) {
+            if (typeof part === 'string') {
+                textFlow.push({ text: part, font: helveticaFont, color: rgb(0.1, 0.1, 0.1) });
+            } else {
+                 textFlow.push({ text: (part.props.children as any).props.children, font: helveticaBoldFont, color: rgb(0.2, 0.2, 0.8) });
+            }
+        }
+        
+        const fontSize = 11;
+        const lineHeight = 15;
+        let currentX = margin;
+        
+        for (const item of textFlow) {
+            const words = item.text.split(' ');
+            for (const word of words) {
+                const wordWithSpace = word + ' ';
+                const textWidth = item.font.widthOfTextAtSize(wordWithSpace, fontSize);
+                if (currentX + textWidth > width - margin) {
+                    currentX = margin;
+                    y -= lineHeight;
+                    if (y < margin) {
+                        page = pdfDoc.addPage();
+                        y = height - margin;
+                    }
+                }
+                page.drawText(wordWithSpace, {
+                    x: currentX,
+                    y: y,
+                    font: item.font,
+                    size: fontSize,
+                    color: item.color
+                });
+                currentX += textWidth;
+            }
+        }
+
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = "vesper-vocabulary-enhancement.pdf";
+        link.click();
+        URL.revokeObjectURL(link.href);
+
+    } catch (pdfError) {
+        console.error("Failed to generate PDF:", pdfError);
+        toast({
+            variant: "destructive",
+            title: "PDF Generation Failed",
+            description: "Could not create the PDF file. Please try again."
+        });
+    }
+  };
+
+  const getEnhancedTextParts = () => {
+    if (!result) return [<p key="orig">{inputText}</p>];
     
     let lastIndex = 0;
     const parts = [];
 
     result.suggestions.forEach((suggestion, i) => {
-      // Add text before the suggestion
       if (suggestion.startIndex > lastIndex) {
         parts.push(inputText.substring(lastIndex, suggestion.startIndex));
       }
-
-      // Add the highlighted suggestion
       parts.push(
-        <Popover key={i}>
+        <Popover key={`popover-${i}`}>
           <PopoverTrigger asChild>
             <span className="bg-primary/20 text-primary font-medium rounded-md px-1 cursor-pointer hover:bg-primary/30 transition-colors">
               {suggestion.originalWord}
@@ -90,15 +165,17 @@ export function VocabularyEnhancerTab() {
           </PopoverContent>
         </Popover>
       );
-      
       lastIndex = suggestion.endIndex;
     });
 
-    // Add remaining text
     if (lastIndex < inputText.length) {
       parts.push(inputText.substring(lastIndex));
     }
+    return parts;
+  };
 
+  const renderEnhancedText = () => {
+    const parts = getEnhancedTextParts();
     return <p className="text-base text-foreground whitespace-pre-wrap font-serif leading-relaxed">{parts.map((part, index) => <React.Fragment key={index}>{part}</React.Fragment>)}</p>;
   };
 
@@ -119,7 +196,15 @@ export function VocabularyEnhancerTab() {
           />
         </div>
         <div className="flex flex-col gap-4">
-          <Label className="font-semibold text-md">Enhanced Text</Label>
+          <div className="flex justify-between items-center">
+            <Label className="font-semibold text-md">Enhanced Text</Label>
+             {result && (
+                <Button onClick={handleDownloadPdf} variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download PDF
+                </Button>
+            )}
+          </div>
           <Card className="min-h-96 bg-background/50 flex flex-col items-center justify-center p-6">
             {isPending && (
               <div className="flex flex-col items-center gap-4 text-muted-foreground animate-in fade-in duration-500">
