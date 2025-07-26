@@ -37,7 +37,7 @@ import { NoteGeneratorTab } from "./note-generator-tab";
 import { ToneDetectionTab } from "./tone-detection-tab";
 import { VocabularyEnhancerTab } from "./vocabulary-enhancer-tab";
 import { Button } from "./ui/button";
-import { cn } from "@/lib/utils";
+import { FeatureTooltip } from "./ui/feature-tooltip";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -49,26 +49,26 @@ interface VesperAppProps {
 }
 
 const allFeatures = [
-    { value: 'paraphrase', icon: <Quote className="h-5 w-5" />, label: 'Paraphrase' },
-    { value: 'summarize', icon: <BookText className="h-5 w-5" />, label: 'Summarize' },
-    { value: 'grammar', icon: <SpellCheck className="h-5 w-5" />, label: 'Grammar' },
-    { value: 'batch-summary', icon: <Rows3 className="h-5 w-5" />, label: 'Batch Summary' },
-    { value: 'translate', icon: <Languages className="h-5 w-5" />, label: 'Translate' },
-    { value: 'style', icon: <Palette className="h-5 w-5" />, label: 'Style' },
-    { value: 'explainer', icon: <BrainCircuit className="h-5 w-5" />, label: 'Explainer' },
-    { value: 'diagrams', icon: <Share2 className="h-5 w-5" />, label: 'Diagrams' },
-    { value: 'assign-mentor', icon: <PenSquare className="h-5 w-5" />, label: 'Assign-mentor' },
-    { value: 'note-mentor', icon: <StickyNote className="h-5 w-5" />, label: 'Note-mentor' },
-    { value: 'flashcards', icon: <Copy className="h-5 w-5" />, label: 'Flashcards' },
-    { value: 'citations', icon: <BookA className="h-5 w-5" />, label: 'Citations' },
-    { value: 'vocabulary', icon: <BookUp className="h-5 w-5" />, label: 'Vocabulary' },
-    { value: 'tone', icon: <Gauge className="h-5 w-5" />, label: 'Tone' },
-    { value: 'video-to-text', icon: <Video className="h-5 w-5" />, label: 'Video to Text' },
-    { value: 'research', icon: <GraduationCap className="h-5 w-5" />, label: 'Research' },
-    { value: 'plagiarism', icon: <ShieldCheck className="h-5 w-5" />, label: 'Plagiarism' },
-    { value: 'tts', icon: <AudioLines className="h-5 w-5" />, label: 'TTS' },
-    { value: 'formula', icon: <FunctionSquare className="h-5 w-5" />, label: 'Formula' },
-    { value: 'notepad', icon: <Notebook className="h-5 w-5" />, label: 'Notepad' },
+    { value: 'paraphrase', icon: <Quote className="h-5 w-5" />, label: 'Paraphrase', description: 'Rephrase text to say the same thing in a new way.' },
+    { value: 'summarize', icon: <BookText className="h-5 w-5" />, label: 'Summarize', description: 'Condense long text into a short, easy-to-read summary.' },
+    { value: 'grammar', icon: <SpellCheck className="h-5 w-5" />, label: 'Grammar', description: 'Check your text for grammatical errors and get corrections.' },
+    { value: 'batch-summary', icon: <Rows3 className="h-5 w-5" />, label: 'Batch Summary', description: 'Upload multiple files to get a summary for each one.' },
+    { value: 'translate', icon: <Languages className="h-5 w-5" />, label: 'Translate', description: 'Translate text from a document into another language.' },
+    { value: 'style', icon: <Palette className="h-5 w-5" />, label: 'Style', description: 'Rewrite text in a different tone or style (e.g., formal).' },
+    { value: 'explainer', icon: <BrainCircuit className="h-5 w-5" />, label: 'Explainer', description: 'Break down complex topics into simple, easy steps.' },
+    { value: 'diagrams', icon: <Share2 className="h-5 w-5" />, label: 'Diagrams', description: 'Generate diagrams (flowcharts, mindmaps) from a topic.' },
+    { value: 'assign-mentor', icon: <PenSquare className="h-5 w-5" />, label: 'Assign-mentor', description: 'Create a well-researched assignment on any topic.' },
+    { value: 'note-mentor', icon: <StickyNote className="h-5 w-5" />, label: 'Note-mentor', description: 'Generate structured study notes on any topic.' },
+    { value: 'flashcards', icon: <Copy className="h-5 w-5" />, label: 'Flashcards', description: 'Create study flashcards from your notes or a document.' },
+    { value: 'citations', icon: <BookA className="h-5 w-5" />, label: 'Citations', description: 'Generate academic citations for your text in various styles.' },
+    { value: 'vocabulary', icon: <BookUp className="h-5 w-5" />, label: 'Vocabulary', description: 'Enhance your text with better word choices.' },
+    { value: 'tone', icon: <Gauge className="h-5 w-5" />, label: 'Tone', description: 'Analyze the emotional and stylistic tone of your text.' },
+    { value: 'video-to-text', icon: <Video className="h-5 w-5" />, label: 'Video to Text', description: 'Transcribe speech from a video file into text.' },
+    { value: 'research', icon: <GraduationCap className="h-5 w-5" />, label: 'Research', description: 'Fact-check claims and get citations for your text.' },
+    { value: 'plagiarism', icon: <ShieldCheck className="h-5 w-5" />, label: 'Plagiarism', description: 'Check your text for potential plagiarism.' },
+    { value: 'tts', icon: <AudioLines className="h-5 w-5" />, label: 'TTS', description: 'Convert text into high-quality spoken audio.' },
+    { value: 'formula', icon: <FunctionSquare className="h-5 w-5" />, label: 'Formula', description: 'Render mathematical formulas using LaTeX.' },
+    { value: 'notepad', icon: <Notebook className="h-5 w-5" />, label: 'Notepad', description: 'A simple scratchpad for your notes. Saved in your browser.' },
 ];
 
 export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProps) {
@@ -93,18 +93,19 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
     }
   };
   
-  const renderTabTrigger = (value: string, icon: React.ReactNode, label: string) => {
+  const renderTabTrigger = (value: string, icon: React.ReactNode, label: string, description: string) => {
     return (
-      <TabsTrigger 
-        key={value}
-        value={value} 
-        className="h-auto py-2.5 flex-1 relative"
-      >
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
-            {icon}
-            <span className="text-xs sm:text-sm">{label}</span>
-        </div>
-      </TabsTrigger>
+      <FeatureTooltip key={value} content={description}>
+        <TabsTrigger 
+          value={value} 
+          className="h-auto py-2.5 flex-1 relative"
+        >
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+              {icon}
+              <span className="text-xs sm:text-sm">{label}</span>
+          </div>
+        </TabsTrigger>
+      </FeatureTooltip>
     );
   };
 
@@ -137,19 +138,31 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
       <CardContent className="p-2 sm:p-8 pt-2">
         <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
             <div className="flex md:flex-col gap-2">
-                 <Button
-                    onClick={() => router.push('/groups')}
-                    variant={'outline'}
-                    className="w-full justify-start text-base py-6"
-                 >
-                    <Users className="h-5 w-5 mr-3" />
-                    Groups
-                 </Button>
+                 <FeatureTooltip content="Collaborate with friends and colleagues in shared workspaces.">
+                     <Button
+                        onClick={() => router.push('/groups')}
+                        variant={'outline'}
+                        className="w-full justify-start text-base py-6"
+                     >
+                        <Users className="h-5 w-5 mr-3" />
+                        Groups
+                     </Button>
+                 </FeatureTooltip>
+                 <FeatureTooltip content="A special tab for chaining multiple AI operations together.">
+                     <Button
+                        onClick={() => setActiveTab('workspace')}
+                        variant={activeTab === 'workspace' ? 'default' : 'outline'}
+                        className="w-full justify-start text-base py-6"
+                     >
+                        <Wand2 className="h-5 w-5 mr-3" />
+                        Workspace
+                     </Button>
+                 </FeatureTooltip>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                 <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 mx-auto h-auto p-1.5 flex-wrap">
-                    {allFeatures.map(feature => renderTabTrigger(feature.value, feature.icon, feature.label))}
+                 <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 mx-auto h-auto p-1.5 flex-wrap">
+                    {allFeatures.map(feature => renderTabTrigger(feature.value, feature.icon, feature.label, feature.description))}
                  </TabsList>
                  
                 <div className="mt-6">
