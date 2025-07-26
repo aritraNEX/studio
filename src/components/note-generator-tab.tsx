@@ -86,29 +86,33 @@ export function NoteGeneratorTab() {
       const margin = 50;
       let y = height - margin;
 
-      const drawTextWithWrapping = async (text: string, options: any) => {
+      const drawTextWithWrapping = async (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; }) => {
         const { font, size, color, lineHeight, x, maxWidth } = options;
         const words = text.split(' ');
         let currentLine = '';
-        const lines = [];
 
-        for(const word of words) {
+        for (const word of words) {
             const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
-            if (font.widthOfTextAtSize(testLine, size) > maxWidth) {
-                lines.push(currentLine);
+            const textWidth = font.widthOfTextAtSize(testLine, size);
+
+            if (textWidth > maxWidth) {
+                 if (y < lineHeight + margin) {
+                    page = pdfDoc.addPage();
+                    y = height - margin;
+                }
+                page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                y -= lineHeight;
                 currentLine = word;
             } else {
                 currentLine = testLine;
             }
         }
-        lines.push(currentLine);
-
-        for (const line of lines) {
-            if (y < margin + lineHeight) {
+        if (currentLine) {
+             if (y < lineHeight + margin) {
                 page = pdfDoc.addPage();
                 y = height - margin;
             }
-            page.drawText(line, { x, y, font, size, color, lineHeight });
+            page.drawText(currentLine, { x, y, font, size, color, lineHeight });
             y -= lineHeight;
         }
       };
@@ -119,7 +123,6 @@ export function NoteGeneratorTab() {
 
       // Draw Content
       const contentParts = result.content.split(/(\*\*.*?\*\*)/g).filter(Boolean);
-      let currentX = margin;
       
       for(const part of contentParts) {
         if (part.startsWith('**') && part.endsWith('**')) {

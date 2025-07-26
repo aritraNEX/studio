@@ -267,37 +267,54 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     try {
       const pdfDoc = await PDFDocument.create();
       const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
+      const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      
       let page = pdfDoc.addPage();
       const { width, height } = page.getSize();
       const margin = 50;
       let y = height - margin;
 
-      page.drawText(`Vesper Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, {
-          x: margin,
-          y: y,
-          font: helveticaFont,
-          size: 18,
-          color: rgb(0, 0, 0),
+       const drawTextWithWrapping = (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; }) => {
+            const { font, size, color, lineHeight, x, maxWidth } = options;
+            const words = text.split(' ');
+            let currentLine = '';
+
+            for (const word of words) {
+                const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+                const textWidth = font.widthOfTextAtSize(testLine, size);
+
+                if (textWidth > maxWidth) {
+                    if (y < lineHeight + margin) {
+                        page = pdfDoc.addPage();
+                        y = height - margin;
+                    }
+                    page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                    y -= lineHeight;
+                    currentLine = word;
+                } else {
+                    currentLine = testLine;
+                }
+            }
+            if (currentLine) {
+                if (y < lineHeight + margin) {
+                    page = pdfDoc.addPage();
+                    y = height - margin;
+                }
+                page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                y -= lineHeight;
+            }
+        };
+
+      drawTextWithWrapping(`Vesper Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, {
+          font: helveticaBoldFont, size: 18, color: rgb(0, 0, 0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin
       });
       y -= 30;
       
       const lines = textToDownload.split('\n');
       for (const line of lines) {
-        if (y < margin) {
-            page = pdfDoc.addPage();
-            y = height - margin;
-        }
-        page.drawText(line, {
-            x: margin,
-            y: y,
-            font: helveticaFont,
-            size: 12,
-            lineHeight: 15,
-            color: rgb(0.2, 0.2, 0.2),
-            maxWidth: width - 2 * margin,
+        drawTextWithWrapping(line, {
+            font: helveticaFont, size: 12, color: rgb(0.2, 0.2, 0.2), lineHeight: 15, x: margin, maxWidth: width - 2 * margin,
         });
-        y -= 15;
       }
 
       const pdfBytes = await pdfDoc.save();

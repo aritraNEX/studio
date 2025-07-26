@@ -79,35 +79,36 @@ export function AssignmentMakerTab() {
       const margin = 50;
       let y = height - margin;
 
-       const drawTextWithWrapping = (text: string, options: any) => {
-          if (y < options.lineHeight + margin) {
-            page = pdfDoc.addPage();
-            y = height - margin;
-          }
-          const { font, size, color, lineHeight, x, maxWidth } = options;
-          const words = text.split(' ');
-          let currentLine = '';
+      const drawTextWithWrapping = (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; isBold?: boolean; }) => {
+        const { font, size, color, lineHeight, x, maxWidth } = options;
+        let words = text.split(' ');
+        let currentLine = '';
 
-          for (const word of words) {
-              const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
-              const textWidth = font.widthOfTextAtSize(testLine, size);
+        for (const word of words) {
+            const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+            const textWidth = font.widthOfTextAtSize(testLine, size);
 
-              if (textWidth > maxWidth) {
-                  page.drawText(currentLine, { x, y, font, size, color, lineHeight });
-                  y -= lineHeight;
-                  currentLine = word;
-                  if (y < lineHeight + margin) {
-                      page = pdfDoc.addPage();
-                      y = height - margin;
-                  }
-              } else {
-                  currentLine = testLine;
-              }
-          }
-          if (currentLine) {
-              page.drawText(currentLine, { x, y, font, size, color, lineHeight });
-              y -= lineHeight;
-          }
+            if (textWidth > maxWidth) {
+                if (y < lineHeight + margin) {
+                    page = pdfDoc.addPage();
+                    y = height - margin;
+                }
+                page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                y -= lineHeight;
+                currentLine = word;
+            } else {
+                currentLine = testLine;
+            }
+        }
+
+        if (currentLine) {
+            if (y < lineHeight + margin) {
+                page = pdfDoc.addPage();
+                y = height - margin;
+            }
+            page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+            y -= lineHeight;
+        }
       };
 
       // Title
@@ -122,12 +123,13 @@ export function AssignmentMakerTab() {
         } else {
             drawTextWithWrapping(line, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2*margin });
         }
+        if (line.trim() === '') y -= 10; // Add space for paragraphs
       }
       y -= 10;
       
       // References
       if (result.references.length > 0) {
-        if (y < margin + 20) {
+        if (y < margin + 40) { // Check space for header + one line
             page = pdfDoc.addPage();
             y = height - margin;
         }
@@ -135,7 +137,7 @@ export function AssignmentMakerTab() {
         y -= 10;
 
         for (const ref of result.references) {
-           drawTextWithWrapping(`- ${ref}`, { font: helveticaFont, size: 10, color: rgb(0.3, 0.3, 0.3), lineHeight: 12, x: margin, maxWidth: width - 2*margin });
+           drawTextWithWrapping(`- ${ref}`, { font: helveticaFont, size: 10, color: rgb(0.3, 0.3, 0.3), lineHeight: 14, x: margin, maxWidth: width - 2*margin });
         }
       }
 

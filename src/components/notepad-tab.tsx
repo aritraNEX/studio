@@ -47,44 +47,61 @@ export function NotepadTab() {
     try {
         const pdfDoc = await PDFDocument.create();
         const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
         
         let page = pdfDoc.addPage();
         const { width, height } = page.getSize();
         const margin = 50;
         let y = height - margin;
 
-        page.drawText("Tex.io Notepad", { 
-            x: margin, 
-            y, 
-            font: helveticaFont, 
-            size: 18, 
-            color: rgb(0,0,0)
+        const drawTextWithWrapping = (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; }) => {
+            const { font, size, color, lineHeight, x, maxWidth } = options;
+            const words = text.split(' ');
+            let currentLine = '';
+
+            for (const word of words) {
+                const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+                const textWidth = font.widthOfTextAtSize(testLine, size);
+
+                if (textWidth > maxWidth) {
+                    if (y < lineHeight + margin) {
+                        page = pdfDoc.addPage();
+                        y = height - margin;
+                    }
+                    page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                    y -= lineHeight;
+                    currentLine = word;
+                } else {
+                    currentLine = testLine;
+                }
+            }
+            if (currentLine) {
+                if (y < lineHeight + margin) {
+                    page = pdfDoc.addPage();
+                    y = height - margin;
+                }
+                page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                y -= lineHeight;
+            }
+        };
+
+        drawTextWithWrapping("Vesper Notepad", { 
+            font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2*margin,
         });
         y -= 30;
 
         const lines = notes.split('\n');
         for (const line of lines) {
-            if (y < margin) {
-                page = pdfDoc.addPage();
-                y = height - margin;
-            }
-            page.drawText(line, {
-                x: margin,
-                y: y,
-                font: helveticaFont,
-                size: 12,
-                color: rgb(0.2, 0.2, 0.2),
-                maxWidth: width - 2 * margin,
-                lineHeight: 15,
+            drawTextWithWrapping(line, {
+                font: helveticaFont, size: 12, color: rgb(0.2, 0.2, 0.2), lineHeight: 15, x: margin, maxWidth: width - 2 * margin,
             });
-            y -= 15;
         }
 
         const pdfBytes = await pdfDoc.save();
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = "texio-notepad.pdf";
+        link.download = "vesper-notepad.pdf";
         link.click();
         URL.revokeObjectURL(link.href);
 

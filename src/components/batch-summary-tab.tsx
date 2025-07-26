@@ -176,12 +176,39 @@ export function BatchSummaryTab() {
             const margin = 50;
             let y = height - margin;
 
-            page.drawText('Vesper Summaries', {
-                x: margin,
-                y,
-                font: helveticaBoldFont,
-                size: 18,
-                color: rgb(0, 0, 0),
+            const drawTextWithWrapping = (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; }) => {
+                const { font, size, color, lineHeight, x, maxWidth } = options;
+                let words = text.split(' ');
+                let currentLine = '';
+
+                for (const word of words) {
+                    const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+                    const textWidth = font.widthOfTextAtSize(testLine, size);
+
+                    if (textWidth > maxWidth) {
+                         if (y < lineHeight + margin) {
+                            page = pdfDoc.addPage();
+                            y = height - margin;
+                        }
+                        page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                        y -= lineHeight;
+                        currentLine = word;
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+                if (currentLine) {
+                     if (y < lineHeight + margin) {
+                        page = pdfDoc.addPage();
+                        y = height - margin;
+                    }
+                    page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                    y -= lineHeight;
+                }
+            };
+            
+            drawTextWithWrapping('Vesper Summaries', {
+                font: helveticaBoldFont, size: 18, color: rgb(0, 0, 0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin
             });
             y -= 30;
 
@@ -192,30 +219,17 @@ export function BatchSummaryTab() {
                         y = height - margin;
                     }
                     
-                    page.drawText(`Summary for: ${file.file.name}`, {
-                        x: margin,
-                        y,
-                        font: helveticaBoldFont,
-                        size: 14,
-                        color: rgb(0, 0, 0),
+                    drawTextWithWrapping(`Summary for: ${file.file.name}`, {
+                        font: helveticaBoldFont, size: 14, color: rgb(0, 0, 0), lineHeight: 18, x: margin, maxWidth: width - 2 * margin
                     });
                     y -= 20;
 
                     const lines = file.generatedText.split('\n');
                     for (const line of lines) {
-                        if (y < margin) {
-                            page = pdfDoc.addPage();
-                            y = height - margin;
-                        }
-                        page.drawText(line, {
-                            x: margin,
-                            y,
-                            font: helveticaFont,
-                            size: 10,
-                            lineHeight: 14,
-                            color: rgb(0.2, 0.2, 0.2),
+                        drawTextWithWrapping(line, {
+                           font: helveticaFont, size: 10, color: rgb(0.2, 0.2, 0.2), lineHeight: 14, x: margin, maxWidth: width - 2 * margin
                         });
-                        y -= 14;
+                        if (line.trim() === '') y -= 7; // Add small space for paragraphs
                     }
                     y -= 20; // Extra space between summaries
                 }
@@ -253,28 +267,54 @@ export function BatchSummaryTab() {
         try {
             const pdfDoc = await PDFDocument.create();
             const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
-            const page = pdfDoc.addPage();
+            const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+            let page = pdfDoc.addPage();
             const { width, height } = page.getSize();
             const margin = 50;
+            let y = height - margin;
 
-            page.drawText(`Vesper Summary: ${fileName}`, {
-                x: margin,
-                y: height - margin,
-                font: helveticaFont,
-                size: 18,
-                color: rgb(0, 0, 0),
-            });
+            const drawTextWithWrapping = (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; }) => {
+                const { font, size, color, lineHeight, x, maxWidth } = options;
+                let words = text.split(' ');
+                let currentLine = '';
 
-            page.drawText(textToDownload, {
-                x: margin,
-                y: height - margin - 30,
-                font: helveticaFont,
-                size: 12,
-                lineHeight: 15,
-                color: rgb(0.2, 0.2, 0.2),
-                maxWidth: width - 2 * margin,
+                for (const word of words) {
+                    const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+                    const textWidth = font.widthOfTextAtSize(testLine, size);
+
+                    if (textWidth > maxWidth) {
+                        if (y < lineHeight + margin) {
+                            page = pdfDoc.addPage();
+                            y = height - margin;
+                        }
+                        page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                        y -= lineHeight;
+                        currentLine = word;
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+                if (currentLine) {
+                    if (y < lineHeight + margin) {
+                        page = pdfDoc.addPage();
+                        y = height - margin;
+                    }
+                    page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                    y -= lineHeight;
+                }
+            };
+            
+            drawTextWithWrapping(`Vesper Summary: ${fileName}`, {
+                font: helveticaBoldFont, size: 18, color: rgb(0, 0, 0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin,
             });
+            y -= 30;
+
+            const lines = textToDownload.split('\n');
+            for (const line of lines) {
+                drawTextWithWrapping(line, {
+                    font: helveticaFont, size: 12, color: rgb(0.2, 0.2, 0.2), lineHeight: 15, x: margin, maxWidth: width - 2 * margin,
+                });
+            }
 
             const pdfBytes = await pdfDoc.save();
             const blob = new Blob([pdfBytes], { type: 'application/pdf' });
