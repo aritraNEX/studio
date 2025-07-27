@@ -133,4 +133,20 @@ body {
     0%, 100% { opacity: 0.6; transform: translate(-50%,-50%) scale(0.8); }
     50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); }
   }
+
+  .tab-focus-animation {
+    animation: tab-focus-animation 2s ease-out;
+  }
+
+  @keyframes tab-focus-animation {
+    0% {
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+    }
+    20% {
+      box-shadow: 0 0 0 4px hsl(var(--primary) / 0.3);
+    }
+    100% {
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+    }
+  }
 }
