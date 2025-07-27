@@ -18,13 +18,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack(config, { isServer }) {
-    if (!isServer) {
-      // Don't watch the `patches` directory, which is created by patch-package
-      config.watchOptions.ignored = /patches/;
-    }
-    return config;
-  },
 };
 
 export default nextConfig;
