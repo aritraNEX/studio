@@ -7,6 +7,10 @@ import { useRouter } from "next/navigation";
 export default function AboutFooter() {
   const router = useRouter();
 
+  const handleNavigate = (path: string) => {
+    router.push(path);
+  }
+
   return (
     <footer className="w-full mt-8 p-6 bg-muted/50 rounded-lg">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
@@ -22,15 +26,15 @@ export default function AboutFooter() {
         <div>
           <h3 className="font-semibold text-foreground mb-2">Quick Links</h3>
           <ul className="text-sm space-y-1">
-            <li><a onClick={() => router.push('/dashboard')} className="text-muted-foreground hover:text-primary cursor-pointer">My Projects</a></li>
-            <li><a onClick={() => router.push('/groups')} className="text-muted-foreground hover:text-primary cursor-pointer">Collaboration Groups</a></li>
+            <li><a onClick={() => handleNavigate('/dashboard')} className="text-muted-foreground hover:text-primary cursor-pointer">My Projects</a></li>
+            <li><a onClick={() => handleNavigate('/groups')} className="text-muted-foreground hover:text-primary cursor-pointer">Collaboration Groups</a></li>
           </ul>
         </div>
         <div>
           <h3 className="font-semibold text-foreground mb-2">Legal</h3>
            <ul className="text-sm space-y-1">
-            <li><a href="#" className="text-muted-foreground hover:text-primary">Privacy Policy</a></li>
-            <li><a href="#" className="text-muted-foreground hover:text-primary">Terms of Service</a></li>
+            <li><a onClick={() => handleNavigate('/privacy')} className="text-muted-foreground hover:text-primary cursor-pointer">Privacy Policy</a></li>
+            <li><a onClick={() => handleNavigate('/terms')} className="text-muted-foreground hover:text-primary cursor-pointer">Terms of Service</a></li>
           </ul>
         </div>
       </div>

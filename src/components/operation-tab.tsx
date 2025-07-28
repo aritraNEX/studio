@@ -336,6 +336,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
       let y = height - margin;
 
        const drawTextWithWrapping = (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; }) => {
+            const { font, size, color, lineHeight, x, maxWidth } = options;
             const words = text.split(' ');
             let currentLine = '';
 
