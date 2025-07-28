@@ -38,6 +38,7 @@ import { ToneDetectionTab } from "./tone-detection-tab";
 import { VocabularyEnhancerTab } from "./vocabulary-enhancer-tab";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import AdBanner from "./ad-banner";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -172,66 +173,87 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                 <div className="mt-6">
                     <TabsContent value="workspace" className="m-0">
                         <WorkspaceTab />
+                        <AdBanner />
                     </TabsContent>
                     <TabsContent value="paraphrase" className="m-0">
                         <OperationTab operation="paraphrase" onSendTo={handleSendTo} projectId={projectId} />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="summarize" className="m-0">
                         <OperationTab operation="summarize" onSendTo={handleSendTo} projectId={projectId} />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="grammar" className="m-0">
                         <GrammarCheckTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="batch-summary" className="m-0">
                         <BatchSummaryTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="translate" className="m-0">
                         <OperationTab operation="translate" onSendTo={handleSendTo} projectId={projectId} />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="style" className="m-0">
                         <OperationTab operation="style" onSendTo={handleSendTo} projectId={projectId} />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="explainer" className="m-0">
                         <ConceptExplainerTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="diagrams" className="m-0">
                         <DiagramGeneratorTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="assign-mentor" className="m-0">
                         <AssignmentMakerTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="note-mentor" className="m-0">
                         <NoteGeneratorTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="flashcards" className="m-0">
                         <FlashcardGeneratorTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="citations" className="m-0">
                         <CitationGeneratorTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="vocabulary" className="m-0">
                         <VocabularyEnhancerTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="tone" className="m-0">
                         <ToneDetectionTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="video-to-text" className="m-0">
                         <TranscriptionTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="research" className="m-0">
                         <ResearchTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="plagiarism" className="m-0">
                         <PlagiarismTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="tts" className="m-0">
                         <TtsTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="formula" className="m-0">
                         <FormulaTab />
+                         <AdBanner />
                     </TabsContent>
                     <TabsContent value="notepad" className="m-0">
                         <NotepadTab />
+                         <AdBanner />
                     </TabsContent>
                 </div>
             </Tabs>
