@@ -28,14 +28,14 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-xl font-semibold">3. How We Use Your Information</h2>
             <p className="text-muted-foreground">
               We use the information we collect to:
-              <ul className="list-disc pl-5 mt-2 space-y-1">
-                <li>Provide, operate, and maintain our application.</li>
-                <li>Improve, personalize, and expand our application.</li>
-                <li>Understand and analyze how you use our application.</li>
-                <li>Process your transactions.</li>
-                <li>Communicate with you, either directly or through one of our partners, including for customer service, to provide you with updates and other information relating to the application, and for marketing and promotional purposes.</li>
-              </ul>
             </p>
+            <ul className="list-disc pl-5 mt-2 space-y-1 text-muted-foreground">
+              <li>Provide, operate, and maintain our application.</li>
+              <li>Improve, personalize, and expand our application.</li>
+              <li>Understand and analyze how you use our application.</li>
+              <li>Process your transactions.</li>
+              <li>Communicate with you, either directly or through one of our partners, including for customer service, to provide you with updates and other information relating to the application, and for marketing and promotional purposes.</li>
+            </ul>
           </div>
           <div className="space-y-2">
             <h2 className="text-xl font-semibold">4. Data Security</h2>
