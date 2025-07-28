@@ -60,6 +60,16 @@ Document: {{media url=fileUrl}}{{else}}You will be given text to process. Follow
 Text: {{{text}}}{{/if}}`
 });
 
+const processTextOnlyPrompt = ai.definePrompt({
+  name: 'processTextOnlyPrompt',
+  input: { schema: z.object({ text: z.string(), instruction: z.string() }) },
+  output: { schema: ProcessImageTextOutputSchema },
+  prompt: `You will be given text to process. Follow this instruction: '{{{instruction}}}'. Place the final result in the 'processedText' field. Ensure the output formatting matches the original text's structure (e.g., lists, paragraphs). Do not add any extra commentary or explanation.
+
+Text: {{{text}}}`
+});
+
+
 const processImageTextFlow = ai.defineFlow(
   {
     name: 'processImageTextFlow',
@@ -103,9 +113,20 @@ const processImageTextFlow = ai.defineFlow(
     }
 
     try {
+        // If we have raw text, use the cheaper, more direct prompt.
+        if(input.text) {
+             const {output} = await processTextOnlyPrompt({
+                text: input.text,
+                instruction: instruction,
+            });
+            if (!output) throw new Error('The model did not return any output.');
+            return output;
+        }
+
+        // If we have a fileUrl, use the multi-modal prompt.
         const {output} = await processImageTextPrompt({
             fileUrl: input.fileUrl,
-            text: input.text,
+            text: input.text, // This will be undefined here but schema needs it
             instruction: instruction,
         });
         

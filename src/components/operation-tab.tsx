@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import * as pdfjsLib from "pdfjs-dist";
+import mammoth from "mammoth";
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import {
   Select,
@@ -51,9 +53,11 @@ interface OperationTabProps {
 export function OperationTab({ operation, onSendTo, initialText, projectId }: OperationTabProps) {
   const [fileDataUri, setFileDataUri] = useState<string | null>(initialText && initialText.startsWith('data:') ? initialText : null);
   const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(initialText && initialText.startsWith('data:image') ? initialText : null);
+  const [extractedText, setExtractedText] = useState<string | null>(null);
   const [generatedText, setGeneratedText] = useState<string>(initialText && !initialText.startsWith('data:') ? initialText : "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isParsing, setIsParsing] = useState(false);
   const [targetLanguage, setTargetLanguage] = useState<string>('Spanish');
   const [targetStyle, setTargetStyle] = useState<string>('Formal');
   const [customStyle, setCustomStyle] = useState<string>('');
@@ -69,6 +73,9 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const [isDragging, setIsDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
 
+  useEffect(() => {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`;
+  }, []);
 
   useEffect(() => {
     setAppUrl(window.location.origin); // Use origin instead of href
@@ -77,6 +84,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   useEffect(() => {
     if (projectId && user) {
       const fetchProject = async () => {
+        setIsParsing(true); // Show loading state while fetching
         const docRef = doc(db, 'projects', projectId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
@@ -93,6 +101,8 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                 setFileDataUri(savedFileData);
                 if (savedFileData.startsWith('data:image')) {
                     setLocalPreviewUrl(savedFileData);
+                } else if (savedFileData) {
+                    setFileName("Loaded Project Document");
                 }
             }
           }
@@ -100,6 +110,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
           toast({ variant: 'destructive', title: 'Project not found.' });
           router.push('/');
         }
+        setIsParsing(false);
       };
       fetchProject();
     }
@@ -118,7 +129,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     try {
       await addDoc(collection(db, 'projects'), {
         userId: user.uid,
-        inputText: fileDataUri || '',
+        inputText: fileDataUri || extractedText || '',
         outputText: generatedText,
         operation: operation,
         createdAt: serverTimestamp(),
@@ -132,6 +143,59 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     }
   };
 
+   const handleParseFile = async (file: File) => {
+        setIsParsing(true);
+        setExtractedText(null);
+        setGeneratedText("");
+
+        try {
+            const fileType = file.type;
+            const reader = new FileReader();
+
+            reader.onerror = () => {
+                reader.abort();
+                throw new DOMException("Problem parsing input file.");
+            };
+            
+            reader.onload = async (e) => {
+                try {
+                    const buffer = e.target?.result;
+                    if (fileType === 'application/pdf') {
+                        const pdf = await pdfjsLib.getDocument(buffer as ArrayBuffer).promise;
+                        let text = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const content = await page.getTextContent();
+                            text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
+                        }
+                        setExtractedText(text);
+                    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                        const result = await mammoth.extractRawText({ arrayBuffer: buffer as ArrayBuffer });
+                        setExtractedText(result.value);
+                    } else if (fileType.startsWith("image/")) {
+                        // For images, the data URI itself is the content.
+                        setExtractedText(null);
+                    }
+                    setIsParsing(false);
+                } catch (err) {
+                    throw err;
+                }
+            };
+            
+            if (fileType.startsWith("image/")) {
+                reader.readAsDataURL(file); // This will set fileDataUri
+                setIsParsing(false); // Image parsing is just loading the data uri
+            } else {
+                reader.readAsArrayBuffer(file);
+            }
+        } catch (err) {
+            toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not parse the selected file.' });
+            setFileName(null);
+            setIsParsing(false);
+        }
+    };
+
+
   const handleFileUpload = async (file: File) => {
     if (!file) return;
 
@@ -142,27 +206,20 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     setError(null);
     setFileName(file.name);
     
-    try {
+    // Set preview for images
+    if (file.type.startsWith("image/")) {
         const reader = new FileReader();
         reader.onload = () => {
             const dataUri = reader.result as string;
             setFileDataUri(dataUri);
-            if (file.type.startsWith("image/")) {
-                setLocalPreviewUrl(dataUri);
-            }
-        };
-        reader.onerror = (err) => {
-             console.error("File processing failed", err);
-            toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not process the selected file.' });
-            setFileName(null);
+            setLocalPreviewUrl(dataUri);
         };
         reader.readAsDataURL(file);
-
-    } catch (err) {
-        console.error("File upload failed", err);
-        toast({ variant: 'destructive', title: 'File Upload Error', description: 'Could not upload the selected file.' });
-        setFileName(null);
+    } else {
+        setFileDataUri("placeholder"); // Indicate that a non-image file is loaded
     }
+    
+    await handleParseFile(file);
   };
   
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,7 +252,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   };
 
   const handleProcess = () => {
-    if (!fileDataUri) {
+    if (!fileDataUri && !extractedText) {
         toast({
             variant: 'destructive',
             title: 'No File Selected',
@@ -228,12 +285,16 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     setGeneratedText("");
     startTransition(async () => {
       try {
-        const result = await processImageText({
+        const isImage = fileDataUri?.startsWith("data:image");
+        const payload = {
             operation,
-            fileUrl: fileDataUri,
+            ...(isImage ? { fileUrl: fileDataUri! } : { text: extractedText! }),
             ...(operation === 'translate' ? { targetLanguage } : {}),
             ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
-        });
+        };
+
+        const result = await processImageText(payload);
+
         if (result && result.processedText) {
           setGeneratedText(result.processedText);
         } else {
@@ -425,7 +486,14 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
              <div className="flex flex-col items-center justify-center text-center p-4">
                 <FileText className="w-16 h-16 mb-4 text-primary" />
                 <p className="font-semibold text-foreground">{fileName}</p>
-                <p className="text-sm text-muted-foreground mt-2">Ready to be processed</p>
+                {isParsing ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Parsing file...</span>
+                    </div>
+                ): (
+                    <p className="text-sm text-muted-foreground mt-2">Ready to be processed</p>
+                )}
             </div>
             ) : (
             <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
@@ -612,7 +680,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
          <div className="flex flex-wrap items-center justify-center gap-4">
           <Button
             onClick={handleProcess}
-            disabled={!fileDataUri || isPending || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
+            disabled={!fileDataUri || isPending || isParsing || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
             className={cn(
                 "w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto",
