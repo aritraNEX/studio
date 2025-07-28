@@ -10,6 +10,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Tabs,
@@ -39,6 +40,7 @@ import { VocabularyEnhancerTab } from "./vocabulary-enhancer-tab";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import AdBanner from "./ad-banner";
+import AboutFooter from "./about-footer";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -259,6 +261,9 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
             </Tabs>
         </div>
       </CardContent>
+      <CardFooter>
+        <AboutFooter />
+      </CardFooter>
     </Card>
   );
 }
