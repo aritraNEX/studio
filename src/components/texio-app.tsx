@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp, Users } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp, Users, MessageSquare } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -130,7 +130,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
       </CardHeader>
       <CardContent className="p-2 sm:p-8 pt-2">
         <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
-            <div className="flex md:flex-col gap-2">
+            <div className="flex flex-col gap-2">
                  <Button
                     onClick={() => handleTabChange('workspace')}
                     variant={activeTab === 'workspace' ? 'default' : 'outline'}
@@ -141,6 +141,16 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                  >
                     <Wand2 className="h-5 w-5 mr-3" />
                     Workspace
+                 </Button>
+                  <Button
+                    onClick={() => router.push('/chat')}
+                    variant={'outline'}
+                    className={cn(
+                        "w-full justify-start text-base py-6"
+                    )}
+                 >
+                    <MessageSquare className="h-5 w-5 mr-3" />
+                    Chatbot
                  </Button>
             </div>
 

@@ -86,6 +86,7 @@ export default function ChatPage() {
                             <div className="text-center text-muted-foreground pt-20">
                                 <Sparkles className="h-16 w-16 mx-auto text-primary/50 mb-4" />
                                 <p className="text-lg">Start a conversation!</p>
+                                <p className="text-sm">Chat with Vesper, your AI assistant.</p>
                             </div>
                         )}
                         {messages.map((message, index) => (
