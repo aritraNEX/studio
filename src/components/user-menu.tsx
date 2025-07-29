@@ -66,6 +66,10 @@ export default function UserMenu() {
   return (
     <div className="flex items-center gap-2">
       <ThemeToggle />
+       <Button variant="outline" onClick={() => handleNavigate('/chat')}>
+          <MessageSquare className="mr-2 h-4 w-4" />
+          Chatbot
+        </Button>
       <Dialog onOpenChange={(open) => !open && setIsEditing(false)}>
         <DialogTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -117,12 +121,6 @@ export default function UserMenu() {
                     <Button onClick={() => handleNavigate('/dashboard')} className="w-full">
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         My Projects
-                    </Button>
-                 </DialogClose>
-                 <DialogClose asChild>
-                    <Button onClick={() => handleNavigate('/chat')} className="w-full">
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        Chatbot
                     </Button>
                  </DialogClose>
             </div>
