@@ -15,3 +15,5 @@ import '@/ai/flows/diagram-generator-flow.ts';
 import '@/ai/flows/note-generator-flow.ts';
 import '@/ai/flows/tone-detection-flow.ts';
 import '@/ai/flows/vocabulary-enhancer-flow.ts';
+import '@/ai/flows/general-chat-flow.ts';
+

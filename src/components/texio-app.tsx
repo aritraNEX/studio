@@ -60,6 +60,7 @@ const allFeatures = [
     { value: 'style', icon: <Palette className="h-5 w-5" />, label: 'Style' },
     { value: 'explainer', icon: <BrainCircuit className="h-5 w-5" />, label: 'Explainer' },
     { value: 'diagrams', icon: <Share2 className="h-5 w-5" />, label: 'Diagrams' },
+    { value: 'assign-mentor', icon: <PenSquare className="h-5 w-5" />, label: 'Assignment' },
     { value: 'note-mentor', icon: <StickyNote className="h-5 w-5" />, label: 'Note-mentor' },
     { value: 'flashcards', icon: <Copy className="h-5 w-5" />, label: 'Flashcards' },
     { value: 'citations', icon: <BookA className="h-5 w-5" />, label: 'Citations' },
@@ -144,7 +145,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
             </div>
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-                 <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 mx-auto h-auto p-1.5 flex-wrap">
+                 <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 mx-auto h-auto p-1.5 flex-wrap">
                     {allFeatures.map(feature => (
                         <TabsTrigger 
                         key={feature.value}
