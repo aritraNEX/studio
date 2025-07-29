@@ -51,14 +51,11 @@ export default function ChatPage() {
         } else {
           throw new Error("The AI returned an empty response.");
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
-        toast({
-          title: "Error",
-          description: "Failed to get a response from the AI. Please try again.",
-          variant: "destructive",
-        });
-        setMessages(prev => prev.slice(0, -1)); // Remove the user message if AI fails
+        const errorMessage = e.message || "Failed to get a response from the AI. Please try again.";
+        const aiErrorMessage: Message = { role: 'ai', content: errorMessage };
+        setMessages(prev => [...prev, aiErrorMessage]);
       }
     });
   };

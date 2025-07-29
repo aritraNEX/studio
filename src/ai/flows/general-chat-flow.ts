@@ -63,7 +63,7 @@ const generalChatFlow = ai.defineFlow(
     } catch (e: any) {
         console.error("Error in generalChatFlow: ", e);
         if (e.message?.includes('overloaded')) {
-            throw new Error('The AI model is currently busy. Please try again in a moment.');
+            return { answer: 'The AI model is currently busy with high traffic. Please try again in a moment.' };
         }
         throw new Error('An error occurred while getting your answer. Please try again.');
     }
