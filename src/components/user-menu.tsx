@@ -119,12 +119,6 @@ export default function UserMenu() {
                         My Projects
                     </Button>
                  </DialogClose>
-                 <DialogClose asChild>
-                    <Button onClick={() => handleNavigate('/groups')} className="w-full">
-                        <Group className="mr-2 h-4 w-4" />
-                        My Groups
-                    </Button>
-                 </DialogClose>
             </div>
           </div>
           <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">

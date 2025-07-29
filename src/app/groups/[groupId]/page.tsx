@@ -1,284 +1,253 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, getDoc, query, collection, where, getDocs } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { collection, query, where, onSnapshot, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Loader2, ServerCrash, Home, Users, Settings, Mail, Clipboard, ClipboardCheck, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
-import { useToast } from '@/hooks/use-toast';
-import { VesperApp } from '@/components/texio-app';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Loader2, Home, Trash2, Edit } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { formatDistanceToNow } from 'date-fns';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
-interface Member {
-  uid: string;
-  email: string;
-  photoURL?: string;
-  name?: string;
-}
-
-interface GroupData {
+interface Project {
   id: string;
-  name: string;
-  ownerId: string;
-  members: Member[];
-  memberIds: string[];
+  inputText: string;
+  outputText: string;
+  operation: string;
+  createdAt: {
+    seconds: number;
+    nanoseconds: number;
+  };
 }
 
-function GroupPage() {
-  const { groupId } = useParams();
-  const router = useRouter();
-  const [groupData, setGroupData] = useState<GroupData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
+function ProjectsSkeleton() {
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+                 <Card key={i} className="flex flex-col">
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                           <Skeleton className="h-6 w-20" />
+                           <Skeleton className="h-5 w-24" />
+                        </div>
+                        <Skeleton className="h-4 w-full pt-2" />
+                        <Skeleton className="h-4 w-2/3" />
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full mt-2" />
+                        <Skeleton className="h-4 w-1/2 mt-2" />
+                    </CardContent>
+                    <CardFooter className="flex justify-end gap-2">
+                        <Skeleton className="h-10 w-10" />
+                        <Skeleton className="h-10 w-24" />
+                    </CardFooter>
+                </Card>
+            ))}
+        </div>
+    );
+}
+
+
+export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const isOwner = user && groupData && user.uid === groupData.ownerId;
-  const isMember = user && groupData && groupData.memberIds.includes(user.uid);
+  const router = useRouter();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (!groupId) return;
     if (authLoading) return;
     if (!user) {
-        router.push('/login');
-        return;
+      router.push('/login');
+      return;
     }
 
-    const docRef = doc(db, 'groups', groupId as string);
-    
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const currentUserIsMember = data.memberIds.includes(user?.uid);
+    const q = query(
+      collection(db, 'projects'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
 
-        if (!currentUserIsMember) {
-          setError('Access denied. You are not a member of this group.');
-          setLoading(false);
-          return;
-        }
-
-        setGroupData({
-          id: docSnap.id,
-          name: data.name,
-          ownerId: data.ownerId,
-          members: data.members,
-          memberIds: data.memberIds,
-        });
-        setError(null);
-      } else {
-        setError('Group not found. This link may be invalid or the group may have been deleted.');
-      }
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const userProjects: Project[] = [];
+      querySnapshot.forEach((doc) => {
+        userProjects.push({ id: doc.id, ...doc.data() } as Project);
+      });
+      setProjects(userProjects);
       setLoading(false);
-    }, (err) => {
-      console.error(err);
-      setError('Failed to load the group. Please try again later.');
+    }, (error) => {
+      console.error("Error fetching projects: ", error);
+      toast({
+        variant: "destructive",
+        title: "Error fetching projects",
+        description: "Could not load your projects. Please try again later.",
+      });
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [groupId, user, authLoading, router]);
+  }, [user, authLoading, router, toast]);
 
-  const handleInvite = async () => {
-    if (!inviteEmail || !isOwner) return;
-    setIsSubmitting(true);
-    
-    if (!/\S+@\S+\.\S+/.test(inviteEmail)) {
-        toast({ variant: "destructive", title: "Invalid Email", description: "Please enter a valid email address." });
-        setIsSubmitting(false);
-        return;
-    }
-
+  const handleDeleteProject = async (projectId: string) => {
     try {
-        const q = query(collection(db, 'users'), where('email', '==', inviteEmail));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            toast({ variant: "destructive", title: "User not found", description: `No Vesper user found with the email: ${inviteEmail}` });
-            setIsSubmitting(false);
-            return;
-        }
-        
-        const invitedUserDoc = querySnapshot.docs[0];
-        const invitedUser = invitedUserDoc.data();
-        const invitedUserId = invitedUserDoc.id;
-        
-        if (groupData?.memberIds.includes(invitedUserId)) {
-            toast({ variant: "destructive", title: "Already a member", description: "This user is already in the group." });
-            setIsSubmitting(false);
-            return;
-        }
-
-        const newMember: Member = {
-            uid: invitedUserId,
-            email: invitedUser.email,
-            photoURL: invitedUser.photoURL || '',
-            name: invitedUser.displayName || invitedUser.email,
-        };
-        
-        const groupRef = doc(db, 'groups', groupId as string);
-        await updateDoc(groupRef, {
-            members: arrayUnion(newMember),
-            memberIds: arrayUnion(invitedUserId)
-        });
-        
-        toast({ title: "Invitation Sent!", description: `${inviteEmail} has been added to the group.` });
-        setInviteEmail("");
-
-    } catch (e) {
-        console.error("Invite error: ", e);
-        toast({ variant: "destructive", title: "Invitation Failed", description: "An error occurred while sending the invite." });
-    } finally {
-        setIsSubmitting(false);
+        await deleteDoc(doc(db, "projects", projectId));
+        toast({
+            title: "Project Deleted",
+            description: "The project has been successfully deleted.",
+        })
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Deletion Failed",
+            description: "Could not delete the project. Please try again.",
+        })
     }
   };
-  
-  const handleRemoveMember = async (memberUid: string) => {
-    if (!isOwner || memberUid === groupData?.ownerId) return;
+
+  const handleOpenProject = (project: Project) => {
+    // A mapping from saved operation to the tab value in the UI
+    const operationToTab: { [key: string]: string } = {
+        explainer: 'explainer',
+        paraphrase: 'paraphrase',
+        summarize: 'summarize',
+        translate: 'translate',
+        style: 'style',
+        // Add other mappings if needed
+    };
     
-    const memberToRemove = groupData?.members.find(m => m.uid === memberUid);
-    if (!memberToRemove) return;
-    
-    try {
-        const groupRef = doc(db, 'groups', groupId as string);
-        await updateDoc(groupRef, {
-            members: arrayRemove(memberToRemove),
-            memberIds: arrayRemove(memberUid)
-        });
-        toast({ title: "Member Removed", description: `${memberToRemove.email} has been removed from the group.` });
-    } catch(e) {
-        toast({ variant: 'destructive', title: "Failed to remove member." });
+    const tab = operationToTab[project.operation];
+
+    if (tab) {
+        const url = new URL(window.location.origin);
+        url.pathname = '/';
+        url.searchParams.set('tab', tab);
+        
+        if (project.operation === 'explainer') {
+            url.searchParams.set('topic', project.inputText);
+        } else {
+            url.searchParams.set('projectId', project.id);
+        }
+        router.push(url.toString());
+    } else {
+        // Fallback for older projects or unmapped operations
+        router.push(`/?projectId=${project.id}`);
     }
   }
 
-  const getShareLink = () => {
-    if (typeof window !== "undefined") {
-      return `${window.location.origin}/groups/${groupId}/join`;
-    }
-    return "";
-  };
+  const getOutputDescription = (project: Project) => {
+      if (project.operation === 'explainer') {
+          try {
+              const parsedOutput = JSON.parse(project.outputText);
+              return parsedOutput.introduction || 'View the full explanation.';
+          } catch {
+              return 'View the full explanation.';
+          }
+      }
+      return project.outputText;
+  }
 
-
-  if (loading || authLoading) {
+  if (authLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
+      <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center p-8">
-        <Card className="max-w-lg text-center">
-            <CardHeader>
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-                   <ServerCrash className="h-6 w-6 text-destructive" />
-                </div>
-                <CardTitle className="mt-4">Access Error</CardTitle>
-                <CardDescription>{error}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                 <Button onClick={() => router.push('/groups')}>
-                    <Home className="mr-2 h-4 w-4" /> Go to My Groups
-                </Button>
-            </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (groupData && isMember) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/50">
-        <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-sm border-b">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-                <Users className="h-7 w-7 text-primary" />
-                <h1 className="text-2xl font-bold tracking-tight">{groupData.name}</h1>
-            </div>
-            <div className="flex items-center gap-2">
-                 <Dialog>
-                    <DialogTrigger asChild>
-                        <Button variant="outline">
-                            <Settings className="mr-2 h-4 w-4" />
-                            Manage Group
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Manage "{groupData.name}"</DialogTitle>
-                            <DialogDescription>
-                                {isOwner ? "Invite new members, manage existing ones, or get a shareable link." : "View group members."}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4 space-y-4">
-                            {isOwner && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="invite-email">Invite with Email</Label>
-                                    <div className="flex gap-2">
-                                        <Input id="invite-email" type="email" placeholder="member@example.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
-                                        <Button onClick={handleInvite} disabled={isSubmitting}>
-                                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Mail className="h-4 w-4"/>}
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-                            <div>
-                                <h3 className="text-sm font-medium mb-2">Members ({groupData.members.length})</h3>
-                                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                                    {groupData.members.map(member => (
-                                        <div key={member.uid} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
-                                            <div className="flex items-center gap-2">
-                                                <Avatar className="h-8 w-8">
-                                                    <AvatarImage src={member.photoURL} />
-                                                    <AvatarFallback>{member.email?.[0].toUpperCase()}</AvatarFallback>
-                                                </Avatar>
-                                                <span className="text-sm font-medium">{member.name || member.email} {member.uid === groupData.ownerId && "(Owner)"}</span>
-                                            </div>
-                                            {isOwner && user.uid !== member.uid && (
-                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemoveMember(member.uid)}>
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </DialogContent>
-                 </Dialog>
-                <Button onClick={() => router.push('/groups')}>
-                    <Home className="mr-2 h-4 w-4" />
-                    All Groups
-                </Button>
-            </div>
-            </div>
-        </header>
-        <main className="p-4 sm:p-8">
-            <VesperApp />
-        </main>
-      </div>
-    );
-  }
-
-  return null;
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50">
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+          <h1 className="text-2xl font-bold tracking-tight">My Projects</h1>
+           <div className="flex items-center gap-2">
+            <Button asChild variant="outline">
+              <Link href="/" prefetch={false}>
+                <Home className="mr-2 h-4 w-4" />
+                Editor
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </header>
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {loading ? (
+            <ProjectsSkeleton />
+        ) : projects.length === 0 ? (
+          <div className="text-center py-20">
+            <h2 className="text-xl font-semibold">No projects yet!</h2>
+            <p className="text-muted-foreground mt-2">
+              Go back to the editor to start creating and saving projects.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {projects.map((project) => (
+              <Card key={project.id} className="flex flex-col">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-lg capitalize pr-2">{project.operation}</CardTitle>
+                    <Badge variant="secondary">
+                        {project.createdAt?.seconds ? formatDistanceToNow(new Date(project.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now'}
+                    </Badge>
+                  </div>
+                   <CardDescription className="line-clamp-2 pt-2">
+                      Input: {project.inputText}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                    <p className="text-sm text-muted-foreground line-clamp-3">
+                        Output: {getOutputDescription(project)}
+                    </p>
+                </CardContent>
+                <CardFooter className="flex justify-end gap-2">
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="icon">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete your project.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteProject(project.id)}>
+                                Delete
+                            </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                    <Button variant="outline" onClick={() => handleOpenProject(project)} prefetch-intent="false">
+                        <Edit className="mr-2 h-4 w-4"/>
+                        Open
+                    </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
 }
-
-export default GroupPage;

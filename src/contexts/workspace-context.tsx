@@ -3,26 +3,48 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
+export type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'grammar';
+
+export interface WorkspaceStep {
+  id: number;
+  operation: Operation;
+  text: string;
+  options?: {
+    lang?: string;
+    style?: string;
+  }
+}
 
 interface WorkspaceContextType {
-  workspaceText: string;
+  workspaceSteps: WorkspaceStep[];
+  setWorkspaceSteps: (steps: WorkspaceStep[]) => void;
+  addWorkspaceStep: (step: WorkspaceStep) => void;
+  removeWorkspaceStep: (id: number) => void;
+  workspaceText: string; // Legacy for TTS
   setWorkspaceText: (text: string) => void;
-  workspaceOperation: Operation | null;
-  setWorkspaceOperation: (operation: Operation | null) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
 export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
-  const [workspaceText, setWorkspaceText] = useState("");
-  const [workspaceOperation, setWorkspaceOperation] = useState<Operation | null>(null);
+  const [workspaceSteps, setWorkspaceSteps] = useState<WorkspaceStep[]>([]);
+  const [workspaceText, setWorkspaceText] = useState(""); // Legacy for TTS
+
+  const addWorkspaceStep = (step: WorkspaceStep) => {
+    setWorkspaceSteps(prev => [...prev, step]);
+  };
+  
+  const removeWorkspaceStep = (id: number) => {
+    setWorkspaceSteps(prev => prev.filter(step => step.id !== id));
+  }
 
   const contextValue = {
+    workspaceSteps,
+    setWorkspaceSteps,
+    addWorkspaceStep,
+    removeWorkspaceStep,
     workspaceText,
     setWorkspaceText,
-    workspaceOperation,
-    setWorkspaceOperation,
   };
 
   return (

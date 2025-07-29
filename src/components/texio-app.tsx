@@ -77,7 +77,7 @@ const allFeatures = [
 export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProps) {
   const [activeTab, setActiveTab] = useState(initialTab || "paraphrase");
   const [animatingTab, setAnimatingTab] = useState<string | null>(null);
-  const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
+  const { setWorkspaceText, addWorkspaceStep } = useWorkspace();
   const router = useRouter();
 
   useEffect(() => {
@@ -94,11 +94,10 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
 
   const handleSendTo = (text: string, operation: Operation) => {
     if (operation === 'tts') {
-        setWorkspaceText(text);
+        setWorkspaceText(text); // Special handling for TTS for now
         setActiveTab("tts");
     } else {
-        setWorkspaceText(text);
-        setWorkspaceOperation(operation);
+        addWorkspaceStep({ operation: operation, text: text, id: Date.now() });
         setActiveTab("workspace");
     }
   };
@@ -132,12 +131,6 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
       <CardContent className="p-2 sm:p-8 pt-2">
         <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
             <div className="flex md:flex-col gap-2">
-                 <Button asChild variant={'outline'} className="w-full justify-start text-base py-6">
-                    <Link href="/groups" prefetch={false}>
-                        <Users className="h-5 w-5 mr-3" />
-                        Groups
-                    </Link>
-                 </Button>
                  <Button
                     onClick={() => handleTabChange('workspace')}
                     variant={activeTab === 'workspace' ? 'default' : 'outline'}
@@ -172,7 +165,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                  
                 <div className="mt-6">
                     <TabsContent value="workspace" className="m-0">
-                        <WorkspaceTab />
+                        <WorkspaceTab onSendTo={handleSendTo} />
                     </TabsContent>
                     <TabsContent value="paraphrase" className="m-0">
                         <OperationTab operation="paraphrase" onSendTo={handleSendTo} projectId={projectId} />

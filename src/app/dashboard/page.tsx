@@ -179,9 +179,6 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold tracking-tight">My Projects</h1>
            <div className="flex items-center gap-2">
             <Button asChild variant="outline">
-              <Link href="/groups" prefetch={false}>Groups</Link>
-            </Button>
-            <Button asChild variant="outline">
               <Link href="/" prefetch={false}>
                 <Home className="mr-2 h-4 w-4" />
                 Editor
