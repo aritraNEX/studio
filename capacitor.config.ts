@@ -10,3 +10,6 @@ const config: CapacitorConfig = {
 };
 
 export default config;
+
+npm install @capacitor/action-sheet
+npx cap sync

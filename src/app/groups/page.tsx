@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
@@ -212,9 +213,11 @@ export default function GroupsPage() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-                <Button variant="outline" onClick={() => router.push('/')}>
-                    <Home className="mr-2 h-4 w-4" />
-                    Back to Editor
+                <Button asChild variant="outline">
+                    <Link href="/" prefetch={false}>
+                        <Home className="mr-2 h-4 w-4" />
+                        Back to Editor
+                    </Link>
                 </Button>
             </div>
         </div>
@@ -277,8 +280,10 @@ export default function GroupsPage() {
                     </Button>
                    )}
                    {group.ownerId !== user?.uid && (<div></div>)}
-                   <Button variant="outline" onClick={() => router.push(`/groups/${group.id}`)}>
-                        Open Group <ArrowRight className="ml-2 h-4 w-4" />
+                   <Button asChild variant="outline">
+                       <Link href={`/groups/${group.id}`} prefetch={false}>
+                            Open Group <ArrowRight className="ml-2 h-4 w-4" />
+                       </Link>
                    </Button>
                 </CardFooter>
               </Card>

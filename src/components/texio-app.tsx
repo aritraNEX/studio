@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp, Users } from "lucide-react";
 import {
@@ -131,13 +132,11 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
       <CardContent className="p-2 sm:p-8 pt-2">
         <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
             <div className="flex md:flex-col gap-2">
-                 <Button
-                    onClick={() => router.push('/groups')}
-                    variant={'outline'}
-                    className="w-full justify-start text-base py-6"
-                 >
-                    <Users className="h-5 w-5 mr-3" />
-                    Groups
+                 <Button asChild variant={'outline'} className="w-full justify-start text-base py-6">
+                    <Link href="/groups" prefetch={false}>
+                        <Users className="h-5 w-5 mr-3" />
+                        Groups
+                    </Link>
                  </Button>
                  <Button
                     onClick={() => handleTabChange('workspace')}

@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { collection, query, where, onSnapshot, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
@@ -147,12 +148,14 @@ export default function DashboardPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           <h1 className="text-2xl font-bold tracking-tight">My Projects</h1>
            <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => router.push('/groups')}>
-              Groups
+            <Button asChild variant="outline">
+              <Link href="/groups" prefetch={false}>Groups</Link>
             </Button>
-            <Button variant="outline" onClick={() => router.push('/')}>
-              <Home className="mr-2 h-4 w-4" />
-              Editor
+            <Button asChild variant="outline">
+              <Link href="/" prefetch={false}>
+                <Home className="mr-2 h-4 w-4" />
+                Editor
+              </Link>
             </Button>
           </div>
         </div>
