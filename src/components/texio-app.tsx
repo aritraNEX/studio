@@ -60,7 +60,6 @@ const allFeatures = [
     { value: 'style', icon: <Palette className="h-5 w-5" />, label: 'Style' },
     { value: 'explainer', icon: <BrainCircuit className="h-5 w-5" />, label: 'Explainer' },
     { value: 'diagrams', icon: <Share2 className="h-5 w-5" />, label: 'Diagrams' },
-    { value: 'assign-mentor', icon: <PenSquare className="h-5 w-5" />, label: 'Assign-mentor' },
     { value: 'note-mentor', icon: <StickyNote className="h-5 w-5" />, label: 'Note-mentor' },
     { value: 'flashcards', icon: <Copy className="h-5 w-5" />, label: 'Flashcards' },
     { value: 'citations', icon: <BookA className="h-5 w-5" />, label: 'Citations' },

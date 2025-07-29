@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { auth } from "@/lib/firebase";
 import { signOut, updateProfile } from "firebase/auth";
-import { LogOut, User as UserIcon, Loader2, Edit, Save, LayoutDashboard, Group } from "lucide-react";
+import { LogOut, User as UserIcon, Loader2, Edit, Save, LayoutDashboard, MessageSquare, Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -117,6 +117,12 @@ export default function UserMenu() {
                     <Button onClick={() => handleNavigate('/dashboard')} className="w-full">
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         My Projects
+                    </Button>
+                 </DialogClose>
+                 <DialogClose asChild>
+                    <Button onClick={() => handleNavigate('/chat')} className="w-full">
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Chatbot
                     </Button>
                  </DialogClose>
             </div>
