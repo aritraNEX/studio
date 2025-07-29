@@ -24,6 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Project {
   id: string;
@@ -35,6 +36,35 @@ interface Project {
     nanoseconds: number;
   };
 }
+
+function ProjectsSkeleton() {
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+                 <Card key={i} className="flex flex-col">
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                           <Skeleton className="h-6 w-20" />
+                           <Skeleton className="h-5 w-24" />
+                        </div>
+                        <Skeleton className="h-4 w-full pt-2" />
+                        <Skeleton className="h-4 w-2/3" />
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full mt-2" />
+                        <Skeleton className="h-4 w-1/2 mt-2" />
+                    </CardContent>
+                    <CardFooter className="flex justify-end gap-2">
+                        <Skeleton className="h-10 w-10" />
+                        <Skeleton className="h-10 w-24" />
+                    </CardFooter>
+                </Card>
+            ))}
+        </div>
+    );
+}
+
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
@@ -134,7 +164,7 @@ export default function DashboardPage() {
       return project.outputText;
   }
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -161,7 +191,9 @@ export default function DashboardPage() {
         </div>
       </header>
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {projects.length === 0 ? (
+        {loading ? (
+            <ProjectsSkeleton />
+        ) : projects.length === 0 ? (
           <div className="text-center py-20">
             <h2 className="text-xl font-semibold">No projects yet!</h2>
             <p className="text-muted-foreground mt-2">
@@ -210,7 +242,7 @@ export default function DashboardPage() {
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
-                    <Button variant="outline" onClick={() => handleOpenProject(project)}>
+                    <Button variant="outline" onClick={() => handleOpenProject(project)} prefetch-intent="false">
                         <Edit className="mr-2 h-4 w-4"/>
                         Open
                     </Button>

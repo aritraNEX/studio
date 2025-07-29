@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { auth } from "@/lib/firebase";
 import { signOut, updateProfile } from "firebase/auth";
-import { LogOut, User as UserIcon, Loader2, Edit, Save, LayoutDashboard } from "lucide-react";
+import { LogOut, User as UserIcon, Loader2, Edit, Save, LayoutDashboard, Group } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,10 @@ export default function UserMenu() {
   const [isPending, setIsPending] = useState(false);
   const { toast } = useToast();
 
+  const handleNavigate = (path: string) => {
+    router.push(path);
+  };
+  
   const handleSignOut = async () => {
     await signOut(auth);
     router.push('/login');
@@ -108,11 +112,17 @@ export default function UserMenu() {
                     </div>
                 )}
             </div>
-             <div className="pt-4">
+             <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <DialogClose asChild>
-                    <Button onClick={() => router.push('/dashboard')} className="w-full">
+                    <Button onClick={() => handleNavigate('/dashboard')} className="w-full">
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         My Projects
+                    </Button>
+                 </DialogClose>
+                 <DialogClose asChild>
+                    <Button onClick={() => handleNavigate('/groups')} className="w-full">
+                        <Group className="mr-2 h-4 w-4" />
+                        My Groups
                     </Button>
                  </DialogClose>
             </div>

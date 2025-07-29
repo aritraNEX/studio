@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Sparkles, Users, FileText } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function AboutFooter() {
