@@ -65,7 +65,10 @@ const assignmentMakerFlow = ai.defineFlow(
         return output;
     } catch (e: any) {
         console.error("Error in assignmentMakerFlow: ", e);
-        throw new Error('The AI model is currently busy. Please try again.');
+        if (e.message?.includes('overloaded')) {
+            throw new Error('The AI model is currently busy. Please try again in a moment.');
+        }
+        throw new Error('An error occurred while generating the assignment. Please check your connection and try again.');
     }
   }
 );

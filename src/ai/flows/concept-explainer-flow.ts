@@ -73,7 +73,10 @@ const conceptExplainerFlow = ai.defineFlow(
         return output;
     } catch (e: any) {
         console.error("Error in conceptExplainerFlow: ", e);
-        throw new Error('The AI model is currently busy. Please try again.');
+        if (e.message?.includes('overloaded')) {
+            throw new Error('The AI model is currently busy. Please try again in a moment.');
+        }
+        throw new Error('An error occurred while generating the explanation. Please check your connection and try again.');
     }
   }
 );

@@ -65,8 +65,7 @@ const noteGeneratorFlow = ai.defineFlow(
         if (e.message?.includes('overloaded')) {
             throw new Error('The AI model is currently busy. Please try again in a moment.');
         }
-        // Re-throw other errors as a generic user-friendly message
-        throw new Error('The AI model is currently busy. Please try again.');
+        throw new Error('An error occurred while generating the notes. Please check your connection and try again.');
     }
   }
 );
