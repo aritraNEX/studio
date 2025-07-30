@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { auth } from "@/lib/firebase";
 import { signOut, updateProfile } from "firebase/auth";
-import { LogOut, User as UserIcon, Loader2, Edit, Save, LayoutDashboard, MessageSquare, Users } from "lucide-react";
+import { LogOut, User as UserIcon, Loader2, Edit, Save, LayoutDashboard, MessageSquare } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -120,9 +120,9 @@ export default function UserMenu() {
                     </Button>
                  </DialogClose>
                   <DialogClose asChild>
-                    <Button onClick={() => handleNavigate('/groups')} className="w-full">
-                        <Users className="mr-2 h-4 w-4" />
-                        Collaboration
+                    <Button onClick={() => handleNavigate('/chat')} className="w-full">
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Chat with Vesper
                     </Button>
                  </DialogClose>
             </div>
