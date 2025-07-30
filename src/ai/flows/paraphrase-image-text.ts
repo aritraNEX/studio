@@ -147,7 +147,7 @@ const processImageTextFlow = ai.defineFlow(
             throw new Error('The request to the AI model timed out. Please try again.');
         }
         // Re-throw other errors as a generic user-friendly message
-        throw new Error('The AI model is currently busy. Please try again.');
+        throw new Error('An error occurred while processing your request. Please try again.');
     }
   }
 );
