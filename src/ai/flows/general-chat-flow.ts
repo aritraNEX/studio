@@ -14,6 +14,11 @@ import { googleSearch } from '@/ai/tools/google-search-tool';
 
 const GeneralChatInputSchema = z.object({
   query: z.string().describe('The user\'s question or message.'),
+  fileUrl: z
+    .string()
+    .describe(
+      "An optional file (image, video, etc.) associated with the query, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ).optional(),
 });
 export type GeneralChatInput = z.infer<typeof GeneralChatInputSchema>;
 
@@ -36,10 +41,13 @@ const generalChatPrompt = ai.definePrompt({
   prompt: `You are Vesper, a friendly and highly intelligent AI assistant. Your goal is to provide helpful, accurate, and conversational answers to user questions.
 
 1.  Analyze the user's query: '{{query}}'.
-2.  If the query requires up-to-date information or knowledge about specific entities, use the 'googleSearch' tool to get information from the web.
-3.  Synthesize the information from your knowledge and the search results to formulate a comprehensive and easy-to-understand answer.
-4.  Your response should be in a conversational tone. Be friendly, but also authoritative and trustworthy.
-5.  Place your final answer in the 'answer' field of the JSON output. Do not add any extra commentary.
+{{#if fileUrl}}
+2.  The user has also provided a file for context. Analyze this file as the primary subject of the query. File: {{media url=fileUrl}}
+{{/if}}
+3.  If the query requires up-to-date information or knowledge about specific entities, use the 'googleSearch' tool to get information from the web.
+4.  Synthesize the information from your knowledge and the search results to formulate a comprehensive and easy-to-understand answer.
+5.  Your response should be in a conversational tone. Be friendly, but also authoritative and trustworthy.
+6.  Place your final answer in the 'answer' field of the JSON output. Do not add any extra commentary.
 `,
 });
 
@@ -50,7 +58,7 @@ const generalChatFlow = ai.defineFlow(
     outputSchema: GeneralChatOutputSchema,
   },
   async (input) => {
-    if (!input.query.trim()) {
+    if (!input.query.trim() && !input.fileUrl) {
         throw new Error('Query cannot be empty.');
     }
     

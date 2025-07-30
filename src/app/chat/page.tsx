@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useTransition, useRef, useEffect } from "react";
-import { Send, User, Sparkles, Loader2, Home } from "lucide-react";
+import { Send, User, Sparkles, Loader2, Home, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -10,21 +10,26 @@ import { generalChat } from "@/ai/flows/general-chat-flow";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
+import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
 
 interface Message {
   role: 'user' | 'ai';
   content: string;
+  fileUrl?: string;
 }
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const { user } = useAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -35,29 +40,67 @@ export default function ChatPage() {
     }
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return;
-
-    const userMessage: Message = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
-    setInput("");
-
-    startTransition(async () => {
-      try {
-        const result = await generalChat({ query: input });
-        if (result && result.answer) {
-          const aiMessage: Message = { role: 'ai', content: result.answer };
-          setMessages(prev => [...prev, aiMessage]);
-        } else {
-          throw new Error("The AI returned an empty response.");
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+        setFile(selectedFile);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            setFilePreview(event.target?.result as string);
         }
-      } catch (e: any) {
-        console.error(e);
-        const errorMessage = e.message || "Failed to get a response from the AI. Please try again.";
-        const aiErrorMessage: Message = { role: 'ai', content: errorMessage };
-        setMessages(prev => [...prev, aiErrorMessage]);
-      }
-    });
+        reader.readAsDataURL(selectedFile);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setFile(null);
+    setFilePreview(null);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
+  };
+
+  const handleSendMessage = () => {
+    const finalInput = input.trim();
+    if (!finalInput && !file) return;
+
+    let fileDataUri: string | undefined = undefined;
+
+    const sendMessageWithFile = (dataUri?: string) => {
+        const userMessage: Message = { role: 'user', content: finalInput, fileUrl: dataUri };
+        setMessages(prev => [...prev, userMessage]);
+        setInput("");
+        setFile(null);
+        setFilePreview(null);
+        if(fileInputRef.current) fileInputRef.current.value = "";
+
+        startTransition(async () => {
+            try {
+                const result = await generalChat({ query: finalInput, fileUrl: dataUri });
+                if (result && result.answer) {
+                const aiMessage: Message = { role: 'ai', content: result.answer };
+                setMessages(prev => [...prev, aiMessage]);
+                } else {
+                throw new Error("The AI returned an empty response.");
+                }
+            } catch (e: any) {
+                console.error(e);
+                const errorMessage = e.message || "Failed to get a response from the AI. Please try again.";
+                const aiErrorMessage: Message = { role: 'ai', content: errorMessage };
+                setMessages(prev => [...prev, aiErrorMessage]);
+            }
+        });
+    }
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            sendMessageWithFile(e.target?.result as string);
+        }
+        reader.readAsDataURL(file);
+    } else {
+        sendMessageWithFile();
+    }
   };
 
   return (
@@ -99,6 +142,11 @@ export default function ChatPage() {
                                     </Avatar>
                                 )}
                                 <div className={`max-w-xl rounded-xl p-4 whitespace-pre-wrap ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                    {message.fileUrl && (
+                                        <div className="mb-2">
+                                            <Image src={message.fileUrl} alt="Uploaded file" width={200} height={200} className="rounded-lg object-contain" />
+                                        </div>
+                                    )}
                                     {message.content}
                                 </div>
                                  {message.role === 'user' && (
@@ -127,7 +175,30 @@ export default function ChatPage() {
                 </ScrollArea>
             </CardContent>
             <div className="border-t p-4">
+                 {filePreview && (
+                    <div className="relative w-fit mb-2 p-2 border rounded-lg bg-muted">
+                        <Image src={filePreview} alt="File preview" width={80} height={80} className="rounded-md object-cover" />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/80"
+                            onClick={handleRemoveFile}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                 )}
                  <div className="relative">
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" id="chat-file-upload" />
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className="absolute left-2 top-1/2 -translate-y-1/2"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isPending}
+                    >
+                       <Paperclip className="h-5 w-5" />
+                    </Button>
                     <Textarea
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
@@ -138,7 +209,7 @@ export default function ChatPage() {
                             }
                         }}
                         placeholder="Type your message here..."
-                        className="pr-16 resize-none"
+                        className="pl-12 pr-16 resize-none"
                         rows={1}
                         disabled={isPending}
                     />
@@ -147,7 +218,7 @@ export default function ChatPage() {
                         size="icon"
                         className="absolute right-2 top-1/2 -translate-y-1/2"
                         onClick={handleSendMessage}
-                        disabled={!input.trim() || isPending}
+                        disabled={(!input.trim() && !file) || isPending}
                     >
                         <Send className="h-5 w-5" />
                     </Button>
