@@ -51,6 +51,27 @@ interface VesperAppProps {
   initialTopic?: string | null;
 }
 
+const VesperIcon = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5 mr-3"
+    >
+      <path d="M12 8V4H8" />
+      <rect width="16" height="12" x="4" y="8" rx="2" />
+      <path d="M2 14h2" />
+      <path d="M20 14h2" />
+      <path d="M15 13v2" />
+      <path d="M9 13v2" />
+    </svg>
+);
+
+
 const allFeatures = [
     { value: 'paraphrase', icon: <Quote className="h-5 w-5" />, label: 'Paraphrase' },
     { value: 'summarize', icon: <BookText className="h-5 w-5" />, label: 'Summarize' },
@@ -129,7 +150,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
         </CardDescription>
       </CardHeader>
       <CardContent className="p-2 sm:p-8 pt-2">
-        <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6">
             <div className="flex flex-col gap-2">
                  <Button
                     onClick={() => handleTabChange('workspace')}
@@ -149,8 +170,8 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                         "w-full justify-start text-base py-6"
                     )}
                  >
-                    <MessageSquare className="h-5 w-5 mr-3" />
-                    Chatbot
+                    <VesperIcon />
+                    Chat with Vesper
                  </Button>
             </div>
 

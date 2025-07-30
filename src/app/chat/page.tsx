@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useTransition, useRef, useEffect } from "react";
-import { Send, User, Sparkles, Loader2, Home, Paperclip, X } from "lucide-react";
+import { Send, User, Paperclip, X, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +19,35 @@ interface Message {
   content: string;
   fileUrl?: string;
 }
+
+const VesperIcon = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-6 w-6"
+    >
+      <path d="M12 8V4H8" />
+      <rect width="16" height="12" x="4" y="8" rx="2" />
+      <path d="M2 14h2" />
+      <path d="M20 14h2" />
+      <path d="M15 13v2" />
+      <path d="M9 13v2" />
+    </svg>
+);
+
+const LoaderIcon = () => (
+    <div className="flex items-center justify-center space-x-1">
+        <div className="h-1.5 w-1.5 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+        <div className="h-1.5 w-1.5 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+        <div className="h-1.5 w-1.5 bg-current rounded-full animate-bounce"></div>
+    </div>
+);
+
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -64,8 +93,6 @@ export default function ChatPage() {
     const finalInput = input.trim();
     if (!finalInput && !file) return;
 
-    let fileDataUri: string | undefined = undefined;
-
     const sendMessageWithFile = (dataUri?: string) => {
         const userMessage: Message = { role: 'user', content: finalInput, fileUrl: dataUri };
         setMessages(prev => [...prev, userMessage]);
@@ -85,7 +112,11 @@ export default function ChatPage() {
                 }
             } catch (e: any) {
                 console.error(e);
-                const errorMessage = e.message || "Failed to get a response from the AI. Please try again.";
+                let errorMessage = e.message || "Failed to get a response from the AI. Please try again.";
+                // Don't throw a hard error, instead show it in the chat
+                if (e.message?.includes('The AI model is currently busy')) {
+                    errorMessage = e.message;
+                }
                 const aiErrorMessage: Message = { role: 'ai', content: errorMessage };
                 setMessages(prev => [...prev, aiErrorMessage]);
             }
@@ -105,15 +136,22 @@ export default function ChatPage() {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4 sm:p-8">
-        <Card className="w-full max-w-4xl h-[90vh] shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20 flex flex-col">
-            <CardHeader className="flex-row items-center justify-between border-b">
-                <div>
-                    <CardTitle className="text-2xl font-bold tracking-tight">
-                        Vesper Chat
-                    </CardTitle>
-                    <CardDescription className="text-md text-muted-foreground/80">
-                        Your personal AI assistant. Ask me anything!
-                    </CardDescription>
+        <Card className="w-full max-w-4xl h-[90vh] shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20 flex flex-col animate-sparkle">
+            <CardHeader className="flex-row items-center justify-between border-b relative z-10">
+                <div className="flex items-center gap-4">
+                     <Avatar className="h-12 w-12 border-2 border-primary/50">
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                            <VesperIcon />
+                        </AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <CardTitle className="text-2xl font-bold tracking-tight">
+                            Chat with Vesper
+                        </CardTitle>
+                        <CardDescription className="text-md text-muted-foreground/80">
+                            Your friendly AI companion. Ask me anything!
+                        </CardDescription>
+                    </div>
                 </div>
                 <Button asChild variant="outline">
                     <Link href="/">
@@ -122,14 +160,14 @@ export default function ChatPage() {
                     </Link>
                 </Button>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-0">
+            <CardContent className="flex-1 overflow-hidden p-0 relative z-10">
                 <ScrollArea ref={scrollAreaRef} className="h-full p-6">
                     <div className="space-y-6">
                         {messages.length === 0 && (
                             <div className="text-center text-muted-foreground pt-20">
-                                <Sparkles className="h-16 w-16 mx-auto text-primary/50 mb-4" />
-                                <p className="text-lg">Start a conversation!</p>
-                                <p className="text-sm">Chat with Vesper, your AI assistant.</p>
+                                <VesperIcon />
+                                <p className="text-lg font-semibold mt-4">Start a conversation!</p>
+                                <p className="text-sm">You can ask me questions or upload an image.</p>
                             </div>
                         )}
                         {messages.map((message, index) => (
@@ -137,7 +175,7 @@ export default function ChatPage() {
                                 {message.role === 'ai' && (
                                     <Avatar className="h-8 w-8">
                                         <AvatarFallback className="bg-primary text-primary-foreground">
-                                            <Sparkles className="h-5 w-5"/>
+                                            <VesperIcon />
                                         </AvatarFallback>
                                     </Avatar>
                                 )}
@@ -163,18 +201,18 @@ export default function ChatPage() {
                             <div className="flex items-start gap-4">
                                 <Avatar className="h-8 w-8">
                                     <AvatarFallback className="bg-primary text-primary-foreground">
-                                        <Sparkles className="h-5 w-5"/>
+                                        <VesperIcon />
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="max-w-xl rounded-xl p-4 bg-muted">
-                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                    <LoaderIcon />
                                 </div>
                             </div>
                         )}
                     </div>
                 </ScrollArea>
             </CardContent>
-            <div className="border-t p-4">
+            <div className="border-t p-4 relative z-10">
                  {filePreview && (
                     <div className="relative w-fit mb-2 p-2 border rounded-lg bg-muted">
                         <Image src={filePreview} alt="File preview" width={80} height={80} className="rounded-md object-cover" />
