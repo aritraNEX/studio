@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import {
   Select,
   SelectContent,
@@ -67,7 +67,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const outputTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [appUrl, setAppUrl] = useState('');
   const { user } = useAuth();
-  const { setWorkspaceText, setWorkspaceOperation } = useWorkspace();
+  const { setWorkspaceText, addWorkspaceStep } = useWorkspace();
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
@@ -328,7 +328,6 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     try {
       const pdfDoc = await PDFDocument.create();
       const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-      const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       
       let page = pdfDoc.addPage();
       const { width, height } = page.getSize();
@@ -365,16 +364,27 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                 y -= lineHeight;
             }
         };
-
-      drawTextWithWrapping(`Vesper Result - ${operation.charAt(0).toUpperCase() + operation.slice(1)}`, {
-          font: helveticaBoldFont, size: 18, color: rgb(0, 0, 0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin
-      });
-      y -= 30;
       
       const lines = textToDownload.split('\n');
       for (const line of lines) {
         drawTextWithWrapping(line, {
             font: helveticaFont, size: 12, color: rgb(0.2, 0.2, 0.2), lineHeight: 15, x: margin, maxWidth: width - 2 * margin,
+        });
+      }
+
+      const pages = pdfDoc.getPages();
+      for (const pdfPage of pages) {
+        const { width, height } = pdfPage.getSize();
+        pdfPage.drawText('Vesper', {
+          x: width / 2,
+          y: height / 2,
+          font: helveticaFont,
+          size: 100,
+          color: rgb(0.85, 0.85, 0.95),
+          opacity: 0.2,
+          rotate: degrees(-45),
+          xSkew: degrees(-15),
+          ySkew: degrees(-15),
         });
       }
 

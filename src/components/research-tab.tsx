@@ -11,7 +11,7 @@ import { researchAssistant, ResearchAssistantOutput } from "@/ai/flows/research-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
 
@@ -165,9 +165,6 @@ export function ResearchTab() {
         }
       };
       
-      await drawTextWithWrapping('Research Report', { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2*margin });
-      y -= 20;
-
       // Report
       await drawTextWithWrapping('Fact-Check Report', { font: helveticaBoldFont, size: 14, color: rgb(0,0,0), lineHeight: 18, x: margin, maxWidth: width - 2*margin });
       y -= 5;
@@ -187,6 +184,22 @@ export function ResearchTab() {
            await drawTextWithWrapping(`- ${ref}`, { font: helveticaFont, size: 10, color: rgb(0.3, 0.3, 0.3), lineHeight: 14, x: margin, maxWidth: width - 2*margin });
            y -= 5;
         }
+      }
+
+      const pages = pdfDoc.getPages();
+      for (const pdfPage of pages) {
+        const { width, height } = pdfPage.getSize();
+        pdfPage.drawText('Vesper', {
+          x: width / 2,
+          y: height / 2,
+          font: helveticaFont,
+          size: 100,
+          color: rgb(0.85, 0.85, 0.95),
+          opacity: 0.2,
+          rotate: degrees(-45),
+          xSkew: degrees(-15),
+          ySkew: degrees(-15),
+        });
       }
 
       const pdfBytes = await pdfDoc.save();

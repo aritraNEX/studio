@@ -14,7 +14,7 @@ import { ScrollArea } from "./ui/scroll-area";
 import * as diffmatchpatch from 'diff-match-patch';
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 
 const dmp = new diffmatchpatch.diff_match_patch();
 const { DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL } = diffmatchpatch;
@@ -154,7 +154,6 @@ export function GrammarCheckTab() {
     try {
         const pdfDoc = await PDFDocument.create();
         const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-        const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
         
         let page = pdfDoc.addPage();
         const { width, height } = page.getSize();
@@ -192,12 +191,25 @@ export function GrammarCheckTab() {
             }
         };
         
-        await drawTextWithWrapping('Grammar Check Result', { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2*margin });
-        y -= 20;
-        
         const lines = textToDownload.split('\n');
         for (const line of lines) {
             await drawTextWithWrapping(line, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2*margin });
+        }
+
+        const pages = pdfDoc.getPages();
+        for (const pdfPage of pages) {
+            const { width, height } = pdfPage.getSize();
+            pdfPage.drawText('Vesper', {
+                x: width / 2,
+                y: height / 2,
+                font: helveticaFont,
+                size: 100,
+                color: rgb(0.85, 0.85, 0.95),
+                opacity: 0.2,
+                rotate: degrees(-45),
+                xSkew: degrees(-15),
+                ySkew: degrees(-15),
+            });
         }
         
         const pdfBytes = await pdfDoc.save();

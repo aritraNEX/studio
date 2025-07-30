@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { flashcardGenerator, FlashcardGeneratorOutput } from "@/ai/flows/flashcard-generator-flow";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
 
@@ -206,6 +206,22 @@ export function FlashcardGeneratorTab() {
             cardCount++;
             x = 20;
             y -= cardHeight + 20;
+        }
+
+        const pages = pdfDoc.getPages();
+        for (const pdfPage of pages) {
+            const { width, height } = pdfPage.getSize();
+            pdfPage.drawText('Vesper', {
+                x: width / 2,
+                y: height / 2,
+                font: helveticaFont,
+                size: 100,
+                color: rgb(0.85, 0.85, 0.95),
+                opacity: 0.2,
+                rotate: degrees(-45),
+                xSkew: degrees(-15),
+                ySkew: degrees(-15),
+            });
         }
 
         const pdfBytes = await pdfDoc.save();

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { processImageText } from "@/ai/flows/paraphrase-image-text";
 import { cn } from "@/lib/utils";
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -207,11 +207,6 @@ export function BatchSummaryTab() {
                 }
             };
             
-            drawTextWithWrapping('Vesper Summaries', {
-                font: helveticaBoldFont, size: 18, color: rgb(0, 0, 0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin
-            });
-            y -= 30;
-
             for (const file of files) {
                 if (file.status === 'done' && file.generatedText) {
                     if (y < margin + 60) {
@@ -234,6 +229,23 @@ export function BatchSummaryTab() {
                     y -= 20; // Extra space between summaries
                 }
             }
+            
+            const pages = pdfDoc.getPages();
+            for (const pdfPage of pages) {
+                const { width, height } = pdfPage.getSize();
+                pdfPage.drawText('Vesper', {
+                    x: width / 2,
+                    y: height / 2,
+                    font: helveticaFont,
+                    size: 100,
+                    color: rgb(0.85, 0.85, 0.95),
+                    opacity: 0.2,
+                    rotate: degrees(-45),
+                    xSkew: degrees(-15),
+                    ySkew: degrees(-15),
+                });
+            }
+
 
             const pdfBytes = await pdfDoc.save();
             const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -267,7 +279,6 @@ export function BatchSummaryTab() {
         try {
             const pdfDoc = await PDFDocument.create();
             const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-            const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
             let page = pdfDoc.addPage();
             const { width, height } = page.getSize();
             const margin = 50;
@@ -304,15 +315,26 @@ export function BatchSummaryTab() {
                 }
             };
             
-            drawTextWithWrapping(`Vesper Summary: ${fileName}`, {
-                font: helveticaBoldFont, size: 18, color: rgb(0, 0, 0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin,
-            });
-            y -= 30;
-
             const lines = textToDownload.split('\n');
             for (const line of lines) {
                 drawTextWithWrapping(line, {
                     font: helveticaFont, size: 12, color: rgb(0.2, 0.2, 0.2), lineHeight: 15, x: margin, maxWidth: width - 2 * margin,
+                });
+            }
+
+            const pages = pdfDoc.getPages();
+            for (const pdfPage of pages) {
+                const { width, height } = pdfPage.getSize();
+                pdfPage.drawText('Vesper', {
+                    x: width / 2,
+                    y: height / 2,
+                    font: helveticaFont,
+                    size: 100,
+                    color: rgb(0.85, 0.85, 0.95),
+                    opacity: 0.2,
+                    rotate: degrees(-45),
+                    xSkew: degrees(-15),
+                    ySkew: degrees(-15),
                 });
             }
 

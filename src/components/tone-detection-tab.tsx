@@ -17,7 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
 
@@ -179,14 +179,27 @@ export function ToneDetectionTab() {
             }
         };
         
-        await drawTextWithWrapping('Tone Analysis Report', { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2*margin });
-        y -= 20;
-        
         for (const tone of result.tones) {
             await drawTextWithWrapping(`${tone.tone} (${tone.score}%)`, { font: helveticaBoldFont, size: 14, color: rgb(0,0,0), lineHeight: 18, x: margin, maxWidth: width - 2*margin });
             y -= 5;
             await drawTextWithWrapping(tone.explanation, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2*margin });
             y -= 15;
+        }
+
+        const pages = pdfDoc.getPages();
+        for (const pdfPage of pages) {
+            const { width, height } = pdfPage.getSize();
+            pdfPage.drawText('Vesper', {
+                x: width / 2,
+                y: height / 2,
+                font: helveticaFont,
+                size: 100,
+                color: rgb(0.85, 0.85, 0.95),
+                opacity: 0.2,
+                rotate: degrees(-45),
+                xSkew: degrees(-15),
+                ySkew: degrees(-15),
+            });
         }
         
         const pdfBytes = await pdfDoc.save();

@@ -12,7 +12,7 @@ import { vocabularyEnhancer, VocabularyEnhancerOutput } from "@/ai/flows/vocabul
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
 
@@ -128,15 +128,6 @@ export function VocabularyEnhancerTab() {
         const margin = 50;
         let y = height - margin;
 
-        await page.drawText('Vocabulary Enhanced Text', {
-            x: margin,
-            y: y,
-            font: helveticaBoldFont,
-            size: 18,
-            color: rgb(0, 0, 0),
-        });
-        y -= 30;
-
         const enhancedParts = getEnhancedTextParts();
         const textFlow = [];
         for (const part of enhancedParts) {
@@ -174,6 +165,23 @@ export function VocabularyEnhancerTab() {
                 currentX += textWidth;
             }
         }
+        
+        const pages = pdfDoc.getPages();
+        for (const pdfPage of pages) {
+            const { width, height } = pdfPage.getSize();
+            pdfPage.drawText('Vesper', {
+                x: width / 2,
+                y: height / 2,
+                font: helveticaFont,
+                size: 100,
+                color: rgb(0.85, 0.85, 0.95),
+                opacity: 0.2,
+                rotate: degrees(-45),
+                xSkew: degrees(-15),
+                ySkew: degrees(-15),
+            });
+        }
+
 
         const pdfBytes = await pdfDoc.save();
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });

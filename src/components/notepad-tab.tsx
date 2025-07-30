@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 
 export function NotepadTab() {
   const [notes, setNotes] = useState<string>("");
@@ -47,7 +47,6 @@ export function NotepadTab() {
     try {
         const pdfDoc = await PDFDocument.create();
         const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-        const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
         
         let page = pdfDoc.addPage();
         const { width, height } = page.getSize();
@@ -85,15 +84,26 @@ export function NotepadTab() {
             }
         };
 
-        drawTextWithWrapping("Vesper Notepad", { 
-            font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2*margin,
-        });
-        y -= 30;
-
         const lines = notes.split('\n');
         for (const line of lines) {
             drawTextWithWrapping(line, {
                 font: helveticaFont, size: 12, color: rgb(0.2, 0.2, 0.2), lineHeight: 15, x: margin, maxWidth: width - 2 * margin,
+            });
+        }
+
+        const pages = pdfDoc.getPages();
+        for (const pdfPage of pages) {
+            const { width, height } = pdfPage.getSize();
+            pdfPage.drawText('Vesper', {
+                x: width / 2,
+                y: height / 2,
+                font: helveticaFont,
+                size: 100,
+                color: rgb(0.85, 0.85, 0.95),
+                opacity: 0.2,
+                rotate: degrees(-45),
+                xSkew: degrees(-15),
+                ySkew: degrees(-15),
             });
         }
 

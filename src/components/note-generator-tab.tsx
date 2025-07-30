@@ -12,7 +12,7 @@ import { noteGenerator, NoteGeneratorOutput } from "@/ai/flows/note-generator-fl
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import { cn } from "@/lib/utils";
 import React from "react";
 
@@ -131,6 +131,22 @@ export function NoteGeneratorTab() {
         } else {
             await drawTextWithWrapping(part, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
         }
+      }
+
+      const pages = pdfDoc.getPages();
+      for (const pdfPage of pages) {
+        const { width, height } = pdfPage.getSize();
+        pdfPage.drawText('Vesper', {
+          x: width / 2,
+          y: height / 2,
+          font: helveticaFont,
+          size: 100,
+          color: rgb(0.85, 0.85, 0.95),
+          opacity: 0.2,
+          rotate: degrees(-45),
+          xSkew: degrees(-15),
+          ySkew: degrees(-15),
+        });
       }
 
       const pdfBytes = await pdfDoc.save();
