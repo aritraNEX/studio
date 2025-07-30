@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithPhoneNumber, sendPasswordResetEmail, RecaptchaVerifier, type ConfirmationResult, type UserCredential } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithPhoneNumber, sendPasswordResetEmail, RecaptchaVerifier, type ConfirmationResult, type UserCredential, type User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -40,10 +40,17 @@ const countryCodes = [
     { name: 'South Africa', code: '+27', flag: '🇿🇦' },
 ];
 
-async function createUserDocument(user: UserCredential['user']) {
+async function createUserDocument(user: User) {
+    if (!user) return;
     const userRef = doc(db, 'users', user.uid);
     // Use set with merge: true to create or update without overwriting
-    await setDoc(userRef, { hasUsedTrial: false }, { merge: true });
+    await setDoc(userRef, { 
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        bio: "", // Initialize with an empty bio
+    }, { merge: true });
 }
 
 export default function LoginPage() {
@@ -71,16 +78,17 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleSuccessfulAuth = () => {
+  const handleSuccessfulAuth = async (user: User) => {
+    await createUserDocument(user);
     router.push('/?welcome=true');
   };
 
   const handleLogin = async () => {
     setIsPending(true);
     try {
-      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      const { user } = await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
       toast({ title: 'Successfully logged in!' });
-      handleSuccessfulAuth();
+      await handleSuccessfulAuth(user);
     } catch (error: any) {
       let description = error.message;
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
@@ -99,10 +107,9 @@ export default function LoginPage() {
   const handleSignUp = async () => {
     setIsPending(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
-      await createUserDocument(userCredential.user);
+      const { user } = await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
       toast({ title: 'Successfully signed up!' });
-      handleSuccessfulAuth();
+      await handleSuccessfulAuth(user);
     } catch (error: any) {
       let description = error.message;
       if (error.code === 'auth/email-already-in-use') {
@@ -141,10 +148,9 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     try {
         auth.languageCode = 'en'; 
-        const userCredential = await signInWithPopup(auth, provider);
-        await createUserDocument(userCredential.user);
+        const { user } = await signInWithPopup(auth, provider);
         toast({ title: 'Successfully signed in with Google!' });
-        handleSuccessfulAuth();
+        await handleSuccessfulAuth(user);
     } catch (error: any) {
          toast({
             variant: 'destructive',
@@ -176,10 +182,9 @@ export default function LoginPage() {
     if (!confirmationResult) return;
     setIsPending(true);
     try {
-        const userCredential = await confirmationResult.confirm(otp);
-        await createUserDocument(userCredential.user);
+        const { user } = await confirmationResult.confirm(otp);
         toast({ title: 'Successfully signed in!' });
-        handleSuccessfulAuth();
+        await handleSuccessfulAuth(user);
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Invalid OTP', description: 'The OTP you entered is incorrect. Please try again.' });
     } finally {

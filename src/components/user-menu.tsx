@@ -1,15 +1,16 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/auth-context";
-import { auth } from "@/lib/firebase";
+import { auth, storage, db } from "@/lib/firebase";
 import { signOut, updateProfile } from "firebase/auth";
-import { LogOut, User as UserIcon, Loader2, Edit, Save, LayoutDashboard, MessageSquare } from "lucide-react";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { doc, setDoc } from "firebase/firestore";
+import { LogOut, User as UserIcon, Loader2, Edit, Save, LayoutDashboard, MessageSquare, Camera } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -23,13 +24,15 @@ import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { Textarea } from "./ui/textarea";
 
 export default function UserMenu() {
   const { user } = useAuth();
   const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
-  const [isPending, setIsPending] = useState(false);
+  const [bio, setBio] = useState(user?.bio ?? "");
+  const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const handleNavigate = (path: string) => {
@@ -47,17 +50,42 @@ export default function UserMenu() {
         toast({ variant: "destructive", title: "Name cannot be empty." });
         return;
     }
-    setIsPending(true);
+    setIsSaving(true);
     try {
         await updateProfile(user, { displayName });
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { bio }, { merge: true });
+        
         toast({ title: "Profile updated successfully!" });
-        setIsEditing(false);
     } catch (error: any) {
         toast({ variant: "destructive", title: "Failed to update profile", description: error.message });
     } finally {
-        setIsPending(false);
+        setIsSaving(false);
     }
   }
+
+  const handlePictureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user || !event.target.files || event.target.files.length === 0) return;
+    
+    const file = event.target.files[0];
+    const storageRef = ref(storage, `profilePictures/${user.uid}`);
+    
+    setIsSaving(true);
+    try {
+        const snapshot = await uploadBytes(storageRef, file);
+        const photoURL = await getDownloadURL(snapshot.ref);
+        
+        await updateProfile(user, { photoURL });
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { photoURL }, { merge: true });
+
+        toast({ title: "Profile picture updated!" });
+    } catch (error: any) {
+        toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload new profile picture." });
+    } finally {
+        setIsSaving(false);
+    }
+  };
 
   if (!user) {
     return null;
@@ -66,7 +94,7 @@ export default function UserMenu() {
   return (
     <div className="flex items-center gap-2">
       <ThemeToggle />
-      <Dialog onOpenChange={(open) => !open && setIsEditing(false)}>
+      <Dialog>
         <DialogTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-10 w-10">
@@ -77,40 +105,56 @@ export default function UserMenu() {
             </Avatar>
           </Button>
         </DialogTrigger>
-        <DialogContent className="w-full max-w-md">
+        <DialogContent className="w-full max-w-lg">
           <DialogHeader className="items-center text-center">
-             <Avatar className="h-24 w-24 mb-4">
-              <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} className="text-5xl" />
-              <AvatarFallback className="text-5xl">
-                {user.email ? user.email.charAt(0).toUpperCase() : <UserIcon />}
-              </AvatarFallback>
-            </Avatar>
-            <DialogTitle className="text-2xl">User Profile</DialogTitle>
-            <DialogDescription>
-              View and manage your account details.
-            </DialogDescription>
+            <div className="relative group">
+                <Avatar className="h-24 w-24 mb-4">
+                <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} className="text-5xl" />
+                <AvatarFallback className="text-5xl">
+                    {user.email ? user.email.charAt(0).toUpperCase() : <UserIcon />}
+                </AvatarFallback>
+                </Avatar>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handlePictureUpload}
+                    className="hidden"
+                    accept="image/png, image/jpeg"
+                />
+                 <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute bottom-4 right-0 rounded-full h-8 w-8 bg-background/80 group-hover:bg-background transition-all"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isSaving}
+                 >
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : <Camera className="h-4 w-4" />}
+                </Button>
+            </div>
+            
+            <DialogTitle className="text-2xl flex items-center gap-2">
+                <Input 
+                    id="displayName"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="text-2xl font-bold text-center border-none focus-visible:ring-1 focus-visible:ring-ring"
+                    disabled={isSaving}
+                />
+            </DialogTitle>
+             <p className="text-sm text-muted-foreground">{user.email}</p>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                    Email
-                </Label>
-                <Input id="email" value={user.email ?? 'No email provided'} readOnly className="col-span-3 bg-muted" />
-            </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                    Name
-                </Label>
-                {isEditing ? (
-                    <Input id="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="col-span-3" />
-                ) : (
-                    <div className="col-span-3 flex items-center justify-between">
-                        <p className="font-medium">{displayName || "Not set"}</p>
-                        <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
-                            <Edit className="h-4 w-4" />
-                        </Button>
-                    </div>
-                )}
+            <div className="grid gap-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                    id="bio"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="Tell us a little about yourself..."
+                    className="resize-none"
+                    rows={3}
+                    disabled={isSaving}
+                />
             </div>
              <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <DialogClose asChild>
@@ -132,17 +176,10 @@ export default function UserMenu() {
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
             </Button>
-            {isEditing && (
-                <div className="flex gap-2">
-                    <DialogClose asChild>
-                        <Button variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>
-                    </DialogClose>
-                    <Button onClick={handleProfileUpdate} disabled={isPending}>
-                        {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        Save
-                    </Button>
-                </div>
-            )}
+            <Button onClick={handleProfileUpdate} disabled={isSaving}>
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Save Changes
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
