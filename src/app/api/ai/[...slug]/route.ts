@@ -4,7 +4,7 @@
  * and route them to the appropriate flow.
  */
 
-import {genkitNextHandler} from '@genkit-ai/next';
+import {genkitAPIHandler} from '@genkit-ai/next';
 import '@/ai/dev'; // Make sure to import the file that defines your flows.
 
-export const POST = genkitNextHandler();
+export const {POST} = genkitAPIHandler();
