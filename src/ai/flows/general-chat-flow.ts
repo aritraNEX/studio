@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A general-purpose conversational AI flow.
@@ -34,7 +33,7 @@ export async function generalChat(
     throw new Error('Query cannot be empty.');
   }
 
-  const { stream } = ai.generateStream({
+  const { stream } = await ai.generate({
     prompt: {
       role: 'user',
       content: [
@@ -54,17 +53,25 @@ export async function generalChat(
     ],
     tools: [googleSearch],
     model: 'googleai/gemini-1.5-flash-latest',
+    stream: true,
   });
   
   const encoder = new TextEncoder();
   const readableStream = new ReadableStream({
     async start(controller) {
-      for await (const chunk of stream) {
-        if (chunk.content) {
-          controller.enqueue(encoder.encode(chunk.content[0].text));
+      try {
+        for await (const chunk of stream) {
+          if (chunk.content) {
+            controller.enqueue(encoder.encode(chunk.content[0].text));
+          }
         }
+      } catch (e: any) {
+        console.error("Error during stream processing:", e);
+        const errorMessage = `Sorry, I encountered an error. ${e.message?.includes('overloaded') ? 'The AI model is currently busy. Please try again in a moment.' : 'Please try again.'}`;
+        controller.enqueue(encoder.encode(errorMessage));
+      } finally {
+        controller.close();
       }
-      controller.close();
     },
     cancel(reason) {
         console.log('Stream canceled:', reason);

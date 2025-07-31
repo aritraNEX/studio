@@ -99,44 +99,44 @@ export function GrammarCheckTab() {
   };
 
   const handleGrammarCheck = () => {
-    if (!fileDataUri) {
-      toast({
-        title: "File not uploaded",
-        description: "Please upload a file before checking.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setError(null);
-    setResult(null);
-
     startTransition(async () => {
-      try {
-        // First, get the original text from the document.
-        const originalTextResult = await processImageText({ fileUrl: fileDataUri, operation: 'style', targetStyle: 'original' });
-        if (!originalTextResult || !originalTextResult.processedText) {
-          throw new Error("Could not extract original text from the document.");
-        }
-        setInputText(originalTextResult.processedText);
-        
-        // Then, get the grammar-corrected version.
-        const checkResult = await processImageText({ operation: 'grammar', fileUrl: fileDataUri });
-        if (checkResult && checkResult.processedText) {
-          setResult(checkResult);
-        } else {
-          throw new Error("The AI returned an empty result for grammar check.");
-        }
-      } catch (e) {
-        console.error(e);
-        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
-        setError(`Failed to check grammar. ${errorMessage}`);
+        if (!fileDataUri) {
         toast({
-          title: "Grammar Check Error",
-          description: "An error occurred while checking the text. Please try again.",
-          variant: "destructive",
+            title: "File not uploaded",
+            description: "Please upload a file before checking.",
+            variant: "destructive",
         });
-      }
+        return;
+        }
+
+        setError(null);
+        setResult(null);
+
+        try {
+            // First, get the original text from the document.
+            const originalTextResult = await processImageText({ fileUrl: fileDataUri, operation: 'style', targetStyle: 'original' });
+            if (!originalTextResult || !originalTextResult.processedText) {
+            throw new Error("Could not extract original text from the document.");
+            }
+            setInputText(originalTextResult.processedText);
+            
+            // Then, get the grammar-corrected version.
+            const checkResult = await processImageText({ operation: 'grammar', fileUrl: fileDataUri });
+            if (checkResult && checkResult.processedText) {
+            setResult(checkResult);
+            } else {
+            throw new Error("The AI returned an empty result for grammar check.");
+            }
+        } catch (e) {
+            console.error(e);
+            const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
+            setError(`Failed to check grammar. ${errorMessage}`);
+            toast({
+            title: "Grammar Check Error",
+            description: "An error occurred while checking the text. Please try again.",
+            variant: "destructive",
+            });
+        }
     });
   };
 

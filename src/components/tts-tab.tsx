@@ -39,35 +39,35 @@ export function TtsTab() {
   }, [workspaceText, setWorkspaceText]);
 
   const handleGenerateSpeech = () => {
-    if (!inputText.trim()) {
-      toast({
-        title: "Text is empty",
-        description: "Please enter some text to convert to speech.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setError(null);
-    setAudioUrl(null);
-
     startTransition(async () => {
-      try {
-        const result = await textToSpeech({
-            text: inputText,
-            voice: selectedVoice as any,
-        });
-        setAudioUrl(result.audioDataUri);
-      } catch (e) {
-        console.error("Failed to generate speech", e);
-        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
-        setError(`Failed to generate speech. ${errorMessage}`);
+        if (!inputText.trim()) {
         toast({
-          title: "Speech Generation Failed",
-          description: "Could not convert text to speech. Please try again.",
-          variant: "destructive",
+            title: "Text is empty",
+            description: "Please enter some text to convert to speech.",
+            variant: "destructive",
         });
-      }
+        return;
+        }
+
+        setError(null);
+        setAudioUrl(null);
+
+        try {
+            const result = await textToSpeech({
+                text: inputText,
+                voice: selectedVoice as any,
+            });
+            setAudioUrl(result.audioDataUri);
+        } catch (e) {
+            console.error("Failed to generate speech", e);
+            const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
+            setError(`Failed to generate speech. ${errorMessage}`);
+            toast({
+            title: "Speech Generation Failed",
+            description: "Could not convert text to speech. Please try again.",
+            variant: "destructive",
+            });
+        }
     });
   };
 

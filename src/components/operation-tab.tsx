@@ -252,64 +252,65 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   };
 
   const handleProcess = () => {
-    if (!fileDataUri && !extractedText) {
-        toast({
-            variant: 'destructive',
-            title: 'No File Selected',
-            description: 'Please upload a file before processing.',
-        });
-        return;
-    }
-    
-    const finalStyle = customStyle.trim() || targetStyle;
+    startTransition(async () => {
+        if (!fileDataUri && !extractedText) {
+            toast({
+                variant: 'destructive',
+                title: 'No File Selected',
+                description: 'Please upload a file before processing.',
+            });
+            return;
+        }
+        
+        const finalStyle = customStyle.trim() || targetStyle;
 
-    if (operation === 'translate' && !targetLanguage.trim()) {
+        if (operation === 'translate' && !targetLanguage.trim()) {
+            toast({
+                title: "Language required",
+                description: "Please enter a target language for translation.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (operation === 'style' && !finalStyle) {
         toast({
-            title: "Language required",
-            description: "Please enter a target language for translation.",
+            title: "Style required",
+            description: "Please select or enter a style for rewriting.",
             variant: "destructive",
         });
         return;
-    }
-
-    if (operation === 'style' && !finalStyle) {
-      toast({
-          title: "Style required",
-          description: "Please select or enter a style for rewriting.",
-          variant: "destructive",
-      });
-      return;
-    }
-
-    setError(null);
-    setGeneratedText("");
-    startTransition(async () => {
-      try {
-        const isImage = fileDataUri?.startsWith("data:image");
-        const payload = {
-            operation,
-            ...(isImage ? { fileUrl: fileDataUri! } : { text: extractedText! }),
-            ...(operation === 'translate' ? { targetLanguage } : {}),
-            ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
-        };
-
-        const result = await processImageText(payload);
-
-        if (result && result.processedText) {
-          setGeneratedText(result.processedText);
-        } else {
-          throw new Error("The processed text is empty.");
         }
-      } catch (e) {
-        console.error(e);
-        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-        setError(`Failed to ${operation} text. Please try again.`);
-        toast({
-          title: `${operation.charAt(0).toUpperCase() + operation.slice(1)} Error`,
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
+
+        setError(null);
+        setGeneratedText("");
+        
+        try {
+            const isImage = fileDataUri?.startsWith("data:image");
+            const payload = {
+                operation,
+                ...(isImage ? { fileUrl: fileDataUri! } : { text: extractedText! }),
+                ...(operation === 'translate' ? { targetLanguage } : {}),
+                ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
+            };
+
+            const result = await processImageText(payload);
+
+            if (result && result.processedText) {
+            setGeneratedText(result.processedText);
+            } else {
+            throw new Error("The processed text is empty.");
+            }
+        } catch (e) {
+            console.error(e);
+            const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+            setError(`Failed to ${operation} text. Please try again.`);
+            toast({
+            title: `${operation.charAt(0).toUpperCase() + operation.slice(1)} Error`,
+            description: errorMessage,
+            variant: "destructive",
+            });
+        }
     });
   };
 

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -53,21 +52,17 @@ interface VesperAppProps {
 
 const VesperIcon = () => (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-5 w-5 mr-3"
-    >
-      <path d="M12 8V4H8" />
-      <rect width="16" height="12" x="4" y="8" rx="2" />
-      <path d="M2 14h2" />
-      <path d="M20 14h2" />
-      <path d="M15 13v2" />
-      <path d="M9 13v2" />
+        width="24"
+        height="24"
+        viewBox="0 0 100 100"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-5 w-5 mr-3"
+        >
+        <circle cx="40" cy="40" r="30" className="fill-primary" />
+        <circle cx="70" cy="35" r="20" className="fill-primary/70" />
+        <circle cx="65" cy="75" r="25" className="fill-accent" />
+        <circle cx="80" cy="70" r="10" className="fill-primary" />
     </svg>
 );
 
@@ -171,7 +166,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                     )}
                  >
                     <VesperIcon />
-                    Chat with Vesper
+                    Visit Vesper AI Studio
                  </Button>
             </div>
 

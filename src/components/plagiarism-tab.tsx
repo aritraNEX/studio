@@ -76,39 +76,39 @@ export function PlagiarismTab() {
 
 
   const handleCheckPlagiarism = () => {
-    if (!inputText.trim() && !fileDataUri) {
-      toast({
-        title: "Input is empty",
-        description: "Please enter some text or upload a file to check for plagiarism.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setError(null);
-    setResult(null);
-
     startTransition(async () => {
-      try {
-        const checkResult = await plagiarismCheck({
-          text: inputText,
-          fileUrl: fileDataUri || undefined
-        });
-        if (checkResult) {
-          setResult(checkResult);
-        } else {
-          throw new Error("The plagiarism check returned no result.");
-        }
-      } catch (e) {
-        console.error(e);
-        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
-        setError(`Failed to check plagiarism. ${errorMessage}`);
+        if (!inputText.trim() && !fileDataUri) {
         toast({
-          title: "Plagiarism Check Error",
-          description: "An error occurred while checking the text. Please try again.",
-          variant: "destructive",
+            title: "Input is empty",
+            description: "Please enter some text or upload a file to check for plagiarism.",
+            variant: "destructive",
         });
-      }
+        return;
+        }
+
+        setError(null);
+        setResult(null);
+
+        try {
+            const checkResult = await plagiarismCheck({
+            text: inputText,
+            fileUrl: fileDataUri || undefined
+            });
+            if (checkResult) {
+            setResult(checkResult);
+            } else {
+            throw new Error("The plagiarism check returned no result.");
+            }
+        } catch (e) {
+            console.error(e);
+            const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
+            setError(`Failed to check plagiarism. ${errorMessage}`);
+            toast({
+            title: "Plagiarism Check Error",
+            description: "An error occurred while checking the text. Please try again.",
+            variant: "destructive",
+            });
+        }
     });
   };
 

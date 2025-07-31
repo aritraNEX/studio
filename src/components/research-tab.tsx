@@ -77,39 +77,39 @@ export function ResearchTab() {
 
 
   const handleResearch = () => {
-    if (!inputText.trim() && !fileDataUri) {
-      toast({
-        title: "Input is empty",
-        description: "Please enter some text or upload a file to research.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setError(null);
-    setResult(null);
-
     startTransition(async () => {
-      try {
-        const researchResult = await researchAssistant({
-          text: inputText,
-          fileUrl: fileDataUri || undefined,
-        });
-        if (researchResult) {
-          setResult(researchResult);
-        } else {
-          throw new Error("The research assistant returned no result.");
-        }
-      } catch (e) {
-        console.error(e);
-        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
-        setError(`Failed to perform research. ${errorMessage}`);
+        if (!inputText.trim() && !fileDataUri) {
         toast({
-          title: "Research Error",
-          description: "An error occurred while researching the text. Please try again.",
-          variant: "destructive",
+            title: "Input is empty",
+            description: "Please enter some text or upload a file to research.",
+            variant: "destructive",
         });
-      }
+        return;
+        }
+
+        setError(null);
+        setResult(null);
+
+        try {
+            const researchResult = await researchAssistant({
+            text: inputText,
+            fileUrl: fileDataUri || undefined,
+            });
+            if (researchResult) {
+            setResult(researchResult);
+            } else {
+            throw new Error("The research assistant returned no result.");
+            }
+        } catch (e) {
+            console.error(e);
+            const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
+            setError(`Failed to perform research. ${errorMessage}`);
+            toast({
+            title: "Research Error",
+            description: "An error occurred while researching the text. Please try again.",
+            variant: "destructive",
+            });
+        }
     });
   };
   
