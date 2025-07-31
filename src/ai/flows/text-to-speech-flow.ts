@@ -98,7 +98,10 @@ const textToSpeechFlow = ai.defineFlow(
         };
     } catch (e: any) {
         console.error("Error in textToSpeechFlow: ", e);
-        throw new Error('The AI model is currently busy. Please try again.');
+        if (e.message?.includes('overloaded')) {
+            throw new Error('The AI model is currently busy. Please try again in a moment.');
+        }
+        throw new Error('An error occurred while converting text to speech. Please try again.');
     }
   }
 );

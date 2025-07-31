@@ -105,7 +105,10 @@ const plagiarismCheckFlow = ai.defineFlow(
         return output;
     } catch (e: any) {
         console.error("Error in plagiarismCheckFlow: ", e);
-        throw new Error('The AI model is currently busy. Please try again.');
+        if (e.message?.includes('overloaded')) {
+            throw new Error('The AI model is currently busy. Please try again in a moment.');
+        }
+        throw new Error('An error occurred during the plagiarism check. Please try again.');
     }
   }
 );

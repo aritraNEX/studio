@@ -98,7 +98,10 @@ const transcriptionFlow = ai.defineFlow(
         return { vtt, detectedLanguage };
     } catch (e: any) {
         console.error("Error in transcriptionFlow: ", e);
-        throw new Error('The AI model is currently busy. Please try again.');
+        if (e.message?.includes('overloaded')) {
+            throw new Error('The AI model is currently busy. Please try again in a moment.');
+        }
+        throw new Error('An error occurred during transcription. Please try again.');
     }
   }
 );
