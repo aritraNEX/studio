@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -10,6 +11,7 @@ import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 
 interface Message {
   id: string;
@@ -54,6 +56,7 @@ export default function ChatPage() {
   const { user } = useAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -161,7 +164,7 @@ export default function ChatPage() {
             <Button asChild variant="outline" size="sm">
                 <Link href="/">
                     <Home className="mr-2 h-4 w-4" />
-                    Toolkit
+                    {t('toolkit_button')}
                 </Link>
             </Button>
         </div>
@@ -170,8 +173,8 @@ export default function ChatPage() {
                 <div className="inline-block p-3 bg-primary rounded-full mb-4 shadow-lg">
                     <VesperIcon />
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Chat with Vesper</h1>
-                <p className="mt-2 text-md text-muted-foreground">Your friendly AI companion. Ask me anything!</p>
+                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{t('chat_title')}</h1>
+                <p className="mt-2 text-md text-muted-foreground">{t('chat_subtitle')}</p>
             </header>
 
              <div ref={scrollAreaRef} className="flex-1 overflow-y-auto pr-4 -mr-4 mb-4">
@@ -209,8 +212,8 @@ export default function ChatPage() {
                     {messages.length === 0 && !isPending && (
                         <div className="text-center text-muted-foreground pt-20">
                             <Sparkles className="mx-auto h-12 w-12 text-primary/30" />
-                            <p className="text-lg font-semibold mt-4">Start a conversation!</p>
-                            <p className="text-sm">You can ask me questions or upload an image.</p>
+                            <p className="text-lg font-semibold mt-4">{t('chat_placeholder')}</p>
+                            <p className="text-sm">{t('chat_sub_placeholder')}</p>
                         </div>
                     )}
                 </div>
@@ -240,8 +243,8 @@ export default function ChatPage() {
                                 handleSendMessage();
                             }
                         }}
-                        placeholder="Type your message here..."
-                        className="pl-12 pr-16 py-3 resize-none border-none focus-visible:ring-0 bg-transparent shadow-none"
+                        placeholder={t('chat_input_placeholder')}
+                        className="pl-12 pr-16 py-3 resize-none border-none focus-visible:ring-0 bg-transparent shadow-none md:text-base text-sm"
                         rows={1}
                         disabled={isPending}
                     />

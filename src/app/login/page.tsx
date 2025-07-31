@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Globe } from 'lucide-react';
 import { FaGoogle } from 'react-icons/fa';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useLanguage, languageOptions } from '@/contexts/language-context';
 
 const countryCodes = [
     { name: 'United States', code: '+1', flag: '🇺🇸' },
@@ -66,6 +67,7 @@ export default function LoginPage() {
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { language, setLanguage, t } = useLanguage();
   
   useEffect(() => {
     // Ensure recaptchaVerifier is only created once on the client
@@ -213,8 +215,8 @@ export default function LoginPage() {
                     <circle cx="80" cy="70" r="10" className="fill-primary" />
                 </svg>
             </div>
-            <h1 className="text-4xl font-bold tracking-tight">Welcome to Vesper</h1>
-            <p className="text-lg text-muted-foreground/80 mt-2">Sign in or create an account to continue</p>
+            <h1 className="text-4xl font-bold tracking-tight">{t('login_welcome_title')}</h1>
+            <p className="text-lg text-muted-foreground/80 mt-2">{t('login_welcome_subtitle')}</p>
         </div>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="login">Login</TabsTrigger>
@@ -359,6 +361,19 @@ export default function LoginPage() {
             {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FaGoogle className="mr-2 h-4 w-4" />}
             Google
         </Button>
+        <div className="mt-4 flex justify-center items-center gap-2">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'es')}>
+              <SelectTrigger className="w-[120px] bg-transparent border-none focus:ring-0">
+                <SelectValue placeholder="Language" />
+              </SelectTrigger>
+              <SelectContent>
+                {languageOptions.map(lang => (
+                    <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+        </div>
       </Tabs>
     </div>
   );

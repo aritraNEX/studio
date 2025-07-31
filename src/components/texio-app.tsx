@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -42,6 +43,7 @@ import { cn } from "@/lib/utils";
 import AboutFooter from "./about-footer";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
+import { useLanguage } from '@/contexts/language-context';
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -99,6 +101,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
   const router = useRouter();
   const [showPopular, setShowPopular] = useState(false);
   const [showQuality, setShowQuality] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (initialTab) {
@@ -129,7 +132,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
   });
   
   return (
-     <Card className="w-full max-w-6xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
+     <Card className="w-full max-w-6xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20 md:text-base text-sm">
       <CardHeader className="text-center p-4 sm:p-8 pt-8">
         <div className="mx-auto w-fit mb-4">
             <svg
@@ -148,10 +151,10 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
         </div>
         
         <CardTitle className="text-3xl sm:text-4xl font-bold tracking-tight">
-          Vesper
+          {t('welcome_title')}
         </CardTitle>
         <CardDescription className="text-lg text-muted-foreground/80">
-          Your Ultimate AI-Powered Toolkit
+          {t('welcome_subtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-2 sm:p-8 pt-2">
@@ -166,7 +169,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                     )}
                  >
                     <Wand2 className="h-5 w-5 mr-3" />
-                    Workspace
+                    {t('workspace')}
                  </Button>
                   <Button
                     onClick={() => router.push('/chat')}
@@ -176,7 +179,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                     )}
                  >
                     <VesperIcon />
-                    Visit Vesper AI Studio
+                    {t('visit_vesper_studio')}
                  </Button>
             </div>
 
@@ -186,14 +189,14 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                         <Switch id="popular-tools" checked={showPopular} onCheckedChange={setShowPopular} />
                         <Label htmlFor="popular-tools" className="flex items-center gap-1.5">
                             <Star className="h-4 w-4 text-yellow-400" />
-                            Most Popular
+                            {t('most_popular')}
                         </Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Switch id="quality-tools" checked={showQuality} onCheckedChange={setShowQuality} />
                         <Label htmlFor="quality-tools" className="flex items-center gap-1.5">
                             <Gem className="h-4 w-4 text-cyan-400" />
-                            High Quality
+                            {t('high_quality')}
                         </Label>
                     </div>
                 </div>

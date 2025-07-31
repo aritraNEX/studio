@@ -7,7 +7,7 @@ import { auth, storage, db } from "@/lib/firebase";
 import { signOut, updateProfile } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
-import { LogOut, User as UserIcon, Loader2, Edit, Save, LayoutDashboard, MessageSquare, Camera } from "lucide-react";
+import { LogOut, User as UserIcon, Loader2, Edit, Save, LayoutDashboard, MessageSquare, Camera, Globe } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,8 @@ import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Textarea } from "./ui/textarea";
+import { useLanguage, languageOptions } from "@/contexts/language-context";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 export default function UserMenu() {
   const { user } = useAuth();
@@ -34,6 +36,7 @@ export default function UserMenu() {
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { language, setLanguage, t } = useLanguage();
 
   const handleNavigate = (path: string) => {
     router.push(path);
@@ -156,11 +159,24 @@ export default function UserMenu() {
                     disabled={isSaving}
                 />
             </div>
+            <div className="grid gap-2">
+                <Label htmlFor="language-select">Language</Label>
+                <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'es')}>
+                  <SelectTrigger id="language-select">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {languageOptions.map(lang => (
+                        <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+            </div>
              <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <DialogClose asChild>
                     <Button onClick={() => handleNavigate('/dashboard')} className="w-full">
                         <LayoutDashboard className="mr-2 h-4 w-4" />
-                        My Projects
+                        {t('profile_my_projects')}
                     </Button>
                  </DialogClose>
                  
@@ -169,11 +185,11 @@ export default function UserMenu() {
           <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">
             <Button variant="outline" onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
+                <span>{t('profile_logout')}</span>
             </Button>
             <Button onClick={handleProfileUpdate} disabled={isSaving}>
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Save Changes
+                {t('profile_save_changes')}
             </Button>
           </DialogFooter>
         </DialogContent>

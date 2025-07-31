@@ -1,0 +1,20 @@
+
+{
+    "welcome_title": "Welcome to Vesper",
+    "welcome_subtitle": "Your Ultimate AI-Powered Toolkit",
+    "visit_vesper_studio": "Visit Vesper AI Studio",
+    "workspace": "Workspace",
+    "most_popular": "Most Popular",
+    "high_quality": "High Quality",
+    "chat_title": "Chat with Vesper",
+    "chat_subtitle": "Your friendly AI companion. Ask me anything!",
+    "chat_placeholder": "Start a conversation!",
+    "chat_sub_placeholder": "You can ask me questions or upload an image.",
+    "chat_input_placeholder": "Type your message here...",
+    "toolkit_button": "Toolkit",
+    "profile_my_projects": "My Projects",
+    "profile_logout": "Log out",
+    "profile_save_changes": "Save Changes",
+    "login_welcome_title": "Welcome to Vesper",
+    "login_welcome_subtitle": "Sign in or create an account to continue"
+}
