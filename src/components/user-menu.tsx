@@ -25,7 +25,7 @@ import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Textarea } from "./ui/textarea";
-import { useLanguage, languageOptions } from "@/contexts/language-context";
+import { useLanguage, allLanguageOptions } from '@/contexts/language-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 export default function UserMenu() {
@@ -166,7 +166,7 @@ export default function UserMenu() {
                     <SelectValue placeholder="Select language" />
                   </SelectTrigger>
                   <SelectContent>
-                    {languageOptions.map(lang => (
+                    {allLanguageOptions.map(lang => (
                         <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
                     ))}
                   </SelectContent>

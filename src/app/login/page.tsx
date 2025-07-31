@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { useLanguage, languageOptions } from '@/contexts/language-context';
+import { useLanguage, allLanguageOptions } from '@/contexts/language-context';
 
 const countryCodes = [
     { name: 'United States', code: '+1', flag: '🇺🇸' },
@@ -364,11 +364,11 @@ export default function LoginPage() {
         <div className="mt-4 flex justify-center items-center gap-2">
             <Globe className="h-4 w-4 text-muted-foreground" />
             <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'es')}>
-              <SelectTrigger className="w-[120px] bg-transparent border-none focus:ring-0">
+              <SelectTrigger className="w-[180px] bg-transparent border-none focus:ring-0">
                 <SelectValue placeholder="Language" />
               </SelectTrigger>
               <SelectContent>
-                {languageOptions.map(lang => (
+                {allLanguageOptions.map(lang => (
                     <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
                 ))}
               </SelectContent>

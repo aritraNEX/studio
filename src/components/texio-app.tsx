@@ -151,7 +151,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
         </div>
         
         <CardTitle className="text-3xl sm:text-4xl font-bold tracking-tight">
-          {t('welcome_title')}
+          Vesper
         </CardTitle>
         <CardDescription className="text-lg text-muted-foreground/80">
           {t('welcome_subtitle')}
