@@ -7,7 +7,7 @@ import { auth, storage, db } from "@/lib/firebase";
 import { signOut, updateProfile } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
-import { LogOut, User as UserIcon, Loader2, Edit, Save, LayoutDashboard, MessageSquare, Camera, Globe } from "lucide-react";
+import { LogOut, User as UserIcon, Loader2, Save, LayoutDashboard, Camera } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -96,6 +96,10 @@ export default function UserMenu() {
 
   return (
     <div className="flex items-center gap-2">
+      <Button onClick={() => handleNavigate('/dashboard')} variant="outline" size="sm" className="hidden sm:flex">
+          <LayoutDashboard className="mr-2 h-4 w-4" />
+          {t('profile_my_projects')}
+      </Button>
       <ThemeToggle />
       <Dialog>
         <DialogTrigger asChild>
@@ -161,7 +165,7 @@ export default function UserMenu() {
             </div>
             <div className="grid gap-2">
                 <Label htmlFor="language-select">Language</Label>
-                <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'es')}>
+                <Select value={language} onValueChange={(value) => setLanguage(value)}>
                   <SelectTrigger id="language-select">
                     <SelectValue placeholder="Select language" />
                   </SelectTrigger>
@@ -172,15 +176,10 @@ export default function UserMenu() {
                   </SelectContent>
                 </Select>
             </div>
-             <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 <DialogClose asChild>
-                    <Button onClick={() => handleNavigate('/dashboard')} className="w-full">
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        {t('profile_my_projects')}
-                    </Button>
-                 </DialogClose>
-                 
-            </div>
+            <Button onClick={() => handleNavigate('/dashboard')} variant="outline" className="w-full sm:hidden">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                {t('profile_my_projects')}
+            </Button>
           </div>
           <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">
             <Button variant="outline" onClick={handleSignOut}>

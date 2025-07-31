@@ -11,7 +11,7 @@ type Language = keyof typeof languages;
 
 interface LanguageContextType {
   language: Language;
-  setLanguage: (language: Language) => void;
+  setLanguage: (language: string) => void;
   t: (key: string, options?: { [key: string]: string | number }) => string;
 }
 
@@ -27,9 +27,9 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const setLanguage = (lang: Language) => {
+  const setLanguage = (lang: string) => {
     localStorage.setItem('vesper-lang', lang);
-    setLanguageState(lang);
+    setLanguageState(lang as Language);
   };
 
   const t = useCallback((key: string, options?: { [key: string]: string | number }): string => {
