@@ -1,3 +1,5 @@
+
+'use server';
 /**
  * @fileOverview Defines a Genkit tool for performing Google searches.
  * 
