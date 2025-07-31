@@ -179,7 +179,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                     )}
                  >
                     <VesperIcon />
-                    {t('visit_vesper_studio')}
+                    {t('vesper_ai_studio')}
                  </Button>
             </div>
 
@@ -212,7 +212,7 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                         >
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
                             {feature.icon}
-                            <span className="text-xs sm:text-sm">{feature.label}</span>
+                            <span className="text-xs sm:text-sm">{t(`features.${feature.value}`)}</span>
                         </div>
                         </TabsTrigger>
                     ))}

@@ -14,6 +14,7 @@ import { Input } from "./ui/input";
 import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import { cn } from "@/lib/utils";
 import React from 'react';
+import { useLanguage } from "@/contexts/language-context";
 
 export function AssignmentMakerTab() {
   const [topic, setTopic] = useState<string>("");
@@ -22,12 +23,13 @@ export function AssignmentMakerTab() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const handleGenerateAssignment = () => {
     if (!topic.trim()) {
       toast({
-        title: "Topic is empty",
-        description: "Please enter a topic for the assignment.",
+        title: t("assignment.toast.topic_empty_title"),
+        description: t("assignment.toast.topic_empty_desc"),
         variant: "destructive",
       });
       return;
@@ -42,15 +44,15 @@ export function AssignmentMakerTab() {
         if (assignmentResult) {
           setResult(assignmentResult);
         } else {
-          throw new Error("The assignment maker returned no result.");
+          throw new Error(t("assignment.toast.no_result_error"));
         }
       } catch (e) {
         console.error(e);
-        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
-        setError(`Failed to generate assignment. ${errorMessage}`);
+        const errorMessage = e instanceof Error ? e.message : t("unknown_error");
+        setError(`${t("assignment.toast.generation_failed_desc")} ${errorMessage}`);
         toast({
-          title: "Assignment Error",
-          description: "An error occurred while generating the assignment. Please try again.",
+          title: t("assignment.toast.generation_failed_title"),
+          description: t("assignment.toast.generation_failed_desc"),
           variant: "destructive",
         });
       }
@@ -61,8 +63,8 @@ export function AssignmentMakerTab() {
     if (!textToCopy) return;
     navigator.clipboard.writeText(textToCopy);
     toast({
-      title: "Copied to clipboard!",
-      description: `The assignment text has been copied.`,
+      title: t("copied_title"),
+      description: t("assignment.toast.copied_desc"),
     });
   };
 
@@ -169,8 +171,8 @@ export function AssignmentMakerTab() {
         console.error("Failed to generate PDF:", pdfError);
         toast({
             variant: "destructive",
-            title: "PDF Generation Failed",
-            description: "Could not create the PDF file. Please try again."
+            title: t("pdf_error_title"),
+            description: t("pdf_error_desc")
         });
     }
   };
@@ -180,44 +182,44 @@ export function AssignmentMakerTab() {
       <div className="grid md:grid-cols-2 gap-8 items-start">
         <div className="flex flex-col gap-4">
           <Label htmlFor="assignment-topic" className="font-semibold text-md">
-            Assignment Topic
+            {t("assignment.topic_label")}
           </Label>
           <Input
             id="assignment-topic"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="e.g., The impact of AI on modern education"
+            placeholder={t("assignment.topic_placeholder")}
             className="bg-background focus-visible:ring-accent"
             disabled={isPending}
           />
            <Label htmlFor="assignment-instructions" className="font-semibold text-md">
-            Optional Instructions
+            {t("assignment.instructions_label")}
           </Label>
           <Textarea
             id="assignment-instructions"
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
-            placeholder="e.g., Focus on the benefits and challenges. Include at least 3 references. The tone should be academic."
+            placeholder={t("assignment.instructions_placeholder")}
             className="h-72 resize-y bg-background focus-visible:ring-accent"
             disabled={isPending}
           />
         </div>
         <div className="flex flex-col gap-4">
             <Label className="font-semibold text-md">
-                Generated Assignment
+                {t("assignment.output_label")}
             </Label>
             <Card className="min-h-96 bg-background/50 flex flex-col">
                 <CardContent className="flex-grow flex items-center justify-center p-6">
                     {isPending && (
                         <div className="flex flex-col items-center gap-4 text-muted-foreground animate-in fade-in duration-500">
                             <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                            <p className="font-semibold">Generating your assignment...</p>
-                            <p className="text-sm text-center">The AI is researching and writing.</p>
+                            <p className="font-semibold">{t("assignment.status.generating")}</p>
+                            <p className="text-sm text-center">{t("assignment.status.writing")}</p>
                         </div>
                     )}
                     {!isPending && !result && (
                          <div className="text-center text-muted-foreground p-4">
-                             <p>Your generated assignment will appear here.</p>
+                             <p>{t("assignment.status.placeholder")}</p>
                         </div>
                     )}
                     {!isPending && result && (
@@ -238,14 +240,14 @@ export function AssignmentMakerTab() {
                                   })}
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold flex items-center gap-2 mt-4 mb-2"><BookCheck className="h-5 w-5"/> References</h3>
+                                    <h3 className="text-lg font-semibold flex items-center gap-2 mt-4 mb-2"><BookCheck className="h-5 w-5"/> {t("references")}</h3>
                                     <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5 font-mono">
                                         {result.references.length > 0 ? (
                                             result.references.map((ref, index) => (
                                             <li key={index}>{ref}</li>
                                             ))
                                         ) : (
-                                            <li>No references were generated.</li>
+                                            <li>{t("assignment.no_references")}</li>
                                         )}
                                     </ul>
                                 </div>
@@ -266,7 +268,7 @@ export function AssignmentMakerTab() {
                     className="transition-all duration-300 hover:scale-105"
                 >
                     <Copy className="mr-2 h-5 w-5" />
-                    Copy Text
+                    {t("copy_text_button")}
                 </Button>
                 <Button
                     onClick={handleDownloadPdf}
@@ -275,7 +277,7 @@ export function AssignmentMakerTab() {
                     className="transition-all duration-300 hover:scale-105"
                 >
                     <Download className="mr-2 h-5 w-5" />
-                    Download PDF
+                    {t("download_pdf_button")}
                 </Button>
             </div>
          )}
@@ -293,7 +295,7 @@ export function AssignmentMakerTab() {
           ) : (
             <Sparkles className="mr-2 h-5 w-5" />
           )}
-          <span>{isPending ? "Generating..." : "Generate Assignment"}</span>
+          <span>{isPending ? t("button.generating") : t("assignment.generate_button")}</span>
         </Button>
         {error && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
       </div>

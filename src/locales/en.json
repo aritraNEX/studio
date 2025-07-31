@@ -1,8 +1,8 @@
 
 {
-    "welcome_title": "Welcome to Vesper",
+    "welcome_title": "Vesper",
     "welcome_subtitle": "Your Ultimate AI-Powered Toolkit",
-    "visit_vesper_studio": "Visit Vesper AI Studio",
+    "vesper_ai_studio": "Vesper AI Studio",
     "workspace": "Workspace",
     "most_popular": "Most Popular",
     "high_quality": "High Quality",
@@ -16,5 +16,64 @@
     "profile_logout": "Log out",
     "profile_save_changes": "Save Changes",
     "login_welcome_title": "Welcome to Vesper",
-    "login_welcome_subtitle": "Sign in or create an account to continue"
+    "login_welcome_subtitle": "Sign in or create an account to continue",
+    "copied_title": "Copied to clipboard!",
+    "unknown_error": "An unknown error occurred.",
+    "pdf_error_title": "PDF Generation Failed",
+    "pdf_error_desc": "Could not create the PDF file. Please try again.",
+    "copy_text_button": "Copy Text",
+    "download_pdf_button": "Download PDF",
+    "references": "References",
+    "button": {
+        "generating": "Generating...",
+        "processing": "Processing...",
+        "checking": "Checking...",
+        "analyzing": "Analyzing...",
+        "drawing": "Drawing...",
+        "thinking": "Thinking..."
+    },
+    "features": {
+        "paraphrase": "Paraphrase",
+        "summarize": "Summarize",
+        "grammar": "Grammar",
+        "batch-summary": "Batch Summary",
+        "translate": "Translate",
+        "style": "Style",
+        "explainer": "Explainer",
+        "diagrams": "Diagrams",
+        "assign-mentor": "Assignment",
+        "note-mentor": "Note-mentor",
+        "flashcards": "Flashcards",
+        "citations": "Citations",
+        "vocabulary": "Vocabulary",
+        "tone": "Tone",
+        "video-to-text": "Video to Text",
+        "research": "Research",
+        "plagiarism": "Plagiarism",
+        "tts": "TTS",
+        "formula": "Formula",
+        "notepad": "Notepad"
+    },
+    "assignment": {
+        "topic_label": "Assignment Topic",
+        "topic_placeholder": "e.g., The impact of AI on modern education",
+        "instructions_label": "Optional Instructions",
+        "instructions_placeholder": "e.g., Focus on the benefits and challenges. Include at least 3 references. The tone should be academic.",
+        "output_label": "Generated Assignment",
+        "status": {
+            "generating": "Generating your assignment...",
+            "writing": "The AI is researching and writing.",
+            "placeholder": "Your generated assignment will appear here."
+        },
+        "toast": {
+            "topic_empty_title": "Topic is empty",
+            "topic_empty_desc": "Please enter a topic for the assignment.",
+            "no_result_error": "The assignment maker returned no result.",
+            "generation_failed_title": "Assignment Error",
+            "generation_failed_desc": "An error occurred while generating the assignment. Please try again.",
+            "copied_desc": "The assignment text has been copied."
+        },
+        "generate_button": "Generate Assignment",
+        "no_references": "No references were generated."
+    }
 }
