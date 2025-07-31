@@ -163,12 +163,7 @@ export default function UserMenu() {
                         My Projects
                     </Button>
                  </DialogClose>
-                  <DialogClose asChild>
-                    <Button onClick={() => handleNavigate('/chat')} className="w-full">
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        Chat with Vesper
-                    </Button>
-                 </DialogClose>
+                 
             </div>
           </div>
           <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">

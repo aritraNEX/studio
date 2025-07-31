@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Sparkles } from "lucide-react";
@@ -27,7 +26,6 @@ export default function AboutFooter() {
           <h3 className="font-semibold text-foreground mb-2">Quick Links</h3>
           <ul className="text-sm space-y-1">
             <li><a onClick={() => handleNavigate('/dashboard')} className="text-muted-foreground hover:text-primary cursor-pointer">My Projects</a></li>
-            <li><a onClick={() => handleNavigate('/chat')} className="text-muted-foreground hover:text-primary cursor-pointer">Chat with Vesper</a></li>
           </ul>
         </div>
         <div>

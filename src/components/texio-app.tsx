@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp, Users, MessageSquare } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp, Users, MessageSquare, Star, Gem } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -40,6 +40,8 @@ import { VocabularyEnhancerTab } from "./vocabulary-enhancer-tab";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import AboutFooter from "./about-footer";
+import { Label } from "./ui/label";
+import { Switch } from "./ui/switch";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -68,26 +70,26 @@ const VesperIcon = () => (
 
 
 const allFeatures = [
-    { value: 'paraphrase', icon: <Quote className="h-5 w-5" />, label: 'Paraphrase' },
-    { value: 'summarize', icon: <BookText className="h-5 w-5" />, label: 'Summarize' },
-    { value: 'grammar', icon: <SpellCheck className="h-5 w-5" />, label: 'Grammar' },
-    { value: 'batch-summary', icon: <Rows3 className="h-5 w-5" />, label: 'Batch Summary' },
-    { value: 'translate', icon: <Languages className="h-5 w-5" />, label: 'Translate' },
-    { value: 'style', icon: <Palette className="h-5 w-5" />, label: 'Style' },
-    { value: 'explainer', icon: <BrainCircuit className="h-5 w-5" />, label: 'Explainer' },
-    { value: 'diagrams', icon: <Share2 className="h-5 w-5" />, label: 'Diagrams' },
-    { value: 'assign-mentor', icon: <PenSquare className="h-5 w-5" />, label: 'Assignment' },
-    { value: 'note-mentor', icon: <StickyNote className="h-5 w-5" />, label: 'Note-mentor' },
-    { value: 'flashcards', icon: <Copy className="h-5 w-5" />, label: 'Flashcards' },
-    { value: 'citations', icon: <BookA className="h-5 w-5" />, label: 'Citations' },
-    { value: 'vocabulary', icon: <BookUp className="h-5 w-5" />, label: 'Vocabulary' },
-    { value: 'tone', icon: <Gauge className="h-5 w-5" />, label: 'Tone' },
-    { value: 'video-to-text', icon: <Video className="h-5 w-5" />, label: 'Video to Text' },
-    { value: 'research', icon: <GraduationCap className="h-5 w-5" />, label: 'Research' },
-    { value: 'plagiarism', icon: <ShieldCheck className="h-5 w-5" />, label: 'Plagiarism' },
-    { value: 'tts', icon: <AudioLines className="h-5 w-5" />, label: 'TTS' },
-    { value: 'formula', icon: <FunctionSquare className="h-5 w-5" />, label: 'Formula' },
-    { value: 'notepad', icon: <Notebook className="h-5 w-5" />, label: 'Notepad' },
+    { value: 'paraphrase', icon: <Quote className="h-5 w-5" />, label: 'Paraphrase', tags: ['popular', 'quality'] },
+    { value: 'summarize', icon: <BookText className="h-5 w-5" />, label: 'Summarize', tags: ['popular', 'quality'] },
+    { value: 'grammar', icon: <SpellCheck className="h-5 w-5" />, label: 'Grammar', tags: ['popular', 'quality'] },
+    { value: 'batch-summary', icon: <Rows3 className="h-5 w-5" />, label: 'Batch Summary', tags: ['quality'] },
+    { value: 'translate', icon: <Languages className="h-5 w-5" />, label: 'Translate', tags: ['popular'] },
+    { value: 'style', icon: <Palette className="h-5 w-5" />, label: 'Style', tags: [] },
+    { value: 'explainer', icon: <BrainCircuit className="h-5 w-5" />, label: 'Explainer', tags: ['popular', 'quality'] },
+    { value: 'diagrams', icon: <Share2 className="h-5 w-5" />, label: 'Diagrams', tags: ['quality'] },
+    { value: 'assign-mentor', icon: <PenSquare className="h-5 w-5" />, label: 'Assignment', tags: ['popular', 'quality'] },
+    { value: 'note-mentor', icon: <StickyNote className="h-5 w-5" />, label: 'Note-mentor', tags: ['quality'] },
+    { value: 'flashcards', icon: <Copy className="h-5 w-5" />, label: 'Flashcards', tags: ['popular'] },
+    { value: 'citations', icon: <BookA className="h-5 w-5" />, label: 'Citations', tags: [] },
+    { value: 'vocabulary', icon: <BookUp className="h-5 w-5" />, label: 'Vocabulary', tags: ['quality'] },
+    { value: 'tone', icon: <Gauge className="h-5 w-5" />, label: 'Tone', tags: [] },
+    { value: 'video-to-text', icon: <Video className="h-5 w-5" />, label: 'Video to Text', tags: ['popular', 'quality'] },
+    { value: 'research', icon: <GraduationCap className="h-5 w-5" />, label: 'Research', tags: ['quality'] },
+    { value: 'plagiarism', icon: <ShieldCheck className="h-5 w-5" />, label: 'Plagiarism', tags: [] },
+    { value: 'tts', icon: <AudioLines className="h-5 w-5" />, label: 'TTS', tags: ['popular'] },
+    { value: 'formula', icon: <FunctionSquare className="h-5 w-5" />, label: 'Formula', tags: [] },
+    { value: 'notepad', icon: <Notebook className="h-5 w-5" />, label: 'Notepad', tags: [] },
 ];
 
 export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProps) {
@@ -95,6 +97,8 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
   const [animatingTab, setAnimatingTab] = useState<string | null>(null);
   const { setWorkspaceText, addWorkspaceStep } = useWorkspace();
   const router = useRouter();
+  const [showPopular, setShowPopular] = useState(false);
+  const [showQuality, setShowQuality] = useState(false);
 
   useEffect(() => {
     if (initialTab) {
@@ -117,6 +121,12 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
         setActiveTab("workspace");
     }
   };
+
+  const filteredFeatures = allFeatures.filter(feature => {
+    if (showPopular && !feature.tags.includes('popular')) return false;
+    if (showQuality && !feature.tags.includes('quality')) return false;
+    return true;
+  });
   
   return (
      <Card className="w-full max-w-6xl shadow-2xl shadow-primary/20 rounded-2xl bg-card/60 backdrop-blur-xl border-border/20">
@@ -171,8 +181,24 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
             </div>
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+                 <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
+                    <div className="flex items-center space-x-2">
+                        <Switch id="popular-tools" checked={showPopular} onCheckedChange={setShowPopular} />
+                        <Label htmlFor="popular-tools" className="flex items-center gap-1.5">
+                            <Star className="h-4 w-4 text-yellow-400" />
+                            Most Popular
+                        </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Switch id="quality-tools" checked={showQuality} onCheckedChange={setShowQuality} />
+                        <Label htmlFor="quality-tools" className="flex items-center gap-1.5">
+                            <Gem className="h-4 w-4 text-cyan-400" />
+                            High Quality
+                        </Label>
+                    </div>
+                </div>
                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 mx-auto h-auto p-1.5 flex-wrap">
-                    {allFeatures.map(feature => (
+                    {filteredFeatures.map(feature => (
                         <TabsTrigger 
                         key={feature.value}
                         value={feature.value} 
