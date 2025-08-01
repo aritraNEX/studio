@@ -127,15 +127,30 @@ export default function ChatPage() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
+      let buffer = '';
 
       while (!done) {
           const { value, done: readerDone } = await reader.read();
           done = readerDone;
-          const chunk = decoder.decode(value, { stream: true });
+          buffer += decoder.decode(value, { stream: true });
           
-          setMessages(prev => prev.map(msg => 
-            msg.id === aiMessageId ? { ...msg, content: msg.content + chunk } : msg
-          ));
+          // Process buffer line by line for Server-Sent Events
+          const lines = buffer.split('\\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                  const jsonString = line.substring(6);
+                  if (jsonString.trim()) {
+                      const chunk = JSON.parse(jsonString);
+                      if (chunk.content) {
+                          setMessages(prev => prev.map(msg => 
+                            msg.id === aiMessageId ? { ...msg, content: msg.content + chunk.content[0].text } : msg
+                          ));
+                      }
+                  }
+              }
+          }
       }
       
     } catch (e: any) {
