@@ -158,6 +158,7 @@ export default function ChatPage() {
           alt="background"
           fill
           className="absolute inset-0 z-0 h-full w-full object-cover opacity-30"
+          data-ai-hint="background"
         />
         <div className="absolute top-4 right-4 z-20">
             <Button asChild variant="outline" size="sm">
@@ -188,7 +189,7 @@ export default function ChatPage() {
                                 </Avatar>
                             )}
                             <div className={cn("max-w-xl rounded-2xl p-4", message.role === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-card text-card-foreground border rounded-bl-none')}>
-                                {message.fileUrl && message.content && (
+                                {message.fileUrl && (
                                     <div className="mb-2">
                                         <Image src={message.fileUrl} alt="Uploaded file" width={200} height={200} className="rounded-lg object-contain" />
                                     </div>
