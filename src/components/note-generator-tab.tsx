@@ -82,7 +82,7 @@ export function NoteGeneratorTab() {
       const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       
       let page = pdfDoc.addPage();
-      const { width, height } = page.getSize();
+      let { width, height } = page.getSize();
       const margin = 50;
       let y = height - margin;
 
@@ -121,15 +121,45 @@ export function NoteGeneratorTab() {
       await drawTextWithWrapping(result.title, { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin });
       y -= 15;
 
-      // Draw Content
-      const contentParts = result.content.split(/(\*\*.*?\*\*)/g).filter(Boolean);
-      
-      for(const part of contentParts) {
-        if (part.startsWith('**') && part.endsWith('**')) {
-            const boldText = part.slice(2, -2);
-            await drawTextWithWrapping(boldText, { font: helveticaBoldFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
-        } else {
-            await drawTextWithWrapping(part, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
+      // Draw Content line by line
+      const contentLines = result.content.split('\n');
+
+      for (const line of contentLines) {
+        const contentParts = line.split(/(\*\*.*?\*\*)/g).filter(Boolean);
+        let currentX = margin;
+
+        for (const part of contentParts) {
+            let text = part;
+            let font = helveticaFont;
+            if (part.startsWith('**') && part.endsWith('**')) {
+                text = part.slice(2, -2);
+                font = helveticaBoldFont;
+            }
+            
+            const textWidth = font.widthOfTextAtSize(text, 11);
+            if (currentX > margin && (currentX + textWidth > width - margin)) {
+                currentX = margin;
+                y -= 15; // lineHeight
+                if (y < margin) {
+                    page = pdfDoc.addPage();
+                    ({ width, height } = page.getSize());
+                    y = height - margin;
+                }
+            }
+            page.drawText(text, {
+                x: currentX,
+                y,
+                font,
+                size: 11,
+                color: rgb(0.1, 0.1, 0.1)
+            });
+            currentX += textWidth;
+        }
+        y -= 15; // Move to the next line in the PDF
+        if (y < margin) {
+            page = pdfDoc.addPage();
+            ({ width, height } = page.getSize());
+            y = height - margin;
         }
       }
 
