@@ -7,7 +7,7 @@ import { auth, storage, db } from "@/lib/firebase";
 import { signOut, updateProfile } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
-import { LogOut, User as UserIcon, Loader2, Save, LayoutDashboard, Camera } from "lucide-react";
+import { LogOut, User as UserIcon, Loader2, Save, LayoutDashboard, Camera, Puzzle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -100,6 +100,10 @@ export default function UserMenu() {
           <LayoutDashboard className="mr-2 h-4 w-4" />
           {t('profile_my_projects')}
       </Button>
+      <Button onClick={() => handleNavigate('/integrations')} variant="outline" size="sm" className="hidden sm:flex">
+          <Puzzle className="mr-2 h-4 w-4" />
+          {t('profile_integrations')}
+      </Button>
       <ThemeToggle />
       <Dialog>
         <DialogTrigger asChild>
@@ -179,6 +183,10 @@ export default function UserMenu() {
             <Button onClick={() => handleNavigate('/dashboard')} variant="outline" className="w-full sm:hidden">
                 <LayoutDashboard className="mr-2 h-4 w-4" />
                 {t('profile_my_projects')}
+            </Button>
+             <Button onClick={() => handleNavigate('/integrations')} variant="outline" className="w-full sm:hidden">
+                <Puzzle className="mr-2 h-4 w-4" />
+                {t('profile_integrations')}
             </Button>
           </div>
           <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">
