@@ -1,0 +1,67 @@
+{
+  "integrations": [
+    {
+      "platform": "Browser",
+      "browser": "Chrome",
+      "store_url": "https://chrome.google.com/webstore/",
+      "features": [
+        "Grammar and spell check",
+        "Tone detection",
+        "Writing suggestions",
+        "Works across web platforms like email, documents, and social media"
+      ]
+    },
+    {
+      "platform": "Browser",
+      "browser": "Edge",
+      "store_url": "https://microsoftedge.microsoft.com/addons/",
+      "features": [
+        "AI writing suggestions",
+        "Real-time feedback",
+        "Secure integration with Office apps",
+        "Spell and grammar checking"
+      ]
+    },
+    {
+      "platform": "Browser",
+      "browser": "Firefox",
+      "store_url": "https://addons.mozilla.org/",
+      "features": [
+        "Grammar and punctuation correction",
+        "Clarity and engagement suggestions",
+        "Lightweight and privacy-safe"
+      ]
+    },
+    {
+      "platform": "Browser / macOS",
+      "browser": "Safari",
+      "store_url": "https://apps.apple.com/",
+      "features": [
+        "macOS system-wide assistance",
+        "Text correction in Safari",
+        "Native desktop support"
+      ]
+    },
+    {
+      "platform": "Webmail",
+      "application": "Gmail",
+      "integration_type": "Inline enhancement",
+      "features": [
+        "Real-time corrections while composing",
+        "Tone and clarity feedback",
+        "AI-driven email suggestions"
+      ]
+    },
+    {
+      "platform": "Desktop / Office Add-in",
+      "application": "Microsoft Word",
+      "integration_type": "Plugin",
+      "features": [
+        "Inline editing with grammar suggestions",
+        "Supports Word and Outlook",
+        "Clarity and tone adjustment",
+        "Rephrasing and corrections"
+      ]
+    }
+  ]
+}
