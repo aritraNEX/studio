@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Send, User, Paperclip, X, Home, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,14 +58,18 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
 
-  useEffect(() => {
+  const scrollToBottom = useCallback(() => {
     if (scrollAreaRef.current) {
         scrollAreaRef.current.scrollTo({
             top: scrollAreaRef.current.scrollHeight,
             behavior: 'smooth'
         });
     }
-  }, [messages]);
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -107,9 +112,7 @@ export default function ChatPage() {
 
     setMessages(prev => [...prev, userMessage, aiMessage]);
     setInput("");
-    setFile(null);
-    setFilePreview(null);
-    if(fileInputRef.current) fileInputRef.current.value = "";
+    handleRemoveFile();
 
     try {
       const response = await fetch('/api/ai/stream/generalChat', {
@@ -117,23 +120,21 @@ export default function ChatPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: finalInput, fileUrl: dataUri }),
       });
-
+      
       if (!response.ok || !response.body) {
         const errorText = await response.text();
-        throw new Error(errorText || "An error occurred during the request.");
+        throw new Error(errorText || "The server returned an invalid response.");
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let done = false;
       
-      while (!done) {
-          const { value, done: readerDone } = await reader.read();
-          done = readerDone;
+      while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
           const chunk = decoder.decode(value, { stream: true });
-          
           setMessages(prev => prev.map(msg => 
-            msg.id === aiMessageId ? { ...msg, content: msg.content + chunk } : msg
+            msg.id === aiMessageId ? { ...msg, content: msg.content + chunk, isStreaming: true } : msg
           ));
       }
       

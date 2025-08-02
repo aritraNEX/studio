@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A general-purpose conversational AI flow.
@@ -27,7 +28,7 @@ export const GeneralChatOutputSchema = z.object({
 export type GeneralChatOutput = z.infer<typeof GeneralChatOutputSchema>;
 
 
-const generalChatFlow = ai.defineFlow(
+const generalChat = ai.defineFlow(
     {
       name: 'generalChat',
       inputSchema: GeneralChatInputSchema,
@@ -39,39 +40,53 @@ const generalChatFlow = ai.defineFlow(
             throw new Error('Query cannot be empty.');
         }
 
-        const genkitStream = await ai.generate({
-            prompt: {
-                role: 'user',
-                content: [
-                    { text: input.query },
-                    ...(input.fileUrl ? [{ media: { url: input.fileUrl } }] : []),
-                ],
-            },
-            history: [
-            {
-                role: 'system',
-                content: [
+        try {
+            const llmResponse = await ai.generate({
+                prompt: {
+                    role: 'user',
+                    content: [
+                        { text: input.query },
+                        ...(input.fileUrl ? [{ media: { url: input.fileUrl } }] : []),
+                    ],
+                },
+                history: [
                 {
-                    text: `You are Vesper, a friendly and highly intelligent AI assistant. Your goal is to provide helpful, accurate, and conversational answers to user questions. If the query requires up-to-date information or knowledge about specific entities, use the 'googleSearch' tool to get information from the web. Synthesize the information from your knowledge and the search results to formulate a comprehensive and easy-to-understand answer. Your response should be in a conversational tone. Be friendly, but also authoritative and trustworthy.`,
+                    role: 'system',
+                    content: [
+                    {
+                        text: `You are Vesper, a friendly and highly intelligent AI assistant. Your goal is to provide helpful, accurate, and conversational answers to user questions. If the query requires up-to-date information or knowledge about specific entities, use the 'googleSearch' tool to get information from the web. Synthesize the information from your knowledge and the search results to formulate a comprehensive and easy-to-understand answer. Your response should be in a conversational tone. Be friendly, but also authoritative and trustworthy.`,
+                    },
+                    ],
                 },
                 ],
-            },
-            ],
-            tools: [googleSearch],
-            model: 'googleai/gemini-1.5-flash-latest',
-            stream: true,
-        });
+                tools: [googleSearch],
+                model: 'googleai/gemini-1.5-flash-latest',
+                stream: true,
+            });
 
-        for await (const chunk of genkitStream.stream) {
-            if (chunk.content) {
-              stream.write(chunk.content[0].text);
+            for await (const chunk of llmResponse.stream) {
+                if (chunk.content) {
+                  stream.write(chunk.content[0].text);
+                }
             }
+        } catch (e: any) {
+            console.error("Error in generalChat flow:", e);
+            const errorMessage = e.message || 'An unexpected error occurred while processing the chat.';
+             if (e.message?.includes('overloaded')) {
+                throw new Error('The AI model is currently busy. Please try again in a moment.');
+            }
+            throw new Error(`AI processing failed: ${errorMessage}`);
         }
     }
 );
 
 // This is an exported wrapper to conform to the expected flow signature for non-streaming access if needed,
-// but the primary use is via streaming.
-export async function generalChat(input: GeneralChatInput): Promise<GeneralChatOutput> {
-    throw new Error('This flow is designed for streaming. Use streamFlow instead.');
+// but the primary use is via streaming. This function is not meant to be called directly in this app.
+export async function generalChatFlow(input: GeneralChatInput): Promise<GeneralChatOutput> {
+    let finalAnswer = '';
+    const {stream} = await ai.runFlow(generalChat, input);
+    for await (const chunk of stream) {
+        finalAnswer += chunk;
+    }
+    return { answer: finalAnswer };
 }

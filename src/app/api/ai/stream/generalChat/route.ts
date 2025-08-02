@@ -1,50 +1,19 @@
+
 'use server';
 
-import { NextRequest, NextResponse } from 'next/server';
-import { streamFlow } from '@genkit-ai/core';
-import '@/ai/dev';
+import { NextRequest } from 'next/server';
+import { streamFlow } from '@genkit-ai/next/server';
+import '@/ai/dev'; // Make sure to import the file that defines your flows
 
+// This route uses the Genkit streamFlow helper to handle the streaming API.
+// It connects the 'generalChat' flow to this endpoint.
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    
-    // Create a streaming response
-    const readableStream = new ReadableStream({
-      async start(controller) {
-        try {
-          const flowResult = await streamFlow('generalChat', body);
-          
-          const encoder = new TextEncoder();
+  const body = await request.json();
 
-          for await (const chunk of flowResult) {
-            // Note: We are now streaming the raw string chunks directly.
-            // The frontend will handle parsing if it expects JSON, but here we send text.
-            controller.enqueue(encoder.encode(chunk));
-          }
-          
-          controller.close();
-        } catch (error) {
-          console.error('Streaming error:', error);
-          const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during streaming.';
-          controller.enqueue(new TextEncoder().encode(`Error: ${errorMessage}`));
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(readableStream, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8', // Changed to text/plain
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
-  } catch (error) {
-    console.error('API error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown API error occurred.';
-    return NextResponse.json(
-      { error: `Internal server error: ${errorMessage}` },
-      { status: 500 }
-    );
-  }
+  // The streamFlow helper manages the entire streaming process.
+  return streamFlow('generalChat', body, {
+      // We pass in the NextRequest and NextResponse for context if needed by the helper.
+      // As of genkit@1.14.0, these are not strictly required but are good practice.
+      request, 
+  });
 }
