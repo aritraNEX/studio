@@ -49,12 +49,21 @@ interface OperationTabProps {
   projectId?: string | null;
 }
 
+const fileToDataUri = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+};
+
 
 export function OperationTab({ operation, onSendTo, initialText, projectId }: OperationTabProps) {
-  const [fileDataUri, setFileDataUri] = useState<string | null>(initialText && initialText.startsWith('data:') ? initialText : null);
-  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(initialText && initialText.startsWith('data:image') ? initialText : null);
-  const [extractedText, setExtractedText] = useState<string | null>(null);
-  const [generatedText, setGeneratedText] = useState<string>(initialText && !initialText.startsWith('data:') ? initialText : "");
+  const [inputText, setInputText] = useState<string>(initialText || "");
+  const [fileDataUri, setFileDataUri] = useState<string | null>(null);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+  const [generatedText, setGeneratedText] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isParsing, setIsParsing] = useState(false);
@@ -97,12 +106,16 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
           if (projectData.operation === operation) {
             setGeneratedText(projectData.outputText);
             const savedFileData = projectData.inputText;
-            if (savedFileData && savedFileData.startsWith('data:')) {
-                setFileDataUri(savedFileData);
-                if (savedFileData.startsWith('data:image')) {
-                    setLocalPreviewUrl(savedFileData);
-                } else if (savedFileData) {
-                    setFileName("Loaded Project Document");
+            if (savedFileData) {
+                if (savedFileData.startsWith('data:')) {
+                    setFileDataUri(savedFileData);
+                    if (savedFileData.startsWith('data:image')) {
+                        setLocalPreviewUrl(savedFileData);
+                    } else {
+                        setFileName("Loaded Project Document");
+                    }
+                } else {
+                    setInputText(savedFileData);
                 }
             }
           }
@@ -129,7 +142,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     try {
       await addDoc(collection(db, 'projects'), {
         userId: user.uid,
-        inputText: fileDataUri || extractedText || '',
+        inputText: inputText || fileDataUri,
         outputText: generatedText,
         operation: operation,
         createdAt: serverTimestamp(),
@@ -143,92 +156,70 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     }
   };
 
-   const handleParseFile = async (file: File) => {
-        setIsParsing(true);
-        setExtractedText(null);
-        setGeneratedText("");
+  const handleParseFile = async (file: File) => {
+    setIsParsing(true);
+    setInputText("");
+    setGeneratedText("");
 
-        try {
-            const fileType = file.type;
-            const reader = new FileReader();
+    try {
+        const fileType = file.type;
+        const reader = new FileReader();
 
-            reader.onerror = () => {
-                reader.abort();
-                throw new DOMException("Problem parsing input file.");
-            };
-            
-            reader.onload = async (e) => {
-                try {
-                    const buffer = e.target?.result;
+        reader.onerror = () => {
+            reader.abort();
+            throw new DOMException("Problem parsing input file.");
+        };
+        
+        reader.onload = async (e) => {
+            try {
+                const buffer = e.target?.result;
+                let textContent = "";
+                if (fileType.startsWith("image/")) {
+                    // For images, the data URI is the content, so no text is extracted here.
+                    const dataUri = await fileToDataUri(file);
+                    setFileDataUri(dataUri);
+                    setLocalPreviewUrl(dataUri);
+                } else {
+                    setFileDataUri(await fileToDataUri(file));
                     if (fileType === 'application/pdf') {
                         const pdf = await pdfjsLib.getDocument(buffer as ArrayBuffer).promise;
-                        let text = '';
                         for (let i = 1; i <= pdf.numPages; i++) {
                             const page = await pdf.getPage(i);
                             const content = await page.getTextContent();
-                            text += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
+                            textContent += content.items.map(item => ('str' in item ? item.str : '')).join(' ') + '\n';
                         }
-                        setExtractedText(text);
                     } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
                         const result = await mammoth.extractRawText({ arrayBuffer: buffer as ArrayBuffer });
-                        setExtractedText(result.value);
-                    } else if (fileType.startsWith("image/")) {
-                        // For images, the data URI itself is the content.
-                        setExtractedText(null);
+                        textContent = result.value;
                     }
-                    setIsParsing(false);
-                } catch (err) {
-                    throw err;
+                    setInputText(textContent);
                 }
-            };
-            
-            if (fileType.startsWith("image/")) {
-                reader.readAsDataURL(file); // This will set fileDataUri
-                setIsParsing(false); // Image parsing is just loading the data uri
-            } else {
-                reader.readAsArrayBuffer(file);
+                setIsParsing(false);
+            } catch (err) {
+                throw err;
             }
-        } catch (err) {
-            toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not parse the selected file.' });
-            setFileName(null);
-            setIsParsing(false);
-        }
-    };
-
-
-  const handleFileUpload = async (file: File) => {
-    if (!file) return;
-
-    // Reset states for a new upload
-    setFileDataUri(null);
-    setLocalPreviewUrl(null);
-    setGeneratedText("");
-    setError(null);
-    setFileName(file.name);
-    
-    // Set preview for images
-    if (file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = () => {
-            const dataUri = reader.result as string;
-            setFileDataUri(dataUri);
-            setLocalPreviewUrl(dataUri);
         };
-        reader.readAsDataURL(file);
-    } else {
-        setFileDataUri("placeholder"); // Indicate that a non-image file is loaded
+        
+        if (fileType.startsWith("image/")) {
+            reader.readAsDataURL(file);
+        } else {
+            reader.readAsArrayBuffer(file);
+        }
+    } catch (err) {
+        toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not parse the selected file.' });
+        setFileName(null);
+        setIsParsing(false);
     }
-    
-    await handleParseFile(file);
   };
-  
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-        handleFileUpload(file);
+      setFileName(file.name);
+      handleParseFile(file);
     }
-    if(event.target) {
-        event.target.value = "";
+    if (event.target) {
+      event.target.value = "";
     }
   };
   
@@ -247,17 +238,18 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     setIsDragging(false);
     const file = event.dataTransfer.files?.[0];
     if (file) {
-        handleFileUpload(file);
+      setFileName(file.name);
+      handleParseFile(file);
     }
   };
 
   const handleProcess = () => {
     startTransition(async () => {
-        if (!fileDataUri && !extractedText) {
+        if (!inputText.trim() && !fileDataUri) {
             toast({
                 variant: 'destructive',
-                title: 'No File Selected',
-                description: 'Please upload a file before processing.',
+                title: 'No Input Provided',
+                description: 'Please enter text or upload a file.',
             });
             return;
         }
@@ -289,7 +281,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             const isImage = fileDataUri?.startsWith("data:image");
             const payload = {
                 operation,
-                ...(isImage ? { fileUrl: fileDataUri! } : { text: extractedText! }),
+                ...(isImage ? { fileUrl: fileDataUri! } : { text: inputText! }),
                 ...(operation === 'translate' ? { targetLanguage } : {}),
                 ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
             };
@@ -397,7 +389,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
+      URL.revokeObjectURL(url);
 
       toast({
           title: "PDF Downloaded",
@@ -461,32 +453,31 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     <div className="grid md:grid-cols-2 gap-8 items-start">
       <div className="flex flex-col gap-4">
         <Label htmlFor={`image-upload-${operation}`} className="font-semibold text-md">
-          Upload a File
+          Upload a File or Enter Text
         </Label>
         
-        <div className="relative">
-        <input
-            type="file"
-            id={`image-upload-${operation}`}
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="sr-only"
-            accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        />
         <label
             htmlFor={`image-upload-${operation}`}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onDragLeave={handleDragLeave}
             className={cn(
-                "group flex flex-col items-center justify-center w-full h-80 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
+                "group relative flex flex-col items-center justify-center w-full min-h-[10rem] border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300",
                 isDragging
                     ? "border-primary bg-primary/20"
                     : "border-primary/20 hover:border-primary bg-primary/5 hover:bg-primary/10 text-muted-foreground"
             )}
         >
+          <input
+              type="file"
+              id={`image-upload-${operation}`}
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="sr-only"
+              accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          />
             {localPreviewUrl ? (
-                <div className="relative w-full h-full p-2">
+                <div className="relative w-full h-full p-2 min-h-[10rem]">
                     <Image
                     src={localPreviewUrl}
                     alt="Uploaded content"
@@ -496,7 +487,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                 </div>
             ) : fileName ? (
              <div className="flex flex-col items-center justify-center text-center p-4">
-                <FileText className="w-16 h-16 mb-4 text-primary" />
+                <FileText className="w-12 h-12 mb-2 text-primary" />
                 <p className="font-semibold text-foreground">{fileName}</p>
                 {isParsing ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
@@ -508,7 +499,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                 )}
             </div>
             ) : (
-            <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
+            <div className="flex flex-col items-center justify-center py-6 text-center p-4">
                 <Upload className="w-10 h-10 mb-3 text-muted-foreground transition-transform duration-300 group-hover:scale-110 group-hover:text-primary" />
                 <p className="mb-2 text-sm text-muted-foreground">
                 <span className="font-semibold text-primary">Click to upload</span> or drag and drop
@@ -517,7 +508,14 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
             </div>
             )}
         </label>
-        </div>
+         <Textarea
+              id={`input-text-${operation}`}
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Or enter text here..."
+              className="h-40 resize-y bg-background focus-visible:ring-accent"
+              disabled={isPending}
+            />
       </div>
       <div className="flex flex-col gap-4 h-full">
         {operation === 'translate' && (
@@ -692,7 +690,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
          <div className="flex flex-wrap items-center justify-center gap-4">
           <Button
             onClick={handleProcess}
-            disabled={!fileDataUri || isPending || isParsing || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
+            disabled={(!inputText.trim() && !fileDataUri) || isPending || isParsing || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
             className={cn(
                 "w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto",

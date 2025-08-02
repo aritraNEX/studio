@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp, Users, MessageSquare, Star, Gem } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp, Users, MessageSquare, Star, Gem, Puzzle } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -180,6 +180,16 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                  >
                     <VesperIcon />
                     {t('vesper_ai_studio')}
+                 </Button>
+                 <Button
+                    onClick={() => router.push('/integrations')}
+                    variant={'outline'}
+                    className={cn(
+                        "w-full justify-start text-base py-6"
+                    )}
+                 >
+                    <Puzzle className="h-5 w-5 mr-3" />
+                    {t('integrations_button')}
                  </Button>
             </div>
 

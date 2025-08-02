@@ -100,10 +100,6 @@ export default function UserMenu() {
           <LayoutDashboard className="mr-2 h-4 w-4" />
           {t('profile_my_projects')}
       </Button>
-      <Button onClick={() => handleNavigate('/integrations')} variant="outline" size="sm" className="hidden sm:flex">
-          <Puzzle className="mr-2 h-4 w-4" />
-          {t('profile_integrations')}
-      </Button>
       <ThemeToggle />
       <Dialog>
         <DialogTrigger asChild>
@@ -186,7 +182,7 @@ export default function UserMenu() {
             </Button>
              <Button onClick={() => handleNavigate('/integrations')} variant="outline" className="w-full sm:hidden">
                 <Puzzle className="mr-2 h-4 w-4" />
-                {t('profile_integrations')}
+                {t('integrations_button')}
             </Button>
           </div>
           <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">
