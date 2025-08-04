@@ -12,7 +12,7 @@ import { noteGenerator, NoteGeneratorOutput } from "@/ai/flows/note-generator-fl
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
-import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees, PDFFont } from 'pdf-lib';
 import { cn } from "@/lib/utils";
 import React from "react";
 
@@ -86,80 +86,60 @@ export function NoteGeneratorTab() {
       const margin = 50;
       let y = height - margin;
 
-      const drawTextWithWrapping = async (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; }) => {
-        const { font, size, color, lineHeight, x, maxWidth } = options;
-        const words = text.split(' ');
-        let currentLine = '';
+      const drawLineWithBold = async (line: string, startY: number) => {
+        let currentY = startY;
+        let currentX = margin;
+        const maxWidth = width - 2 * margin;
+        const parts = line.split(/(\*\*.*?\*\*)/g).filter(Boolean);
 
-        for (const word of words) {
-            const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
-            const textWidth = font.widthOfTextAtSize(testLine, size);
+        for (const part of parts) {
+          const isBold = part.startsWith('**') && part.endsWith('**');
+          const text = isBold ? part.slice(2, -2) : part;
+          const font = isBold ? helveticaBoldFont : helveticaFont;
+          const words = text.split(' ');
 
-            if (textWidth > maxWidth) {
-                 if (y < lineHeight + margin) {
-                    page = pdfDoc.addPage();
-                    y = height - margin;
-                }
-                page.drawText(currentLine, { x, y, font, size, color, lineHeight });
-                y -= lineHeight;
-                currentLine = word;
-            } else {
-                currentLine = testLine;
+          for (const word of words) {
+            const wordWidth = font.widthOfTextAtSize(word + ' ', 11);
+            if (currentX + wordWidth > width - margin) {
+              currentX = margin;
+              currentY -= 15;
             }
-        }
-        if (currentLine) {
-             if (y < lineHeight + margin) {
-                page = pdfDoc.addPage();
-                y = height - margin;
+            if (currentY <= margin) {
+              page = pdfDoc.addPage();
+              currentY = height - margin;
+              currentX = margin;
             }
-            page.drawText(currentLine, { x, y, font, size, color, lineHeight });
-            y -= lineHeight;
+            page.drawText(word + ' ', {
+              x: currentX,
+              y: currentY,
+              font,
+              size: 11,
+              color: rgb(0.1, 0.1, 0.1),
+            });
+            currentX += wordWidth;
+          }
         }
+        return currentY;
       };
 
       // Draw Title
-      await drawTextWithWrapping(result.title, { font: helveticaBoldFont, size: 18, color: rgb(0,0,0), lineHeight: 22, x: margin, maxWidth: width - 2 * margin });
-      y -= 15;
+      page.drawText(result.title, {
+        x: margin,
+        y,
+        font: helveticaBoldFont,
+        size: 18,
+        color: rgb(0, 0, 0),
+      });
+      y -= 30;
 
       // Draw Content line by line
       const contentLines = result.content.split('\n');
-
       for (const line of contentLines) {
-        const contentParts = line.split(/(\*\*.*?\*\*)/g).filter(Boolean);
-        let currentX = margin;
-
-        for (const part of contentParts) {
-            let text = part;
-            let font = helveticaFont;
-            if (part.startsWith('**') && part.endsWith('**')) {
-                text = part.slice(2, -2);
-                font = helveticaBoldFont;
-            }
-            
-            const textWidth = font.widthOfTextAtSize(text, 11);
-            if (currentX > margin && (currentX + textWidth > width - margin)) {
-                currentX = margin;
-                y -= 15; // lineHeight
-                if (y < margin) {
-                    page = pdfDoc.addPage();
-                    ({ width, height } = page.getSize());
-                    y = height - margin;
-                }
-            }
-            page.drawText(text, {
-                x: currentX,
-                y,
-                font,
-                size: 11,
-                color: rgb(0.1, 0.1, 0.1)
-            });
-            currentX += textWidth;
-        }
+        y = await drawLineWithBold(line, y);
         y -= 15; // Move to the next line in the PDF
         if (y < margin) {
-            page = pdfDoc.addPage();
-            ({ width, height } = page.getSize());
-            y = height - margin;
+          page = pdfDoc.addPage();
+          y = height - margin;
         }
       }
 
