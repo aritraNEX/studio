@@ -38,6 +38,7 @@
         "summarize": "Resumir",
         "grammar": "Gramática",
         "batch-summary": "Resumen por lotes",
+        "batch-paraphrase": "Parafraseo por lotes",
         "translate": "Traducir",
         "style": "Estilo",
         "explainer": "Explicador",

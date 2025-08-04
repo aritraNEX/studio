@@ -28,6 +28,7 @@ import { ResearchTab } from "./research-tab";
 import { TtsTab } from "./tts-tab";
 import { TranscriptionTab } from "./transcription-tab";
 import { BatchSummaryTab } from "./batch-summary-tab";
+import { BatchParaphraseTab } from "./batch-paraphrase-tab";
 import { FormulaTab } from "./formula-tab";
 import { AssignmentMakerTab } from "./assignment-maker-tab";
 import { FlashcardGeneratorTab } from "./flashcard-generator-tab";
@@ -76,6 +77,7 @@ const allFeatures = [
     { value: 'summarize', icon: <BookText className="h-5 w-5" />, label: 'Summarize', tags: ['popular', 'quality'] },
     { value: 'grammar', icon: <SpellCheck className="h-5 w-5" />, label: 'Grammar', tags: ['popular', 'quality'] },
     { value: 'batch-summary', icon: <Rows3 className="h-5 w-5" />, label: 'Batch Summary', tags: ['quality'] },
+    { value: 'batch-paraphrase', icon: <Rows3 className="h-5 w-5" />, label: 'Batch Paraphrase', tags: ['quality'] },
     { value: 'translate', icon: <Languages className="h-5 w-5" />, label: 'Translate', tags: ['popular'] },
     { value: 'style', icon: <Palette className="h-5 w-5" />, label: 'Style', tags: [] },
     { value: 'explainer', icon: <BrainCircuit className="h-5 w-5" />, label: 'Explainer', tags: ['popular', 'quality'] },
@@ -243,6 +245,9 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                     </TabsContent>
                     <TabsContent value="batch-summary" className="m-0">
                         <BatchSummaryTab />
+                    </TabsContent>
+                     <TabsContent value="batch-paraphrase" className="m-0">
+                        <BatchParaphraseTab />
                     </TabsContent>
                     <TabsContent value="translate" className="m-0">
                         <OperationTab operation="translate" onSendTo={handleSendTo} projectId={projectId} />
