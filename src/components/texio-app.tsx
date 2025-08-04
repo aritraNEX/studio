@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp, Users, MessageSquare, Star, Gem, Puzzle } from "lucide-react";
+import { Sparkles, Quote, BookText, Languages, Notebook, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, Rows3, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp, Users, MessageSquare, Star, Gem, Puzzle, Camera } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -45,6 +45,7 @@ import AboutFooter from "./about-footer";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { useLanguage } from '@/contexts/language-context';
+import { LensTab } from "./lens-tab";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -93,6 +94,7 @@ const allFeatures = [
     { value: 'plagiarism', icon: <ShieldCheck className="h-5 w-5" />, label: 'Plagiarism' },
     { value: 'tts', icon: <AudioLines className="h-5 w-5" />, label: 'TTS' },
     { value: 'formula', icon: <FunctionSquare className="h-5 w-5" />, label: 'Formula' },
+    { value: 'lens', icon: <Camera className="h-5 w-5" />, label: 'Lens' },
     { value: 'notepad', icon: <Notebook className="h-5 w-5" />, label: 'Notepad' },
 ];
 
@@ -269,6 +271,9 @@ export function VesperApp({ projectId, initialTab, initialTopic }: VesperAppProp
                     </TabsContent>
                     <TabsContent value="formula" className="m-0">
                         <FormulaTab />
+                    </TabsContent>
+                    <TabsContent value="lens" className="m-0">
+                        <LensTab />
                     </TabsContent>
                     <TabsContent value="notepad" className="m-0">
                         <NotepadTab />

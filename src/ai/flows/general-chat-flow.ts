@@ -12,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { googleSearch } from '@/ai/tools/google-search-tool';
 
-export const GeneralChatInputSchema = z.object({
+const GeneralChatInputSchema = z.object({
   query: z.string().describe('The user\'s question or message.'),
   fileUrl: z
     .string()
@@ -22,7 +22,7 @@ export const GeneralChatInputSchema = z.object({
 });
 export type GeneralChatInput = z.infer<typeof GeneralChatInputSchema>;
 
-export const GeneralChatOutputSchema = z.object({
+const GeneralChatOutputSchema = z.object({
   answer: z.string().describe('A helpful and conversational answer to the user\'s query.'),
 });
 export type GeneralChatOutput = z.infer<typeof GeneralChatOutputSchema>;
