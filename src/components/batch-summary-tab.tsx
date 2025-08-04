@@ -178,32 +178,34 @@ export function BatchSummaryTab() {
 
             const drawTextWithWrapping = (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; }) => {
                 const { font, size, color, lineHeight, x, maxWidth } = options;
-                let words = text.split(' ');
-                let currentLine = '';
+                const lines = text.split('\n');
+                for (const line of lines) {
+                    let words = line.split(' ');
+                    let currentLine = '';
+                    for (const word of words) {
+                        const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+                        const textWidth = font.widthOfTextAtSize(testLine, size);
 
-                for (const word of words) {
-                    const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
-                    const textWidth = font.widthOfTextAtSize(testLine, size);
-
-                    if (textWidth > maxWidth) {
+                        if (textWidth > maxWidth) {
+                             if (y < lineHeight + margin) {
+                                page = pdfDoc.addPage();
+                                y = height - margin;
+                            }
+                            page.drawText(currentLine, { x, y, font, size, color, lineHeight });
+                            y -= lineHeight;
+                            currentLine = word;
+                        } else {
+                            currentLine = testLine;
+                        }
+                    }
+                    if (currentLine) {
                          if (y < lineHeight + margin) {
                             page = pdfDoc.addPage();
                             y = height - margin;
                         }
                         page.drawText(currentLine, { x, y, font, size, color, lineHeight });
                         y -= lineHeight;
-                        currentLine = word;
-                    } else {
-                        currentLine = testLine;
                     }
-                }
-                if (currentLine) {
-                     if (y < lineHeight + margin) {
-                        page = pdfDoc.addPage();
-                        y = height - margin;
-                    }
-                    page.drawText(currentLine, { x, y, font, size, color, lineHeight });
-                    y -= lineHeight;
                 }
             };
             
@@ -219,30 +221,26 @@ export function BatchSummaryTab() {
                     });
                     y -= 20;
 
-                    const lines = file.generatedText.split('\n');
-                    for (const line of lines) {
-                        drawTextWithWrapping(line, {
-                           font: helveticaFont, size: 10, color: rgb(0.2, 0.2, 0.2), lineHeight: 14, x: margin, maxWidth: width - 2 * margin
-                        });
-                        if (line.trim() === '') y -= 7; // Add small space for paragraphs
-                    }
+                    drawTextWithWrapping(file.generatedText, {
+                       font: helveticaFont, size: 10, color: rgb(0.2, 0.2, 0.2), lineHeight: 14, x: margin, maxWidth: width - 2 * margin
+                    });
+
                     y -= 20; // Extra space between summaries
                 }
             }
             
             const pages = pdfDoc.getPages();
+            const watermarkText = "Researched and created with Vesper";
             for (const pdfPage of pages) {
                 const { width, height } = pdfPage.getSize();
-                pdfPage.drawText('Vesper', {
-                    x: width / 2,
+                pdfPage.drawText(watermarkText, {
+                    x: width / 2 - helveticaFont.widthOfTextAtSize(watermarkText, 50) / 2,
                     y: height / 2,
                     font: helveticaFont,
-                    size: 100,
-                    color: rgb(0.85, 0.85, 0.95),
-                    opacity: 0.2,
-                    rotate: degrees(-45),
-                    xSkew: degrees(-15),
-                    ySkew: degrees(-15),
+                    size: 50,
+                    color: rgb(0.1, 0.1, 0.1),
+                    opacity: 0.1,
+                    rotate: degrees(-30),
                 });
             }
 
@@ -323,18 +321,17 @@ export function BatchSummaryTab() {
             }
 
             const pages = pdfDoc.getPages();
+            const watermarkText = "Researched and created with Vesper";
             for (const pdfPage of pages) {
                 const { width, height } = pdfPage.getSize();
-                pdfPage.drawText('Vesper', {
-                    x: width / 2,
+                pdfPage.drawText(watermarkText, {
+                    x: width / 2 - helveticaFont.widthOfTextAtSize(watermarkText, 50) / 2,
                     y: height / 2,
                     font: helveticaFont,
-                    size: 100,
-                    color: rgb(0.85, 0.85, 0.95),
-                    opacity: 0.2,
-                    rotate: degrees(-45),
-                    xSkew: degrees(-15),
-                    ySkew: degrees(-15),
+                    size: 50,
+                    color: rgb(0.1, 0.1, 0.1),
+                    opacity: 0.1,
+                    rotate: degrees(-30),
                 });
             }
 

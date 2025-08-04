@@ -209,18 +209,17 @@ export function FlashcardGeneratorTab() {
         }
 
         const pages = pdfDoc.getPages();
+        const watermarkText = "Researched and created with Vesper";
         for (const pdfPage of pages) {
             const { width, height } = pdfPage.getSize();
-            pdfPage.drawText('Vesper', {
-                x: width / 2,
+            pdfPage.drawText(watermarkText, {
+                x: width / 2 - helveticaFont.widthOfTextAtSize(watermarkText, 50) / 2,
                 y: height / 2,
                 font: helveticaFont,
-                size: 100,
-                color: rgb(0.85, 0.85, 0.95),
-                opacity: 0.2,
-                rotate: degrees(-45),
-                xSkew: degrees(-15),
-                ySkew: degrees(-15),
+                size: 50,
+                color: rgb(0.1, 0.1, 0.1),
+                opacity: 0.1,
+                rotate: degrees(-30),
             });
         }
 

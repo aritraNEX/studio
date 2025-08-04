@@ -140,7 +140,7 @@ export function CitationGeneratorTab() {
       const margin = 50;
       let y = height - margin;
 
-      const drawTextWithWrapping = async (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; isBold?: boolean; }) => {
+      const drawTextWithWrapping = (text: string, options: { font: any; size: number; color: any; lineHeight: number; x: number; maxWidth: number; isBold?: boolean; }) => {
         const { font, size, color, lineHeight, x, maxWidth } = options;
         const words = text.split(' ');
         let currentLine = '';
@@ -172,23 +172,22 @@ export function CitationGeneratorTab() {
       };
 
       for (const citation of result.citations) {
-        await drawTextWithWrapping(citation, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
+        drawTextWithWrapping(citation, { font: helveticaFont, size: 11, color: rgb(0.1, 0.1, 0.1), lineHeight: 15, x: margin, maxWidth: width - 2 * margin });
         y -= 10;
       }
       
       const pages = pdfDoc.getPages();
+      const watermarkText = "Researched and created with Vesper";
       for (const pdfPage of pages) {
         const { width, height } = pdfPage.getSize();
-        pdfPage.drawText('Vesper', {
-          x: width / 2,
-          y: height / 2,
-          font: helveticaFont,
-          size: 100,
-          color: rgb(0.85, 0.85, 0.95),
-          opacity: 0.2,
-          rotate: degrees(-45),
-          xSkew: degrees(-15),
-          ySkew: degrees(-15),
+        pdfPage.drawText(watermarkText, {
+            x: width / 2 - helveticaFont.widthOfTextAtSize(watermarkText, 50) / 2,
+            y: height / 2,
+            font: helveticaFont,
+            size: 50,
+            color: rgb(0.1, 0.1, 0.1),
+            opacity: 0.1,
+            rotate: degrees(-30),
         });
       }
 
