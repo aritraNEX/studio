@@ -5,8 +5,7 @@ import Link from "next/link";
 import {
   Sparkles, Quote, BookText, Languages, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp, Users, MessageSquare, Puzzle, Camera, Notebook
 } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import UserMenu from "@/components/user-menu";
 import AboutFooter from "@/components/about-footer";
@@ -86,13 +85,13 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                         <Link href="/workspace" className={cn(buttonVariants({ variant: 'outline' }), "h-16 text-lg justify-start p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50")}>
+                         <Link href="/workspace" className={cn("h-16 text-lg justify-start p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50", "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground")}>
                             <Wand2 className="mr-4 h-6 w-6" /> {t('features.workspace')}
                         </Link>
-                        <Link href="/chat" className={cn(buttonVariants({ variant: 'outline' }), "h-16 text-lg justify-start p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50")}>
+                        <Link href="/chat" className={cn("h-16 text-lg justify-start p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50", "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground")}>
                             <VesperIcon /> <span className="ml-4">{t('vesper_ai_studio')}</span>
                         </Link>
-                        <Link href="/integrations" className={cn(buttonVariants({ variant: 'outline' }), "h-16 text-lg justify-start p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50")}>
+                        <Link href="/integrations" className={cn("h-16 text-lg justify-start p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50", "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground")}>
                             <Puzzle className="mr-4 h-6 w-6" /> {t('integrations_button')}
                         </Link>
                     </div>
