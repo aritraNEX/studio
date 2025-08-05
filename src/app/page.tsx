@@ -11,6 +11,9 @@ import { cn } from "@/lib/utils";
 import UserMenu from "@/components/user-menu";
 import AboutFooter from "@/components/about-footer";
 import { useLanguage } from "@/contexts/language-context";
+import WelcomeBanner from "@/components/welcome-banner";
+import { useAuth } from "@/contexts/auth-context";
+import { useSearchParams } from "next/navigation";
 
 const VesperIcon = () => (
     <svg
@@ -55,8 +58,13 @@ const allFeatures = [
 
 export default function DashboardPage() {
     const { t } = useLanguage();
+    const { user } = useAuth();
+    const searchParams = useSearchParams();
+    const showWelcome = searchParams.get('welcome') === 'true';
+
     return (
         <div className="flex min-h-screen w-full flex-col bg-gradient-to-br from-background to-muted/50">
+             {user && showWelcome && <WelcomeBanner user={user} />}
              <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="container flex h-14 items-center justify-between">
                      <Link href="/" className="flex items-center gap-2 font-bold">

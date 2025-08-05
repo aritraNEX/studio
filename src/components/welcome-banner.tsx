@@ -38,12 +38,24 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
     }, 300);
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) {
+      return "Good morning";
+    } else if (hour >= 12 && hour < 18) {
+      return "Good afternoon";
+    } else {
+      return "Good evening";
+    }
+  };
+
   const getFirstName = (displayName: string | null) => {
     if (!displayName) return "User";
     return displayName.split(" ")[0];
   };
 
   const firstName = getFirstName(user.displayName);
+  const timeGreeting = getGreeting();
 
   return (
     <div
@@ -57,7 +69,7 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
       <div className="relative flex items-center gap-2 sm:gap-4 rounded-full bg-gradient-to-r from-primary to-accent p-3 sm:p-4 sm:pl-6 sm:pr-10 shadow-2xl shadow-primary/30 text-white">
         <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0 animate-pulse" />
         <p className="text-sm sm:text-lg font-semibold text-center">
-          Welcome {firstName}, we are setting up your workspace!
+          {`${timeGreeting}, ${firstName}!`}
         </p>
         <button
           onClick={handleClose}
