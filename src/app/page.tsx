@@ -78,13 +78,13 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                         <Link href="/workspace" className={cn(buttonVariants({ variant: 'outline' }), "h-16 text-lg justify-start p-6")}>
+                         <Link href="/workspace" className={cn(buttonVariants({ variant: 'outline' }), "h-16 text-lg justify-start p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50")}>
                             <Wand2 className="mr-4 h-6 w-6" /> {t('features.workspace')}
                         </Link>
-                        <Link href="/chat" className={cn(buttonVariants({ variant: 'outline' }), "h-16 text-lg justify-start p-6")}>
+                        <Link href="/chat" className={cn(buttonVariants({ variant: 'outline' }), "h-16 text-lg justify-start p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50")}>
                             <VesperIcon /> <span className="ml-4">{t('vesper_ai_studio')}</span>
                         </Link>
-                        <Link href="/integrations" className={cn(buttonVariants({ variant: 'outline' }), "h-16 text-lg justify-start p-6")}>
+                        <Link href="/integrations" className={cn(buttonVariants({ variant: 'outline' }), "h-16 text-lg justify-start p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50")}>
                             <Puzzle className="mr-4 h-6 w-6" /> {t('integrations_button')}
                         </Link>
                     </div>
@@ -96,10 +96,13 @@ export default function DashboardPage() {
                                 <Link
                                     href={feature.href}
                                     key={feature.href}
-                                    className="group flex flex-col items-center justify-center gap-2 rounded-xl border bg-card p-6 text-card-foreground shadow-sm transition-all duration-200 hover:bg-accent hover:shadow-md hover:-translate-y-1"
+                                    className="group relative flex flex-col items-center justify-center gap-2 rounded-xl border bg-card p-6 text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/30"
                                 >
-                                    <Icon className="h-8 w-8 text-muted-foreground transition-colors group-hover:text-primary" />
-                                    <span className="text-sm font-medium text-center">{t(`features.${feature.label.toLowerCase().replace(/ /g, '-')}`)}</span>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+                                    <div className="relative p-3 rounded-full bg-muted/70 group-hover:bg-primary/10 transition-colors duration-300">
+                                      <Icon className="h-7 w-7 text-muted-foreground transition-colors group-hover:text-primary" />
+                                    </div>
+                                    <span className="text-sm font-medium text-center relative">{t(`features.${feature.label.toLowerCase().replace(/ /g, '-')}`)}</span>
                                 </Link>
                              )
                         })}
@@ -111,3 +114,4 @@ export default function DashboardPage() {
             </div>
         </div>
     );
+}
