@@ -4,13 +4,13 @@
 import Link from "next/link";
 import { Button } from "./ui/button";
 import UserMenu from "./user-menu";
-import { type LucideIcon } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 
 interface ToolPageLayoutProps {
   title: string;
   subtitle: string;
-  icon: LucideIcon;
+  iconName: keyof typeof LucideIcons;
   children: React.ReactNode;
 }
 
@@ -31,8 +31,10 @@ const VesperIcon = () => (
 );
 
 
-export default function ToolPageLayout({ title, subtitle, icon: Icon, children }: ToolPageLayoutProps) {
+export default function ToolPageLayout({ title, subtitle, iconName, children }: ToolPageLayoutProps) {
     const { t } = useLanguage();
+    const Icon = LucideIcons[iconName] as LucideIcons.LucideIcon;
+    
     return (
       <div className="flex min-h-screen w-full flex-col items-center bg-gradient-to-br from-background to-muted/50">
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -55,7 +57,7 @@ export default function ToolPageLayout({ title, subtitle, icon: Icon, children }
         <main className="flex-1 w-full container mx-auto p-4 sm:p-8">
             <div className="mb-8 flex items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <Icon className="h-8 w-8" />
+                    {Icon ? <Icon className="h-8 w-8" /> : null}
                 </div>
                 <div>
                     <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">{title}</h1>

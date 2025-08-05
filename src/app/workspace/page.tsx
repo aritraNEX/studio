@@ -3,7 +3,6 @@
 
 import { WorkspaceTab } from "@/components/workspace-tab";
 import ToolPageLayout from "@/components/tool-page-layout";
-import { Wand2 } from "lucide-react";
 import { WorkspaceProvider } from "@/contexts/workspace-context";
 import { useRouter } from "next/navigation";
 
@@ -21,7 +20,7 @@ function WorkspacePageContent() {
         <ToolPageLayout
             title="Workspace"
             subtitle="Chain multiple AI operations together in a seamless workflow."
-            icon={Wand2}
+            iconName="Wand2"
         >
             <WorkspaceTab onSendTo={handleSendTo} />
         </ToolPageLayout>
