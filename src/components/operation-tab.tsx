@@ -3,7 +3,7 @@
 
 import { useState, useRef, useTransition, useEffect } from "react";
 import Image from "next/image";
-import { Copy, Loader2, Sparkles, Upload, Download, ChevronDown, Send, AudioLines, Share2, Link, Save, FileText } from "lucide-react";
+import { Copy, Loader2, Sparkles, Upload, Download, ChevronDown, Send, AudioLines, Share2, Link, Save, FileText, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -76,7 +76,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   const outputTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [appUrl, setAppUrl] = useState('');
   const { user } = useAuth();
-  const { setWorkspaceText, addWorkspaceStep } = useWorkspace();
+  const { addWorkspaceStep, setWorkspaceText } = useWorkspace();
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
@@ -429,6 +429,18 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const handleAddToWorkspace = () => {
+    if (!generatedText) return;
+    addWorkspaceStep({
+        id: Date.now(),
+        operation: operation,
+        text: generatedText,
+        options: operation === 'translate' ? { lang: targetLanguage } : operation === 'style' ? { style: finalStyle } : undefined
+    });
+    router.push('/workspace');
+    toast({title: "Added to Workspace!", description: "The result has been added as a new step in your workspace."});
+  };
+
   const buttonText = {
       paraphrase: 'Paraphrase',
       summarize: 'Summarize',
@@ -606,22 +618,6 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
           
           {!isPending && (
             <div className="absolute top-2 right-2 flex items-center">
-                 {generatedText && onSendTo && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-                                <Send className="h-5 w-5" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            {allOperations.filter(op => op !== operation).map(op => (
-                                <DropdownMenuItem key={op} onClick={() => onSendTo(generatedText, op)}>
-                                    Send to {op === 'tts' ? 'Text to Speech' : op.charAt(0).toUpperCase() + op.slice(1)}
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                 )}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button
@@ -670,11 +666,22 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
           <div className="flex flex-col gap-4 mt-4 p-4 border rounded-lg bg-muted/50 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row items-center gap-4">
                 <Button 
-                    onClick={() => onSendTo(generatedText, 'tts')} 
+                    onClick={() => {
+                        setWorkspaceText(generatedText);
+                        router.push('/tts');
+                    }}
                     className="w-full sm:w-auto"
                 >
                     <AudioLines className="mr-2 h-5 w-5" />
                     Listen with Text-to-Speech
+                </Button>
+                <Button 
+                    onClick={handleAddToWorkspace} 
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                >
+                    <Wand2 className="mr-2 h-5 w-5" />
+                    Add to Workspace
                 </Button>
                 <Button onClick={handleSaveProject} disabled={isSaving || !user} className="w-full sm:w-auto">
                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
