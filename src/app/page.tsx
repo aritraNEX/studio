@@ -93,11 +93,13 @@ export default function DashboardPage() {
                         {allFeatures.map((feature) => {
                              const Icon = feature.icon;
                              return (
-                                <Link href={feature.href} key={feature.href} legacyBehavior>
-                                    <a className="group flex flex-col items-center justify-center gap-2 rounded-xl border bg-card p-6 text-card-foreground shadow-sm transition-all duration-200 hover:bg-accent hover:shadow-md hover:-translate-y-1">
-                                        <Icon className="h-8 w-8 text-muted-foreground transition-colors group-hover:text-primary" />
-                                        <span className="text-sm font-medium text-center">{t(`features.${feature.label.toLowerCase().replace(/ /g, '-')}`)}</span>
-                                    </a>
+                                <Link
+                                    href={feature.href}
+                                    key={feature.href}
+                                    className="group flex flex-col items-center justify-center gap-2 rounded-xl border bg-card p-6 text-card-foreground shadow-sm transition-all duration-200 hover:bg-accent hover:shadow-md hover:-translate-y-1"
+                                >
+                                    <Icon className="h-8 w-8 text-muted-foreground transition-colors group-hover:text-primary" />
+                                    <span className="text-sm font-medium text-center">{t(`features.${feature.label.toLowerCase().replace(/ /g, '-')}`)}</span>
                                 </Link>
                              )
                         })}
@@ -109,4 +111,3 @@ export default function DashboardPage() {
             </div>
         </div>
     );
-}
