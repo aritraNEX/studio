@@ -4,17 +4,9 @@
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/auth-context';
-import { ABTestProvider } from '@/contexts/ab-test-context';
 import { LanguageProvider } from '@/contexts/language-context';
 import 'katex/dist/katex.min.css';
 import type {ReactNode} from 'react';
-
-// Metadata is not supported in client components. 
-// We can move this to a parent layout if needed, but for now, we'll keep it simple.
-// export const metadata: Metadata = {
-//   title: 'Vesper',
-//   description: 'Your personal AI text assistant.',
-// };
 
 export default function RootLayout({
   children,
@@ -32,11 +24,9 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AuthProvider>
-          <ABTestProvider>
             <LanguageProvider>
               {children}
             </LanguageProvider>
-          </ABTestProvider>
         </AuthProvider>
         <Toaster />
       </body>
