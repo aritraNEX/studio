@@ -5,6 +5,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/auth-context';
 import { LanguageProvider } from '@/contexts/language-context';
+import { WorkspaceProvider } from '@/contexts/workspace-context';
 import 'katex/dist/katex.min.css';
 import type {ReactNode} from 'react';
 
@@ -25,7 +26,9 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <AuthProvider>
             <LanguageProvider>
-              {children}
+              <WorkspaceProvider>
+                {children}
+              </WorkspaceProvider>
             </LanguageProvider>
         </AuthProvider>
         <Toaster />

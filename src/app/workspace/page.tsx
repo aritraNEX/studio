@@ -3,7 +3,7 @@
 
 import { WorkspaceTab } from "@/components/workspace-tab";
 import ToolPageLayout from "@/components/tool-page-layout";
-import { WorkspaceProvider, useWorkspace } from "@/contexts/workspace-context";
+import { useWorkspace } from "@/contexts/workspace-context";
 import { useRouter } from "next/navigation";
 
 function WorkspacePageContent() {
@@ -31,8 +31,6 @@ function WorkspacePageContent() {
 
 export default function WorkspacePage() {
     return (
-        <WorkspaceProvider>
-            <WorkspacePageContent />
-        </WorkspaceProvider>
+        <WorkspacePageContent />
     );
 }
