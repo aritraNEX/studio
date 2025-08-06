@@ -95,7 +95,7 @@ export default function DashboardPage() {
                             <Wand2 className="mr-4 h-6 w-6" /> {t('features.workspace')}
                         </Link>
                         <Link href="/chat" className="h-16 text-lg justify-start p-6 text-white bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors duration-300 flex items-center gap-2">
-                            <VesperIcon /> <span className="ml-4">{t('vesper_ai_studio')}</span>
+                            <Sparkles className="mr-4 h-6 w-6" /> <span className="ml-4">{t('vesper_ai_studio')}</span>
                         </Link>
                         <Link href="/integrations" className="h-16 text-lg justify-start p-6 text-white bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors duration-300 flex items-center gap-2">
                             <Puzzle className="mr-4 h-6 w-6" /> {t('integrations_button')}
