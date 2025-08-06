@@ -50,9 +50,44 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
         "w-full text-center py-4"
       )}
     >
-        {greeting && <h2 className="text-3xl md:text-4xl font-medium text-foreground">{greeting}</h2>}
+        <style>
+        {`
+        @keyframes ledFlow {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 100% 50%; }
+        }
+
+        .led-border {
+          background: linear-gradient(
+            90deg,
+            red,
+            orange,
+            yellow,
+            green,
+            cyan,
+            blue,
+            violet,
+            red
+          );
+          background-size: 400% 400%;
+          animation: ledFlow 4s linear infinite;
+          border-radius: 12px;
+          filter: brightness(1.3) blur(1px);
+        }
+        `}
+        </style>
+
+        {greeting && (
+            <div className="relative inline-block">
+                <span className="absolute inset-0 led-border rounded-lg p-[4px] z-0"></span>
+                <h2 className="relative z-10 bg-background px-4 py-2 rounded-lg text-3xl md:text-4xl font-medium text-foreground">
+                    {greeting}
+                </h2>
+            </div>
+        )}
+
         {!greeting && <h2 className="text-3xl md:text-4xl font-medium text-foreground">{t('login_welcome_title')}</h2>}
-        {welcomeMessage && <p className="text-lg text-muted-foreground mt-1">{welcomeMessage}</p>}
+        {welcomeMessage && <p className="text-lg text-muted-foreground mt-2">{welcomeMessage}</p>}
     </div>
   );
 }
