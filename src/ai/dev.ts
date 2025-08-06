@@ -17,4 +17,4 @@ import '@/ai/flows/tone-detection-flow.ts';
 import '@/ai/flows/vocabulary-enhancer-flow.ts';
 import '@/ai/flows/general-chat-flow.ts';
 import '@/ai/flows/image-to-latex-flow.ts';
-
+import '@/ai/flows/task-planner-flow.ts';

@@ -59,7 +59,8 @@
         "notepad": "Notepad",
         "workspace": "Workspace",
         "vesper_ai_studio": "Vesper AI Studio",
-        "integrations": "Integrations"
+        "integrations": "Integrations",
+        "task_planner": "Task Planner"
     },
     "assignment": {
         "topic_label": "Assignment Topic",

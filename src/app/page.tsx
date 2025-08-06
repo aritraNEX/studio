@@ -28,6 +28,7 @@ import {
   FileText,
   SpellCheck,
   Search,
+  ListTodo,
 } from "lucide-react";
 import UserMenu from "@/components/user-menu";
 import { useLanguage } from "@/contexts/language-context";
@@ -38,6 +39,7 @@ import React, { useEffect, useState } from 'react';
 import AdBanner from "@/components/ad-banner";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 const VesperIcon = () => (
     <svg
@@ -78,6 +80,7 @@ const allTools = [
     { section: 'high_quality', href: '/batch-paraphrase', icon: FileText, label: 'Batch Paraphrase' },
     { section: 'high_quality', href: '/notepad', icon: Notebook, label: 'Notepad' },
     { section: 'high_quality', href: '/integrations', icon: Puzzle, label: 'Integrations' },
+    { section: 'high_quality', href: '/task-planner', icon: ListTodo, label: 'Task Planner' },
 ];
 
 const getGradientByHour = () => {
@@ -237,13 +240,15 @@ export default function DashboardPage() {
                             <p className="text-sm text-muted-foreground">Chat with Vesper AI.</p>
                         </div>
                     </Link>
-                    <Link href="/integrations" className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1 sm:col-span-2 lg:col-span-1">
-                        <Puzzle className="h-8 w-8 text-primary" />
-                        <div>
-                            <h3 className="font-semibold text-foreground">{t('features.integrations')}</h3>
-                            <p className="text-sm text-muted-foreground">Works where you do.</p>
-                        </div>
-                    </Link>
+                    <Button asChild className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1 sm:col-span-2 lg:col-span-1 h-auto text-left justify-start">
+                         <Link href="/integrations" >
+                            <Puzzle className="h-8 w-8 text-primary" />
+                            <div>
+                                <h3 className="font-semibold text-foreground">{t('features.integrations')}</h3>
+                                <p className="text-sm text-muted-foreground">Works where you do.</p>
+                            </div>
+                        </Link>
+                    </Button>
                 </div>
 
                 {mostPopularTools.length > 0 && (

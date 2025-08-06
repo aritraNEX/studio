@@ -59,7 +59,8 @@
         "notepad": "Bloc de notas",
         "workspace": "Espacio de trabajo",
         "vesper_ai_studio": "Vesper AI Studio",
-        "integrations": "Integraciones"
+        "integrations": "Integraciones",
+        "task_planner": "Planificador de Tareas"
     },
     "assignment": {
         "topic_label": "Tema de la Tarea",
