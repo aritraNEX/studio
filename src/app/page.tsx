@@ -27,6 +27,7 @@ import {
   Notebook,
   FileText,
   SpellCheck,
+  Search,
 } from "lucide-react";
 import UserMenu from "@/components/user-menu";
 import { useLanguage } from "@/contexts/language-context";
@@ -36,6 +37,7 @@ import { cn } from "@/lib/utils";
 import React, { useEffect, useState } from 'react';
 import AdBanner from "@/components/ad-banner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const VesperIcon = () => (
     <svg
@@ -53,33 +55,29 @@ const VesperIcon = () => (
     </svg>
 );
 
-
-const mostPopularTools = [
-  { href: '/paraphrase', icon: Quote, label: 'Paraphrase' },
-  { href: '/summarize', icon: BookText, label: 'Summarize' },
-  { href: '/explainer', icon: BrainCircuit, label: 'Explainer' },
-  { href: '/grammar', icon: SpellCheck, label: 'Grammar' },
-  { href: '/vocabulary', icon: BookUp, label: 'Vocabulary' },
-  { href: '/style', icon: Palette, label: 'Style' },
-  { href: '/assignment-maker', icon: PenSquare, label: 'Assignment' },
-];
-
-const highQualityTools = [
-  { href: '/note-generator', icon: StickyNote, label: 'Note-mentor' },
-  { href: '/diagrams', icon: Share2, label: 'Diagrams' },
-  { href: '/video-transcription', icon: Video, label: 'Video to Text' },
-  { href: '/tts', icon: AudioLines, label: 'TTS' },
-  { href: '/translate', icon: Languages, label: 'Translate' },
-  { href: '/citations', icon: BookA, label: 'Citations' },
-  { href: '/tone-detection', icon: Gauge, label: 'Tone' },
-  { href: '/plagiarism', icon: ShieldCheck, label: 'Plagiarism' },
-  { href: '/research', icon: GraduationCap, label: 'Research' },
-  { href: '/formula', icon: FunctionSquare, label: 'Formula' },
-  { href: '/flashcards', icon: Copy, label: 'Flashcards' },
-  { href: '/batch-summary', icon: FileText, label: 'Batch Summary' },
-  { href: '/batch-paraphrase', icon: FileText, label: 'Batch Paraphrase' },
-  { href: '/notepad', icon: Notebook, label: 'Notepad' },
-  { href: '/integrations', icon: Puzzle, label: 'Integrations' },
+const allTools = [
+    { section: 'most_popular', href: '/paraphrase', icon: Quote, label: 'Paraphrase' },
+    { section: 'most_popular', href: '/summarize', icon: BookText, label: 'Summarize' },
+    { section: 'most_popular', href: '/explainer', icon: BrainCircuit, label: 'Explainer' },
+    { section: 'most_popular', href: '/grammar', icon: SpellCheck, label: 'Grammar' },
+    { section: 'most_popular', href: '/vocabulary', icon: BookUp, label: 'Vocabulary' },
+    { section: 'most_popular', href: '/style', icon: Palette, label: 'Style' },
+    { section: 'most_popular', href: '/assignment-maker', icon: PenSquare, label: 'Assignment' },
+    { section: 'high_quality', href: '/note-generator', icon: StickyNote, label: 'Note-mentor' },
+    { section: 'high_quality', href: '/diagrams', icon: Share2, label: 'Diagrams' },
+    { section: 'high_quality', href: '/video-transcription', icon: Video, label: 'Video to Text' },
+    { section: 'high_quality', href: '/tts', icon: AudioLines, label: 'TTS' },
+    { section: 'high_quality', href: '/translate', icon: Languages, label: 'Translate' },
+    { section: 'high_quality', href: '/citations', icon: BookA, label: 'Citations' },
+    { section: 'high_quality', href: '/tone-detection', icon: Gauge, label: 'Tone' },
+    { section: 'high_quality', href: '/plagiarism', icon: ShieldCheck, label: 'Plagiarism' },
+    { section: 'high_quality', href: '/research', icon: GraduationCap, label: 'Research' },
+    { section: 'high_quality', href: '/formula', icon: FunctionSquare, label: 'Formula' },
+    { section: 'high_quality', href: '/flashcards', icon: Copy, label: 'Flashcards' },
+    { section: 'high_quality', href: '/batch-summary', icon: FileText, label: 'Batch Summary' },
+    { section: 'high_quality', href: '/batch-paraphrase', icon: FileText, label: 'Batch Paraphrase' },
+    { section: 'high_quality', href: '/notepad', icon: Notebook, label: 'Notepad' },
+    { section: 'high_quality', href: '/integrations', icon: Puzzle, label: 'Integrations' },
 ];
 
 const getGradientByHour = () => {
@@ -94,6 +92,7 @@ export default function DashboardPage() {
     const { t } = useLanguage();
     const { user } = useAuth();
     const [gradient, setGradient] = useState(getGradientByHour());
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -102,15 +101,26 @@ export default function DashboardPage() {
         return () => clearInterval(interval);
     }, []);
 
+    const getTranslatedToolLabel = (label: string) => {
+        const translationKey = `features.${label.toLowerCase().replace(/ /g, '_').replace(/-/g, '_')}`;
+        return t(translationKey);
+    };
+
+    const filteredTools = allTools.filter(tool => 
+        getTranslatedToolLabel(tool.label).toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const mostPopularTools = filteredTools.filter(tool => tool.section === 'most_popular');
+    const highQualityTools = filteredTools.filter(tool => tool.section === 'high_quality');
+
     const renderToolCard = (tool: { href: string; icon: React.ElementType; label: string }) => {
         const Icon = tool.icon;
-        const translationKey = `features.${tool.label.toLowerCase().replace(/ /g, '_').replace(/-/g, '_')}`;
         return (
             <Link href={tool.href} key={tool.href} className="group flex flex-col items-center justify-center gap-2 rounded-xl bg-card p-4 text-center transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                     <Icon className="h-6 w-6" />
                 </div>
-                <span className="text-sm font-medium text-foreground">{t(translationKey)}</span>
+                <span className="text-sm font-medium text-foreground">{getTranslatedToolLabel(tool.label)}</span>
             </Link>
         );
     };
@@ -132,6 +142,22 @@ export default function DashboardPage() {
             <main className="flex-1 w-full container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <WelcomeBanner user={user} />
                 
+                <div className="my-8 max-w-2xl mx-auto">
+                    <div className="relative group">
+                         <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-400 to-purple-600 rounded-lg blur opacity-0 group-focus-within:opacity-75 transition-opacity duration-300 animate-glowing-border"></div>
+                         <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Search for a tool..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 h-12 text-base rounded-lg border-2 border-transparent focus:ring-0 focus:border-transparent bg-background/80"
+                            />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="my-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <Link href="/workspace" className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1">
                         <Wand2 className="h-8 w-8 text-primary" />
@@ -156,21 +182,25 @@ export default function DashboardPage() {
                     </Link>
                 </div>
 
-                <div className="my-8">
-                    <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('most_popular')}</h2>
-                    <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
-                        {mostPopularTools.map(renderToolCard)}
+                {mostPopularTools.length > 0 && (
+                    <div className="my-8">
+                        <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('most_popular')}</h2>
+                        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
+                            {mostPopularTools.map(renderToolCard)}
+                        </div>
                     </div>
-                </div>
+                )}
                 
                 <AdBanner />
 
-                <div className="mt-8">
-                    <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('high_quality')}</h2>
-                     <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
-                        {highQualityTools.map(renderToolCard)}
+                {highQualityTools.length > 0 && (
+                    <div className="mt-8">
+                        <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('high_quality')}</h2>
+                         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
+                            {highQualityTools.map(renderToolCard)}
+                        </div>
                     </div>
-                </div>
+                )}
             </main>
         </div>
     );
