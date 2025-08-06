@@ -52,12 +52,19 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
     >
         <style>
         {`
+        @keyframes river-flow {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
         .text-gradient {
-            background: linear-gradient(90deg, #FFC107, #F44336, #E91E63);
+            background: linear-gradient(90deg, #FFC107, #F44336, #E91E63, #9C27B0, #FFC107);
+            background-size: 200% 200%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             text-fill-color: transparent;
+            animation: river-flow 10s ease-in-out infinite;
         }
         `}
         </style>
