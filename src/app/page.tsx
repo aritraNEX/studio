@@ -1,18 +1,16 @@
-
 "use client";
 
 import Link from "next/link";
 import {
   Sparkles, Quote, BookText, Languages, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp, Users, MessageSquare, Puzzle, Camera, Notebook
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import UserMenu from "@/components/user-menu";
 import AboutFooter from "@/components/about-footer";
 import { useLanguage } from "@/contexts/language-context";
 import WelcomeBanner from "@/components/welcome-banner";
 import { useAuth } from "@/contexts/auth-context";
-import { useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 const VesperIcon = () => (
     <svg
@@ -58,47 +56,51 @@ const allFeatures = [
 export default function DashboardPage() {
     const { t } = useLanguage();
     const { user } = useAuth();
-    const searchParams = useSearchParams();
-    const showWelcome = searchParams.get('welcome') === 'true';
+    const [animationsEnabled, setAnimationsEnabled] = useState(false);
+
+    useEffect(() => {
+      setAnimationsEnabled(localStorage.getItem("texio-animations-enabled") === "true");
+    }, []);
 
     return (
         <div 
-            className="flex min-h-screen w-full flex-col" 
+            className={cn(
+                "flex min-h-screen w-full flex-col transition-all duration-500",
+                animationsEnabled && "animated-background"
+              )}
             style={{
-                backgroundColor: '#1a1a2e',
-                backgroundImage: `
-                    radial-gradient(circle at 15% 25%, hsla(259, 90%, 55%, 0.4) 0%, transparent 25%),
-                    radial-gradient(circle at 85% 75%, hsla(30, 90%, 55%, 0.3) 0%, transparent 25%)
-                `,
+                background: `radial-gradient(ellipse 80% 80% at 50% -20%, hsl(var(--primary) / 0.3), transparent),
+                             radial-gradient(ellipse 80% 80% at 50% 120%, hsl(var(--accent) / 0.3), transparent),
+                             hsl(var(--background))`,
+                backgroundSize: '200% 200%',
             }}
         >
-             {user && <WelcomeBanner user={user} />}
-             <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-transparent backdrop-blur-sm">
+             <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/30 backdrop-blur-sm">
                 <div className="container flex h-14 items-center justify-end">
                     <UserMenu />
                 </div>
             </header>
             <main className="flex flex-1 flex-col items-center p-4 sm:p-8">
-                <div className="w-full max-w-4xl">
-                     <div className="text-center mb-12 flex flex-col items-center">
-                        <VesperIcon />
-                        <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-white mt-4">
+                <div className="w-full max-w-5xl">
+                     <WelcomeBanner user={user} />
+                     <div className="text-center mb-12">
+                        <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-foreground mt-4">
                           {t('welcome_title')}
                         </h1>
-                        <p className="mt-4 max-w-2xl mx-auto text-lg text-white/70">
+                        <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
                           {t('welcome_subtitle')}
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                         <Link href="/workspace" className="h-16 text-lg justify-start p-6 text-white bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors duration-300 flex items-center gap-2">
-                            <Wand2 className="mr-4 h-6 w-6" /> {t('features.workspace')}
+                         <Link href="/workspace" className="glass-card h-16 text-lg justify-start p-6 text-foreground hover:border-primary/50 transition-all duration-300 flex items-center gap-2 transform hover:-translate-y-1">
+                            <Wand2 className="mr-4 h-6 w-6 text-primary" /> {t('features.workspace')}
                         </Link>
-                        <Link href="/chat" className="h-16 text-lg justify-start p-6 text-white bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors duration-300 flex items-center gap-2">
-                            <Sparkles className="mr-4 h-6 w-6" /> <span className="ml-4">{t('vesper_ai_studio')}</span>
+                        <Link href="/chat" className="glass-card h-16 text-lg justify-start p-6 text-foreground hover:border-primary/50 transition-all duration-300 flex items-center gap-2 transform hover:-translate-y-1">
+                            <Sparkles className="mr-4 h-6 w-6 text-primary" /> <span>{t('vesper_ai_studio')}</span>
                         </Link>
-                        <Link href="/integrations" className="h-16 text-lg justify-start p-6 text-white bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors duration-300 flex items-center gap-2">
-                            <Puzzle className="mr-4 h-6 w-6" /> {t('integrations_button')}
+                        <Link href="/integrations" className="glass-card h-16 text-lg justify-start p-6 text-foreground hover:border-primary/50 transition-all duration-300 flex items-center gap-2 transform hover:-translate-y-1">
+                            <Puzzle className="mr-4 h-6 w-6 text-primary" /> {t('integrations_button')}
                         </Link>
                     </div>
 
@@ -109,11 +111,10 @@ export default function DashboardPage() {
                                 <Link
                                     href={feature.href}
                                     key={feature.href}
-                                    className="group relative flex flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 p-6 text-white/90 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:bg-white/10"
+                                    className="group glass-card relative flex flex-col items-center justify-center gap-2 p-6 text-foreground shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/50"
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-                                    <div className="relative p-3 rounded-full bg-white/5 group-hover:bg-primary/10 transition-colors duration-300">
-                                      <Icon className="h-7 w-7 text-white/70 transition-colors group-hover:text-primary" />
+                                    <div className="relative p-3 rounded-full bg-primary/10 transition-colors duration-300">
+                                      <Icon className="h-7 w-7 text-primary transition-transform duration-300 group-hover:scale-110" />
                                     </div>
                                     <span className="text-sm font-medium text-center relative">{t(`features.${feature.label.toLowerCase().replace(/ /g, '-')}`)}</span>
                                 </Link>

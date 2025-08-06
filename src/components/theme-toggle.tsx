@@ -1,8 +1,7 @@
-
 "use client"
 
 import * as React from "react"
-import { Moon, Sun, Eye, EyeOff } from "lucide-react"
+import { Moon, Sun, Eye, EyeOff, Sparkles, SparklesIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -11,22 +10,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Switch } from "./ui/switch";
+import { Label } from "./ui/label";
 
 export function ThemeToggle() {
   const [theme, setThemeState] = React.useState<"theme-light" | "dark" | "system">("system");
   const [isEyeProtectionOn, setEyeProtection] = React.useState(false);
+  const [animationsEnabled, setAnimationsEnabled] = React.useState(false);
 
   React.useEffect(() => {
     try {
       const savedTheme = localStorage.getItem("texio-theme") as "theme-light" | "dark" | "system" | null;
       const savedEyeProtection = localStorage.getItem("texio-eye-protection") === "true";
+      const savedAnimations = localStorage.getItem("texio-animations-enabled") === "true";
 
       if (savedTheme) {
         setThemeState(savedTheme);
       }
       setEyeProtection(savedEyeProtection);
+      setAnimationsEnabled(savedAnimations);
     } catch (error) {
-        console.warn("Could not read theme settings from localStorage", error);
+        console.warn("Could not read settings from localStorage", error);
     }
   }, []);
 
@@ -39,16 +43,24 @@ export function ThemeToggle() {
     }
   }
 
-  const toggleEyeProtection = () => {
-    setEyeProtection(prev => {
-        const newState = !prev;
-        try {
-            localStorage.setItem("texio-eye-protection", String(newState));
-        } catch (error) {
-            console.warn("Could not save eye protection state to localStorage", error);
-        }
-        return newState;
-    });
+  const toggleEyeProtection = (checked: boolean) => {
+    setEyeProtection(checked);
+    try {
+        localStorage.setItem("texio-eye-protection", String(checked));
+    } catch (error) {
+        console.warn("Could not save eye protection state to localStorage", error);
+    }
+  }
+  
+  const toggleAnimations = (checked: boolean) => {
+    setAnimationsEnabled(checked);
+    try {
+        localStorage.setItem("texio-animations-enabled", String(checked));
+    } catch (error) {
+        console.warn("Could not save animations state to localStorage", error);
+    }
+     // Force a reload to apply new animation class, not ideal but simple for now.
+     window.location.reload();
   }
 
   React.useEffect(() => {
@@ -93,14 +105,24 @@ export function ThemeToggle() {
           System
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={toggleEyeProtection}>
-           {isEyeProtectionOn ? (
-              <EyeOff className="mr-2 h-4 w-4" />
-            ) : (
-              <Eye className="mr-2 h-4 w-4" />
-            )}
-            <span>Eye Protection</span>
-        </DropdownMenuItem>
+        <div className="px-2 py-1.5 text-sm outline-none">
+            <div className="flex items-center justify-between">
+                <Label htmlFor="eye-protection-switch" className="flex items-center gap-2 cursor-pointer font-normal">
+                    {isEyeProtectionOn ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <span>Eye Protection</span>
+                </Label>
+                <Switch id="eye-protection-switch" checked={isEyeProtectionOn} onCheckedChange={toggleEyeProtection} />
+            </div>
+        </div>
+        <div className="px-2 py-1.5 text-sm outline-none">
+            <div className="flex items-center justify-between">
+                <Label htmlFor="animations-switch" className="flex items-center gap-2 cursor-pointer font-normal">
+                    <Sparkles className="h-4 w-4" />
+                    <span>Animations</span>
+                </Label>
+                <Switch id="animations-switch" checked={animationsEnabled} onCheckedChange={toggleAnimations} />
+            </div>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   )
