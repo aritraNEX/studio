@@ -16,12 +16,12 @@ import { useSearchParams } from "next/navigation";
 
 const VesperIcon = () => (
     <svg
-        width="24"
-        height="24"
+        width="48"
+        height="48"
         viewBox="0 0 100 100"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
+        className="h-12 w-12"
         >
         <circle cx="40" cy="40" r="30" className="fill-primary" />
         <circle cx="70" cy="35" r="20" className="fill-primary/70" />
@@ -62,36 +62,33 @@ export default function DashboardPage() {
     const showWelcome = searchParams.get('welcome') === 'true';
 
     return (
-        <div className="flex min-h-screen w-full flex-col bg-gradient-to-br from-background to-muted/50">
-             {user && showWelcome && <WelcomeBanner user={user} />}
-             <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="container flex h-14 items-center justify-between">
-                     <Link href="/" className="flex items-center gap-2 font-bold">
-                        <VesperIcon />
-                        <span>Vesper</span>
-                    </Link>
+        <div className="flex min-h-screen w-full flex-col" style={{background: 'radial-gradient(circle at top, #4a0e91, #2d0b57 30%, #1a0633 60%, #0c021a)'}}>
+             {user && <WelcomeBanner user={user} />}
+             <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-transparent backdrop-blur-sm">
+                <div className="container flex h-14 items-center justify-end">
                     <UserMenu />
                 </div>
             </header>
             <main className="flex flex-1 flex-col items-center p-4 sm:p-8">
                 <div className="w-full max-w-4xl">
-                     <div className="text-center mb-12">
-                        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground">
+                     <div className="text-center mb-12 flex flex-col items-center">
+                        <VesperIcon />
+                        <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-white mt-4">
                           {t('welcome_title')}
                         </h1>
-                        <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
+                        <p className="mt-4 max-w-2xl mx-auto text-lg text-white/70">
                           {t('welcome_subtitle')}
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                         <Link href="/workspace" className={cn("h-16 text-lg justify-start p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50", "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground")}>
+                         <Link href="/workspace" className="h-16 text-lg justify-start p-6 text-white bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors duration-300 flex items-center gap-2">
                             <Wand2 className="mr-4 h-6 w-6" /> {t('features.workspace')}
                         </Link>
-                        <Link href="/chat" className={cn("h-16 text-lg justify-start p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50", "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground")}>
+                        <Link href="/chat" className="h-16 text-lg justify-start p-6 text-white bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors duration-300 flex items-center gap-2">
                             <VesperIcon /> <span className="ml-4">{t('vesper_ai_studio')}</span>
                         </Link>
-                        <Link href="/integrations" className={cn("h-16 text-lg justify-start p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50", "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground")}>
+                        <Link href="/integrations" className="h-16 text-lg justify-start p-6 text-white bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors duration-300 flex items-center gap-2">
                             <Puzzle className="mr-4 h-6 w-6" /> {t('integrations_button')}
                         </Link>
                     </div>
@@ -103,11 +100,11 @@ export default function DashboardPage() {
                                 <Link
                                     href={feature.href}
                                     key={feature.href}
-                                    className="group relative flex flex-col items-center justify-center gap-2 rounded-xl border bg-card p-6 text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/30"
+                                    className="group relative flex flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 p-6 text-white/90 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:bg-white/10"
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-                                    <div className="relative p-3 rounded-full bg-muted/70 group-hover:bg-primary/10 transition-colors duration-300">
-                                      <Icon className="h-7 w-7 text-muted-foreground transition-colors group-hover:text-primary" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+                                    <div className="relative p-3 rounded-full bg-white/5 group-hover:bg-primary/10 transition-colors duration-300">
+                                      <Icon className="h-7 w-7 text-white/70 transition-colors group-hover:text-primary" />
                                     </div>
                                     <span className="text-sm font-medium text-center relative">{t(`features.${feature.label.toLowerCase().replace(/ /g, '-')}`)}</span>
                                 </Link>

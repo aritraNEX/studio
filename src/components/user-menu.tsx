@@ -96,7 +96,7 @@ export default function UserMenu() {
 
   return (
     <div className="flex items-center gap-2">
-      <Button onClick={() => handleNavigate('/dashboard')} variant="outline" size="sm" className="hidden sm:flex">
+      <Button onClick={() => handleNavigate('/dashboard')} variant="outline" size="sm" className="hidden sm:flex bg-white/10 text-white border-white/20 hover:bg-white/20">
           <LayoutDashboard className="mr-2 h-4 w-4" />
           {t('profile_my_projects')}
       </Button>
@@ -104,7 +104,7 @@ export default function UserMenu() {
       <Dialog>
         <DialogTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-            <Avatar className="h-10 w-10">
+            <Avatar className="h-10 w-10 border-2 border-transparent hover:border-primary/50 transition-colors">
               <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
               <AvatarFallback>
                 {user.email ? user.email.charAt(0).toUpperCase() : <UserIcon />}
