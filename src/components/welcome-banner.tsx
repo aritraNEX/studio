@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { User } from "firebase/auth";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
+import { useSearchParams } from "next/navigation";
 
 interface WelcomeBannerProps {
   user: User | null;
@@ -12,7 +13,9 @@ interface WelcomeBannerProps {
 
 export default function WelcomeBanner({ user }: WelcomeBannerProps) {
   const [greeting, setGreeting] = useState("");
+  const [welcomeMessage, setWelcomeMessage] = useState("");
   const { t } = useLanguage();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const getGreeting = () => {
@@ -35,8 +38,11 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
         const firstName = getFirstName(user.displayName);
         const timeGreeting = getGreeting();
         setGreeting(`${timeGreeting}${firstName}`);
+        
+        const isFirstTimeUser = searchParams.get('welcome') === 'true';
+        setWelcomeMessage(isFirstTimeUser ? 'Welcome!' : 'Welcome back!');
     }
-  }, [user]);
+  }, [user, searchParams]);
 
   return (
     <div
@@ -46,6 +52,7 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
     >
         {greeting && <h2 className="text-3xl md:text-4xl font-medium text-foreground">{greeting}</h2>}
         {!greeting && <h2 className="text-3xl md:text-4xl font-medium text-foreground">{t('login_welcome_title')}</h2>}
+        {welcomeMessage && <p className="text-lg text-muted-foreground mt-1">{welcomeMessage}</p>}
     </div>
   );
 }
