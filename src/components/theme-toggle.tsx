@@ -56,13 +56,14 @@ export function ThemeToggle() {
   }
   
   const toggleAnimations = (checked: boolean) => {
-    setAnimationsEnabled(checked);
     try {
         localStorage.setItem("texio-animations-enabled", String(checked));
+        setAnimationsEnabled(checked);
+        // Force a reload to apply or remove the animation class from the root layout
+        window.location.reload();
     } catch (error) {
         console.warn("Could not save animations state to localStorage", error);
     }
-     window.location.reload();
   }
 
   React.useEffect(() => {
@@ -77,6 +78,14 @@ export function ThemeToggle() {
         if (!existingFilter) {
             const filterDiv = document.createElement('div');
             filterDiv.className = 'eye-protection-filter';
+            filterDiv.style.position = 'fixed';
+            filterDiv.style.top = '0';
+            filterDiv.style.left = '0';
+            filterDiv.style.width = '100vw';
+            filterDiv.style.height = '100vh';
+            filterDiv.style.pointerEvents = 'none';
+            filterDiv.style.zIndex = '9999';
+            filterDiv.style.backgroundColor = 'rgba(240, 190, 100, 0.1)';
             document.body.appendChild(filterDiv);
         }
     } else {

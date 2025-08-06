@@ -15,8 +15,14 @@ let audioContext: AudioContext | null = null;
 const isBrowser = typeof window !== 'undefined';
 
 const initializeAudioContext = () => {
-  if (isBrowser && !audioContext) {
-    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  if (isBrowser && (!audioContext || audioContext.state === 'suspended')) {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioContext) {
+      audioContext = new AudioContext();
+    }
+  }
+  if (audioContext?.state === 'suspended') {
+      audioContext.resume();
   }
 };
 
@@ -46,10 +52,27 @@ export const SoundProvider = ({ children }: { children: ReactNode }) => {
     try {
       const savedSoundSetting = localStorage.getItem('vesper-sound-enabled') === 'true';
       setSoundEnabledState(savedSoundSetting);
+       if (savedSoundSetting) {
+          initializeAudioContext();
+       }
     } catch (error) {
       console.warn("Could not read sound setting from localStorage", error);
     }
-  }, []);
+
+    // Add a global click listener to resume audio context on any user interaction
+    const resumeAudio = () => {
+        if (soundEnabled && audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        document.removeEventListener('click', resumeAudio);
+    };
+    document.addEventListener('click', resumeAudio);
+
+    return () => {
+        document.removeEventListener('click', resumeAudio);
+    };
+
+  }, [soundEnabled]);
 
   const setSoundEnabled = (enabled: boolean) => {
     try {
