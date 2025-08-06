@@ -52,38 +52,20 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
     >
         <style>
         {`
-        @keyframes ledFlow {
-          0% { background-position: 0% 50%; }
-          100% { background-position: 100% 50%; }
-        }
-
-        .led-border {
-          background: linear-gradient(
-            90deg,
-            red,
-            orange,
-            yellow,
-            green,
-            cyan,
-            blue,
-            violet,
-            red
-          );
-          background-size: 400% 400%;
-          animation: ledFlow 4s linear infinite;
-          border-radius: 12px;
-          filter: brightness(1.3) blur(1px);
+        .text-gradient {
+            background: linear-gradient(90deg, #FFC107, #F44336, #E91E63);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
         }
         `}
         </style>
 
         {greeting && (
-            <div className="relative inline-block">
-                <span className="absolute inset-0 led-border rounded-lg p-[4px] z-0"></span>
-                <h2 className="relative z-10 bg-background px-4 py-2 rounded-lg text-3xl md:text-4xl font-medium text-foreground">
-                    {greeting}
-                </h2>
-            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gradient">
+                {greeting}
+            </h2>
         )}
 
         {!greeting && <h2 className="text-3xl md:text-4xl font-medium text-foreground">{t('login_welcome_title')}</h2>}
