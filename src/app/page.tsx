@@ -36,8 +36,8 @@ import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import React, { useEffect, useState } from 'react';
 import AdBanner from "@/components/ad-banner";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
 
 const VesperIcon = () => (
     <svg
@@ -88,9 +88,52 @@ const getGradientByHour = () => {
   return 'from-gray-800 via-blue-900 to-black'; // Night
 };
 
+// Levenshtein distance function for string similarity
+const similarity = (s1: string, s2: string) => {
+  let longer = s1;
+  let shorter = s2;
+  if (s1.length < s2.length) {
+    longer = s2;
+    shorter = s1;
+  }
+  let longerLength = longer.length;
+  if (longerLength === 0) {
+    return 1.0;
+  }
+  return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength.toString());
+}
+
+const editDistance = (s1: string, s2: string) => {
+  s1 = s1.toLowerCase();
+  s2 = s2.toLowerCase();
+
+  let costs = new Array();
+  for (let i = 0; i <= s1.length; i++) {
+    let lastValue = i;
+    for (let j = 0; j <= s2.length; j++) {
+      if (i == 0)
+        costs[j] = j;
+      else {
+        if (j > 0) {
+          let newValue = costs[j - 1];
+          if (s1.charAt(i - 1) != s2.charAt(j - 1))
+            newValue = Math.min(Math.min(newValue, lastValue),
+              costs[j]) + 1;
+          costs[j - 1] = lastValue;
+          lastValue = newValue;
+        }
+      }
+    }
+    if (i > 0)
+      costs[s2.length] = lastValue;
+  }
+  return costs[s2.length];
+}
+
 export default function DashboardPage() {
     const { t } = useLanguage();
     const { user } = useAuth();
+    const router = useRouter();
     const [gradient, setGradient] = useState(getGradientByHour());
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -105,6 +148,27 @@ export default function DashboardPage() {
         const translationKey = `features.${label.toLowerCase().replace(/ /g, '_').replace(/-/g, '_')}`;
         return t(translationKey);
     };
+
+    useEffect(() => {
+        if (searchQuery.length > 2) { // Only check after a few characters
+            let bestMatch = null;
+            let highestSimilarity = 0;
+
+            allTools.forEach(tool => {
+                const toolName = getTranslatedToolLabel(tool.label);
+                const score = similarity(searchQuery, toolName);
+                if (score > highestSimilarity) {
+                    highestSimilarity = score;
+                    bestMatch = tool;
+                }
+            });
+
+            if (bestMatch && highestSimilarity > 0.8) {
+                router.push(bestMatch.href);
+            }
+        }
+    }, [searchQuery, router, t]);
+
 
     const filteredTools = allTools.filter(tool => 
         getTranslatedToolLabel(tool.label).toLowerCase().includes(searchQuery.toLowerCase())
@@ -199,6 +263,15 @@ export default function DashboardPage() {
                          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
                             {highQualityTools.map(renderToolCard)}
                         </div>
+                    </div>
+                )}
+
+                {filteredTools.length === 0 && searchQuery && (
+                     <div className="text-center py-20">
+                        <h2 className="text-xl font-semibold">No tools found</h2>
+                        <p className="text-muted-foreground mt-2">
+                        Your search for "{searchQuery}" did not match any tools.
+                        </p>
                     </div>
                 )}
             </main>
