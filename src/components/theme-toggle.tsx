@@ -1,7 +1,8 @@
+
 "use client"
 
 import * as React from "react"
-import { Moon, Sun, Eye, EyeOff, Sparkles, SparklesIcon } from "lucide-react"
+import { Moon, Sun, Eye, EyeOff, Sparkles, Volume2, VolumeX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,11 +13,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Switch } from "./ui/switch";
 import { Label } from "./ui/label";
+import { useSound } from "@/contexts/sound-context"
 
 export function ThemeToggle() {
   const [theme, setThemeState] = React.useState<"theme-light" | "dark" | "system">("system");
   const [isEyeProtectionOn, setEyeProtection] = React.useState(false);
   const [animationsEnabled, setAnimationsEnabled] = React.useState(false);
+  const { soundEnabled, setSoundEnabled } = useSound();
 
   React.useEffect(() => {
     try {
@@ -59,7 +62,6 @@ export function ThemeToggle() {
     } catch (error) {
         console.warn("Could not save animations state to localStorage", error);
     }
-     // Force a reload to apply new animation class, not ideal but simple for now.
      window.location.reload();
   }
 
@@ -121,6 +123,15 @@ export function ThemeToggle() {
                     <span>Animations</span>
                 </Label>
                 <Switch id="animations-switch" checked={animationsEnabled} onCheckedChange={toggleAnimations} />
+            </div>
+        </div>
+        <div className="px-2 py-1.5 text-sm outline-none">
+            <div className="flex items-center justify-between">
+                <Label htmlFor="sound-switch" className="flex items-center gap-2 cursor-pointer font-normal">
+                    {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                    <span>Sound Effects</span>
+                </Label>
+                <Switch id="sound-switch" checked={soundEnabled} onCheckedChange={setSoundEnabled} />
             </div>
         </div>
       </DropdownMenuContent>
