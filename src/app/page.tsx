@@ -34,6 +34,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import React, { useEffect, useState } from 'react';
 import AdBanner from "@/components/ad-banner";
+import { Button } from "@/components/ui/button";
 
 const VesperIcon = () => (
     <svg
