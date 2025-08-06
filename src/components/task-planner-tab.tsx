@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ListTodo, Loader2, Sparkles, Calendar as CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
+import { ListTodo, Loader2, Sparkles, Calendar as CalendarIcon, Clock, Download, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,17 +11,21 @@ import { taskPlanner, TaskPlannerOutput } from "@/ai/flows/task-planner-flow";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
+import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
+
+const timeSlots = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
 
 export function TaskPlannerTab() {
   const [task, setTask] = useState<string>("");
   const [deadline, setDeadline] = useState<Date>();
   const [priority, setPriority] = useState<"Medium" | "Low" | "High">("Medium");
+  const [availability, setAvailability] = useState({ start: "09:00", end: "17:00" });
   
   const [result, setResult] = useState<TaskPlannerOutput | null>(null);
   const [checkedTasks, setCheckedTasks] = useState<Record<string, boolean>>({});
@@ -50,6 +54,7 @@ export function TaskPlannerTab() {
           task,
           deadline: deadline.toISOString(),
           priority,
+          dailyAvailability: availability,
         });
         if (planResult && planResult.subtasks.length > 0) {
           setResult(planResult);
@@ -70,6 +75,61 @@ export function TaskPlannerTab() {
         [taskTitle]: !prev[taskTitle]
     }));
   };
+  
+  const handleDownloadPdf = async () => {
+    if (!result) return;
+    try {
+      const pdfDoc = await PDFDocument.create();
+      const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      
+      let page = pdfDoc.addPage();
+      const { width, height } = page.getSize();
+      const margin = 40;
+      let y = height - margin;
+
+      const drawText = (text: string, x: number, yPos: number, font: any, size: number) => {
+        if (yPos < margin) {
+            page = pdfDoc.addPage();
+            yPos = height - margin;
+        }
+        page.drawText(text, { x, y: yPos, font, size, color: rgb(0,0,0) });
+        return yPos - size * 1.5;
+      };
+      
+      y = drawText(result.planTitle, margin, y, helveticaBoldFont, 18);
+      y -= 10;
+      
+      for(const subtask of result.subtasks) {
+          if (y < margin + 40) {
+              page = pdfDoc.addPage();
+              y = height - margin;
+          }
+          y = drawText(`${subtask.title} (${subtask.duration} mins)`, margin, y, helveticaBoldFont, 12);
+          y = drawText(`Scheduled for: ${format(new Date(`${subtask.date}T${subtask.time}`), 'PPP, p')}`, margin + 10, y, helveticaFont, 10);
+          y -= 5;
+      }
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `vesper-plan-${result.planTitle.replace(/\s/g, '_')}.pdf`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      toast({ title: "Plan Downloaded", description: "Your schedule has been exported to PDF." });
+    } catch (e) {
+        console.error(e);
+        toast({ title: "PDF Export Failed", variant: "destructive" });
+    }
+  };
+  
+  const handleCalendarSync = () => {
+      toast({
+          title: "Coming Soon!",
+          description: "Google Calendar integration is under development. Thank you for your patience."
+      })
+  }
 
   const completedCount = Object.values(checkedTasks).filter(Boolean).length;
   const totalCount = result?.subtasks.length || 0;
@@ -99,10 +159,7 @@ export function TaskPlannerTab() {
                     <Button
                         id="deadline-picker"
                         variant={"outline"}
-                        className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !deadline && "text-muted-foreground"
-                        )}
+                        className={cn("w-full justify-start text-left font-normal", !deadline && "text-muted-foreground")}
                         disabled={isPending}
                     >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -110,22 +167,14 @@ export function TaskPlannerTab() {
                     </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                    <Calendar
-                        mode="single"
-                        selected={deadline}
-                        onSelect={setDeadline}
-                        initialFocus
-                        disabled={(date) => date < new Date() || date < new Date("1900-01-01")}
-                    />
+                    <Calendar mode="single" selected={deadline} onSelect={setDeadline} initialFocus disabled={(date) => date < new Date() || date < new Date("1900-01-01")} />
                     </PopoverContent>
                 </Popover>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="priority-select" className="font-semibold text-md">Priority</Label>
                 <Select value={priority} onValueChange={(v: any) => setPriority(v)} disabled={isPending}>
-                    <SelectTrigger id="priority-select">
-                        <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
+                    <SelectTrigger id="priority-select"><SelectValue placeholder="Select priority" /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="Low">Low</SelectItem>
                         <SelectItem value="Medium">Medium</SelectItem>
@@ -134,6 +183,23 @@ export function TaskPlannerTab() {
                 </Select>
             </div>
            </div>
+           <div className="space-y-2">
+               <Label className="font-semibold text-md">Daily Availability</Label>
+               <div className="grid grid-cols-2 gap-2">
+                    <Select value={availability.start} onValueChange={(v) => setAvailability(p => ({...p, start: v}))}>
+                        <SelectTrigger><SelectValue/></SelectTrigger>
+                        <SelectContent>
+                            {timeSlots.map(t => <SelectItem key={`start-${t}`} value={t}>{t}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Select value={availability.end} onValueChange={(v) => setAvailability(p => ({...p, end: v}))}>
+                        <SelectTrigger><SelectValue/></SelectTrigger>
+                        <SelectContent>
+                            {timeSlots.map(t => <SelectItem key={`end-${t}`} value={t}>{t}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+               </div>
+           </div>
         </div>
 
         {/* Output Section */}
@@ -141,9 +207,14 @@ export function TaskPlannerTab() {
             <Label className="font-semibold text-md">
                 Your Generated Plan
             </Label>
-            <Card className="min-h-[24rem] bg-background/50 flex flex-col">
+            <Card className="min-h-[28rem] bg-background/50 flex flex-col">
                 <CardHeader>
-                    {result && <CardTitle className="text-lg">{result.planTitle}</CardTitle>}
+                    {result && <CardTitle className="text-lg flex justify-between items-center">{result.planTitle}
+                    <div className="flex gap-1">
+                        <Button variant="outline" size="sm" onClick={handleDownloadPdf}><Download className="h-4 w-4 mr-2"/>PDF</Button>
+                        <Button variant="outline" size="sm" onClick={handleCalendarSync}><CalendarPlus className="h-4 w-4 mr-2"/>Sync</Button>
+                    </div>
+                    </CardTitle>}
                 </CardHeader>
                 <CardContent className="flex-grow flex flex-col items-center justify-center p-6">
                     {isPending && (
@@ -175,7 +246,12 @@ export function TaskPlannerTab() {
                                         />
                                         <div className="grid gap-1.5 leading-snug">
                                             <Label htmlFor={`task-${index}`} className={cn("font-medium", checkedTasks[subtask.title] && "line-through text-muted-foreground")}>{subtask.title}</Label>
-                                            <p className={cn("text-xs text-muted-foreground", checkedTasks[subtask.title] && "line-through")}>Due: {format(new Date(subtask.date), "PPP")}</p>
+                                            <p className={cn("text-xs text-muted-foreground flex items-center gap-2", checkedTasks[subtask.title] && "line-through")}>
+                                                <CalendarIcon className="h-3 w-3"/>
+                                                {format(new Date(subtask.date), "EEE, MMM d")}
+                                                <Clock className="h-3 w-3 ml-2"/>
+                                                {subtask.time} ({subtask.duration}m)
+                                            </p>
                                         </div>
                                     </li>
                                 ))}
