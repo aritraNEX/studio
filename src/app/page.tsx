@@ -111,12 +111,6 @@ export default function DashboardPage() {
                         <span>Vesper</span>
                     </Link>
                     <div className="flex items-center gap-2">
-                        <Button asChild variant="outline">
-                            <Link href="/integrations">
-                                <Puzzle className="mr-2 h-4 w-4" />
-                                {t('integrations_button')}
-                            </Link>
-                        </Button>
                         <UserMenu />
                     </div>
                 </div>
@@ -125,7 +119,28 @@ export default function DashboardPage() {
             <main className="flex-1 w-full container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <WelcomeBanner user={user} />
                 
-                <div className="mt-8">
+                <div className="my-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <Button asChild variant="outline" size="lg" className="h-14 text-base font-semibold">
+                        <Link href="/workspace">
+                            <Wand2 className="mr-2 h-5 w-5" />
+                            {t('features.workspace')}
+                        </Link>
+                    </Button>
+                     <Button asChild size="lg" className="h-14 text-base font-semibold">
+                        <Link href="/chat">
+                            <Sparkles className="mr-2 h-5 w-5" />
+                            {t('features.vesper-ai-studio')}
+                        </Link>
+                    </Button>
+                     <Button asChild variant="outline" size="lg" className="h-14 text-base font-semibold">
+                        <Link href="/integrations">
+                            <Puzzle className="mr-2 h-5 w-5" />
+                            {t('integrations_button')}
+                        </Link>
+                    </Button>
+                </div>
+
+                <div>
                     <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('most_popular')}</h2>
                     <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                         {mostPopularTools.map((tool) => {
@@ -164,6 +179,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-
-
-    
