@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { collection, query, where, onSnapshot, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
-import { Loader2, Home, Trash2, Edit } from 'lucide-react';
+import { Loader2, Home, Trash2, Edit, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -124,14 +124,12 @@ export default function DashboardPage() {
   };
 
   const handleOpenProject = (project: Project) => {
-    // A mapping from saved operation to the tab value in the UI
     const operationToTab: { [key: string]: string } = {
         explainer: 'explainer',
         paraphrase: 'paraphrase',
         summarize: 'summarize',
         translate: 'translate',
         style: 'style',
-        // Add other mappings if needed
     };
     
     const tab = operationToTab[project.operation];
@@ -148,7 +146,6 @@ export default function DashboardPage() {
         }
         router.push(url.toString());
     } else {
-        // Fallback for older projects or unmapped operations
         router.push(`/?projectId=${project.id}`);
     }
   }
@@ -185,13 +182,19 @@ export default function DashboardPage() {
                 Editor
               </Link>
             </Button>
+             <Button asChild variant="outline">
+              <Link href="/groups" prefetch={false}>
+                <Users className="mr-2 h-4 w-4" />
+                Groups
+              </Link>
+            </Button>
           </div>
         </div>
       </header>
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <TaskSummaryDashboard />
         <div className="my-8 border-t border-border"></div>
-        <h2 className="text-xl font-bold tracking-tight mb-4">My Saved Projects</h2>
+        <h2 className="text-xl font-bold tracking-tight mb-4">My Personal Projects</h2>
         {loading ? (
             <ProjectsSkeleton />
         ) : projects.length === 0 ? (

@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc, deleteDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, Home, Users, PlusCircle, Trash2, ArrowRight } from 'lucide-react';
@@ -33,7 +33,7 @@ interface Group {
     seconds: number;
     nanoseconds: number;
   };
-  memberCount: number;
+  memberIds: string[];
 }
 
 function GroupsPageSkeleton() {
@@ -58,7 +58,6 @@ function GroupsPageSkeleton() {
     );
 }
 
-
 export default function GroupsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -76,7 +75,6 @@ export default function GroupsPage() {
       return;
     }
 
-    // Optimized query using the new `memberIds` array
     const q = query(
       collection(db, 'groups'),
       where('memberIds', 'array-contains', user.uid),
@@ -86,14 +84,7 @@ export default function GroupsPage() {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const userGroups: Group[] = [];
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        userGroups.push({ 
-            id: doc.id,
-            name: data.name,
-            ownerId: data.ownerId,
-            createdAt: data.createdAt,
-            memberCount: data.members.length,
-        });
+        userGroups.push({ id: doc.id, ...doc.data() } as Group);
       });
       setGroups(userGroups);
       setLoading(false);
@@ -119,14 +110,14 @@ export default function GroupsPage() {
             uid: user.uid,
             email: user.email,
             name: user.displayName || user.email,
-            photoURL: user.photoURL || '',
+            role: 'Owner'
         };
 
         const docRef = await addDoc(collection(db, 'groups'), {
             name: newGroupName,
             ownerId: user.uid,
             members: [initialMember],
-            memberIds: [user.uid], // Add the initial member's ID to the new array
+            memberIds: [user.uid],
             createdAt: serverTimestamp(),
         });
         toast({ title: "Group Created!", description: `The group "${newGroupName}" has been created.` });
@@ -269,7 +260,7 @@ export default function GroupsPage() {
                 </CardHeader>
                 <CardContent className="flex-grow">
                     <div className="flex items-center text-sm text-muted-foreground">
-                        <Users className="mr-2 h-4 w-4"/> {group.memberCount} member{group.memberCount > 1 && 's'}
+                        <Users className="mr-2 h-4 w-4"/> {group.memberIds.length} member{group.memberIds.length > 1 && 's'}
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-between items-center">

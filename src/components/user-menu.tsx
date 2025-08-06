@@ -7,7 +7,7 @@ import { auth, storage, db } from "@/lib/firebase";
 import { signOut, updateProfile } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
-import { LogOut, User as UserIcon, Loader2, Save, LayoutDashboard, Camera, Puzzle } from "lucide-react";
+import { LogOut, User as UserIcon, Loader2, Save, LayoutDashboard, Camera, Puzzle, Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -96,9 +96,13 @@ export default function UserMenu() {
 
   return (
     <div className="flex items-center gap-2">
-      <Button onClick={() => handleNavigate('/dashboard')} variant="outline" size="sm" className="hidden sm:flex bg-white/10 text-white border-white/20 hover:bg-white/20">
+      <Button onClick={() => handleNavigate('/dashboard')} variant="ghost" size="sm" className="hidden sm:flex">
           <LayoutDashboard className="mr-2 h-4 w-4" />
           {t('profile_my_projects')}
+      </Button>
+      <Button onClick={() => handleNavigate('/groups')} variant="ghost" size="sm" className="hidden sm:flex">
+          <Users className="mr-2 h-4 w-4" />
+          My Groups
       </Button>
       <ThemeToggle />
       <Dialog>
@@ -179,6 +183,10 @@ export default function UserMenu() {
             <Button onClick={() => handleNavigate('/dashboard')} variant="outline" className="w-full sm:hidden">
                 <LayoutDashboard className="mr-2 h-4 w-4" />
                 {t('profile_my_projects')}
+            </Button>
+             <Button onClick={() => handleNavigate('/groups')} variant="outline" className="w-full sm:hidden">
+                <Users className="mr-2 h-4 w-4" />
+                My Groups
             </Button>
              <Button onClick={() => handleNavigate('/integrations')} variant="outline" className="w-full sm:hidden">
                 <Puzzle className="mr-2 h-4 w-4" />
