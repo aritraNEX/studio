@@ -26,6 +26,7 @@ import {
   Camera,
   Notebook,
   FileText,
+  SpellCheck,
 } from "lucide-react";
 import UserMenu from "@/components/user-menu";
 import { useLanguage } from "@/contexts/language-context";
@@ -58,7 +59,9 @@ const mostPopularTools = [
   { href: '/paraphrase', icon: Quote, label: 'Paraphrase' },
   { href: '/summarize', icon: BookText, label: 'Summarize' },
   { href: '/explainer', icon: BrainCircuit, label: 'Explainer' },
-  { href: '/flashcards', icon: Copy, label: 'Flashcards' },
+  { href: '/grammar', icon: SpellCheck, label: 'Grammar' },
+  { href: '/vocabulary', icon: BookUp, label: 'Vocabulary' },
+  { href: '/style', icon: Palette, label: 'Style' },
   { href: '/assignment-maker', icon: PenSquare, label: 'Assignment' },
 ];
 
@@ -69,17 +72,17 @@ const highQualityTools = [
   { href: '/diagrams', icon: Share2, label: 'Diagrams' },
   { href: '/video-transcription', icon: Video, label: 'Video to Text' },
   { href: '/tts', icon: AudioLines, label: 'TTS' },
-  { href: '/style', icon: Palette, label: 'Style' },
   { href: '/translate', icon: Languages, label: 'Translate' },
   { href: '/citations', icon: BookA, label: 'Citations' },
-  { href: '/vocabulary', icon: BookUp, label: 'Vocabulary' },
   { href: '/tone-detection', icon: Gauge, label: 'Tone' },
   { href: '/plagiarism', icon: ShieldCheck, label: 'Plagiarism' },
   { href: '/research', icon: GraduationCap, label: 'Research' },
   { href: '/formula', icon: FunctionSquare, label: 'Formula' },
+  { href: '/flashcards', icon: Copy, label: 'Flashcards' },
   { href: '/batch-summary', icon: FileText, label: 'Batch Summary' },
   { href: '/batch-paraphrase', icon: FileText, label: 'Batch Paraphrase' },
   { href: '/notepad', icon: Notebook, label: 'Notepad' },
+  { href: '/integrations', icon: Puzzle, label: 'Integrations' },
 ];
 
 const getGradientByHour = () => {
@@ -119,30 +122,9 @@ export default function DashboardPage() {
             <main className="flex-1 w-full container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <WelcomeBanner user={user} />
                 
-                <div className="my-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <Button asChild variant="outline" size="lg" className="h-14 text-base font-semibold">
-                        <Link href="/workspace">
-                            <Wand2 className="mr-2 h-5 w-5" />
-                            {t('features.workspace')}
-                        </Link>
-                    </Button>
-                     <Button asChild size="lg" className="h-14 text-base font-semibold">
-                        <Link href="/chat">
-                            <Sparkles className="mr-2 h-5 w-5" />
-                            {t('features.vesper-ai-studio')}
-                        </Link>
-                    </Button>
-                     <Button asChild variant="outline" size="lg" className="h-14 text-base font-semibold">
-                        <Link href="/integrations">
-                            <Puzzle className="mr-2 h-5 w-5" />
-                            {t('integrations_button')}
-                        </Link>
-                    </Button>
-                </div>
-
-                <div>
+                <div className="my-8">
                     <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('most_popular')}</h2>
-                    <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                    <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
                         {mostPopularTools.map((tool) => {
                             const Icon = tool.icon;
                             return (
@@ -161,7 +143,7 @@ export default function DashboardPage() {
 
                 <div className="mt-8">
                     <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('high_quality')}</h2>
-                     <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                     <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
                         {highQualityTools.map((tool) => {
                              const Icon = tool.icon;
                             return (
