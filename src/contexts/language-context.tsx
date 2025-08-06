@@ -34,7 +34,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
   const t = useCallback((key: string, options?: { [key: string]: string | number }): string => {
     const keys = key.split('.');
-    let result: any = languages[language];
+    let result: any = languages[language] || languages['en']; // Fallback to English if language file doesn't exist
     for (const k of keys) {
         result = result?.[k];
         if (result === undefined) {
@@ -73,11 +73,6 @@ export const useLanguage = () => {
   }
   return context;
 };
-
-export const languageOptions: { code: Language, name: string }[] = [
-    { code: 'en', name: 'English' },
-    { code: 'es', name: 'Español' },
-];
 
 export const allLanguageOptions: { code: string, name: string }[] = [
     { "code": "en", "name": "English" },

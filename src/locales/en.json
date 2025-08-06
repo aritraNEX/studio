@@ -79,5 +79,18 @@
         },
         "generate_button": "Generate Assignment",
         "no_references": "No references were generated."
+    },
+    "user_menu": {
+        "bio": "Bio",
+        "bio_placeholder": "Tell us a little about yourself...",
+        "language": "Language",
+        "toast": {
+            "name_empty": "Name cannot be empty.",
+            "profile_updated_title": "Profile updated successfully!",
+            "profile_update_failed_title": "Failed to update profile",
+            "picture_updated_title": "Profile picture updated!",
+            "upload_failed_title": "Upload Failed",
+            "upload_failed_desc": "Could not upload new profile picture."
+        }
     }
 }

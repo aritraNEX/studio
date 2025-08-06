@@ -79,5 +79,18 @@
         },
         "generate_button": "Generar Tarea",
         "no_references": "No se generaron referencias."
+    },
+    "user_menu": {
+        "bio": "Biografía",
+        "bio_placeholder": "Cuéntanos un poco sobre ti...",
+        "language": "Idioma",
+        "toast": {
+            "name_empty": "El nombre no puede estar vacío.",
+            "profile_updated_title": "¡Perfil actualizado correctamente!",
+            "profile_update_failed_title": "Error al actualizar el perfil",
+            "picture_updated_title": "¡Foto de perfil actualizada!",
+            "upload_failed_title": "Falló la subida",
+            "upload_failed_desc": "No se pudo subir la nueva foto de perfil."
+        }
     }
 }

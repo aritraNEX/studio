@@ -50,7 +50,7 @@ export default function UserMenu() {
   const handleProfileUpdate = async () => {
     if (!user) return;
     if (displayName.trim() === "") {
-        toast({ variant: "destructive", title: "Name cannot be empty." });
+        toast({ variant: "destructive", title: t('user_menu.toast.name_empty') });
         return;
     }
     setIsSaving(true);
@@ -59,9 +59,9 @@ export default function UserMenu() {
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { bio }, { merge: true });
         
-        toast({ title: "Profile updated successfully!" });
+        toast({ title: t('user_menu.toast.profile_updated_title') });
     } catch (error: any) {
-        toast({ variant: "destructive", title: "Failed to update profile", description: error.message });
+        toast({ variant: "destructive", title: t('user_menu.toast.profile_update_failed_title'), description: error.message });
     } finally {
         setIsSaving(false);
     }
@@ -82,9 +82,9 @@ export default function UserMenu() {
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { photoURL }, { merge: true });
 
-        toast({ title: "Profile picture updated!" });
+        toast({ title: t('user_menu.toast.picture_updated_title') });
     } catch (error: any) {
-        toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload new profile picture." });
+        toast({ variant: "destructive", title: t('user_menu.toast.upload_failed_title'), description: t('user_menu.toast.upload_failed_desc') });
     } finally {
         setIsSaving(false);
     }
@@ -152,19 +152,19 @@ export default function UserMenu() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-                <Label htmlFor="bio">Bio</Label>
+                <Label htmlFor="bio">{t('user_menu.bio')}</Label>
                 <Textarea
                     id="bio"
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
-                    placeholder="Tell us a little about yourself..."
+                    placeholder={t('user_menu.bio_placeholder')}
                     className="resize-none"
                     rows={3}
                     disabled={isSaving}
                 />
             </div>
             <div className="grid gap-2">
-                <Label htmlFor="language-select">Language</Label>
+                <Label htmlFor="language-select">{t('user_menu.language')}</Label>
                 <Select value={language} onValueChange={(value) => setLanguage(value)}>
                   <SelectTrigger id="language-select">
                     <SelectValue placeholder="Select language" />
