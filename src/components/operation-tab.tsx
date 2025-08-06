@@ -28,7 +28,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { useWorkspace } from "@/contexts/workspace-context";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -45,8 +45,6 @@ const allOperations: Operation[] = ['paraphrase', 'summarize', 'translate', 'sty
 interface OperationTabProps {
   operation: Operation;
   onSendTo: (text: string, operation: Operation) => void;
-  initialText?: string;
-  projectId?: string | null;
 }
 
 const fileToDataUri = (file: File): Promise<string> => {
@@ -59,8 +57,11 @@ const fileToDataUri = (file: File): Promise<string> => {
 };
 
 
-export function OperationTab({ operation, onSendTo, initialText, projectId }: OperationTabProps) {
-  const [inputText, setInputText] = useState<string>(initialText || "");
+export function OperationTab({ operation, onSendTo }: OperationTabProps) {
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get('projectId');
+  const { workspaceText } = useWorkspace();
+  const [inputText, setInputText] = useState<string>("");
   const [fileDataUri, setFileDataUri] = useState<string | null>(null);
   const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
   const [generatedText, setGeneratedText] = useState<string>("");
@@ -87,43 +88,55 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
   }, []);
 
   useEffect(() => {
-    setAppUrl(window.location.origin); // Use origin instead of href
+    setAppUrl(window.location.origin);
   }, []);
+
+  useEffect(() => {
+    if(workspaceText && operation !== 'style' && operation !== 'translate'){
+        setInputText(workspaceText);
+        setWorkspaceText("");
+    }
+  }, [workspaceText, operation, setWorkspaceText]);
 
   useEffect(() => {
     if (projectId && user) {
       const fetchProject = async () => {
         setIsParsing(true); // Show loading state while fetching
         const docRef = doc(db, 'projects', projectId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const projectData = docSnap.data();
-          if (projectData.userId !== user.uid) {
-             toast({ variant: 'destructive', title: 'Access Denied', description: "You don't have permission to view this project." });
-             router.push('/');
-             return;
-          }
-          if (projectData.operation === operation) {
-            setGeneratedText(projectData.outputText);
-            const savedFileData = projectData.inputText;
-            if (savedFileData) {
-                if (savedFileData.startsWith('data:')) {
-                    setFileDataUri(savedFileData);
-                    if (savedFileData.startsWith('data:image')) {
-                        setLocalPreviewUrl(savedFileData);
-                    } else {
+        try {
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+              const projectData = docSnap.data();
+              if (projectData.userId !== user.uid) {
+                 toast({ variant: 'destructive', title: 'Access Denied', description: "You don't have permission to view this project." });
+                 router.push('/');
+                 return;
+              }
+              if (projectData.operation === operation) {
+                setGeneratedText(projectData.outputText);
+                const savedInput = projectData.inputText;
+                if (savedInput) {
+                    if (savedInput.startsWith('data:')) {
+                        setFileDataUri(savedInput);
                         setFileName("Loaded Project Document");
+                        if (savedInput.startsWith('data:image')) {
+                            setLocalPreviewUrl(savedInput);
+                        }
+                    } else {
+                        setInputText(savedInput);
                     }
-                } else {
-                    setInputText(savedFileData);
                 }
+              }
+            } else {
+              toast({ variant: 'destructive', title: 'Project not found.' });
+              router.push('/');
             }
-          }
-        } else {
-          toast({ variant: 'destructive', title: 'Project not found.' });
-          router.push('/');
+        } catch (e) {
+            console.error(e);
+            toast({ variant: 'destructive', title: 'Error loading project' });
+        } finally {
+             setIsParsing(false);
         }
-        setIsParsing(false);
       };
       fetchProject();
     }
@@ -142,7 +155,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
     try {
       await addDoc(collection(db, 'projects'), {
         userId: user.uid,
-        inputText: inputText || fileDataUri,
+        inputText: fileDataUri || inputText,
         outputText: generatedText,
         operation: operation,
         createdAt: serverTimestamp(),
@@ -175,12 +188,12 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                 const buffer = e.target?.result;
                 let textContent = "";
                 if (fileType.startsWith("image/")) {
-                    // For images, the data URI is the content, so no text is extracted here.
                     const dataUri = await fileToDataUri(file);
                     setFileDataUri(dataUri);
                     setLocalPreviewUrl(dataUri);
                 } else {
-                    setFileDataUri(await fileToDataUri(file));
+                    const dataUri = await fileToDataUri(file);
+                    setFileDataUri(dataUri);
                     if (fileType === 'application/pdf') {
                         const pdf = await pdfjsLib.getDocument(buffer as ArrayBuffer).promise;
                         for (let i = 1; i <= pdf.numPages; i++) {
@@ -431,6 +444,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
 
   const handleAddToWorkspace = () => {
     if (!generatedText) return;
+    const finalStyle = customStyle.trim() || targetStyle;
     addWorkspaceStep({
         id: Date.now(),
         operation: operation,
@@ -599,10 +613,10 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
           Result
         </Label>
         <div className="relative flex-grow min-h-[24rem]">
-            {isPending ? (
+            {isPending || isParsing ? (
                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted-foreground bg-background/50 rounded-lg">
                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                    <p className="font-semibold">Generating your result...</p>
+                    <p className="font-semibold">{isParsing ? "Reading file..." : "Generating your result..."}</p>
                 </div>
             ) : (
                 <Textarea
@@ -616,7 +630,7 @@ export function OperationTab({ operation, onSendTo, initialText, projectId }: Op
                 />
             )}
           
-          {!isPending && (
+          {!isPending && !isParsing && (
             <div className="absolute top-2 right-2 flex items-center">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
