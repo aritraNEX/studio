@@ -7,101 +7,162 @@ import {
   Wand2,
   Puzzle,
   Quote,
+  Languages,
+  BookText,
+  Palette,
+  BrainCircuit,
+  Share2,
+  PenSquare,
+  StickyNote,
+  Copy,
+  BookA,
+  BookUp,
+  ShieldCheck,
+  Gauge,
+  GraduationCap,
+  Video,
+  AudioLines,
+  FunctionSquare,
+  Camera,
+  Notebook,
+  FileText,
 } from "lucide-react";
 import UserMenu from "@/components/user-menu";
-import AboutFooter from "@/components/about-footer";
 import { useLanguage } from "@/contexts/language-context";
 import WelcomeBanner from "@/components/welcome-banner";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import React, { useEffect, useState } from 'react';
+import AdBanner from "@/components/ad-banner";
 
-const VesperLogo = () => (
-  <svg
-    width="80"
-    height="80"
-    viewBox="0 0 108 92"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-16 w-16 md:h-20 md:w-20 text-white"
-  >
-    <path
-      d="M26.748 89.25C19.78 89.25 14.85 84.58 14.85 79.6V12.14C14.85 7.16 19.78 2.5 26.748 2.5H35.25C42.22 2.5 47.15 7.16 47.15 12.14V72.93C47.15 77.9 42.22 82.57 35.25 82.57H32.48C31.54 82.57 30.63 82.16 30.01 81.44L18.45 66.86"
-      stroke="currentColor"
-      strokeWidth="5"
-      strokeMiterlimit="10"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M72.2811 89.25C79.2511 89.25 84.1811 84.58 84.1811 79.6V12.14C84.1811 7.16 79.2511 2.5 72.2811 2.5H63.7811C56.8111 2.5 51.8811 7.16 51.8811 12.14V72.93C51.8811 77.9 56.8111 82.57 63.7811 82.57H66.5511C67.4911 82.57 68.4011 82.16 69.0211 81.44L80.5811 66.86"
-      stroke="currentColor"
-      strokeWidth="5"
-      strokeMiterlimit="10"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
+const VesperIcon = () => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 100 100"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6 text-primary"
+        >
+        <circle cx="40" cy="40" r="30" className="fill-primary" />
+        <circle cx="70" cy="35" r="20" className="fill-primary/70" />
+        <circle cx="65" cy="75" r="25" className="fill-accent" />
+        <circle cx="80" cy="70" r="10" className="fill-primary" />
+    </svg>
 );
 
-const featureLinks = [
-  { href: '/workspace', icon: Wand2, label: 'Workspace' },
+
+const mostPopularTools = [
   { href: '/chat', icon: Sparkles, label: 'Vesper AI Studio' },
-  { href: '/integrations', icon: Puzzle, label: 'Integrations' },
+  { href: '/paraphrase', icon: Quote, label: 'Paraphrase' },
+  { href: '/summarize', icon: BookText, label: 'Summarize' },
+  { href: '/explainer', icon: BrainCircuit, label: 'Explainer' },
+  { href: '/flashcards', icon: Copy, label: 'Flashcards' },
+  { href: '/assignment-maker', icon: PenSquare, label: 'Assignment' },
 ];
+
+const highQualityTools = [
+  { href: '/workspace', icon: Wand2, label: 'Workspace' },
+  { href: '/lens', icon: Camera, label: 'Lens' },
+  { href: '/note-generator', icon: StickyNote, label: 'Note-mentor' },
+  { href: '/diagrams', icon: Share2, label: 'Diagrams' },
+  { href: '/video-transcription', icon: Video, label: 'Video to Text' },
+  { href: '/tts', icon: AudioLines, label: 'TTS' },
+  { href: '/style', icon: Palette, label: 'Style' },
+  { href: '/translate', icon: Languages, label: 'Translate' },
+  { href: '/citations', icon: BookA, label: 'Citations' },
+  { href: '/vocabulary', icon: BookUp, label: 'Vocabulary' },
+  { href: '/tone-detection', icon: Gauge, label: 'Tone' },
+  { href: '/plagiarism', icon: ShieldCheck, label: 'Plagiarism' },
+  { href: '/research', icon: GraduationCap, label: 'Research' },
+  { href: '/formula', icon: FunctionSquare, label: 'Formula' },
+  { href: '/batch-summary', icon: FileText, label: 'Batch Summary' },
+  { href: '/batch-paraphrase', icon: FileText, label: 'Batch Paraphrase' },
+  { href: '/notepad', icon: Notebook, label: 'Notepad' },
+];
+
+const getGradientByHour = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 11) return 'from-sky-100 via-blue-100 to-cyan-100'; // Softer Morning
+  if (hour >= 11 && hour < 17) return 'from-yellow-50 via-orange-100 to-pink-100'; // Softer Afternoon
+  if (hour >= 17 && hour < 20) return 'from-red-100 via-purple-200 to-indigo-200'; // Softer Evening
+  return 'from-gray-800 via-blue-900 to-black'; // Night
+};
 
 export default function DashboardPage() {
     const { t } = useLanguage();
     const { user } = useAuth();
+    const [gradient, setGradient] = useState(getGradientByHour());
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+        setGradient(getGradientByHour());
+        }, 5000); // Update every 5 seconds to check the time
+        return () => clearInterval(interval);
+    }, []);
 
     return (
-        <div 
-            className="flex min-h-screen w-full flex-col text-white animated-gradient"
-        >
-            <main className="flex flex-1 flex-col items-center p-4 sm:p-8">
-                <div className="w-full max-w-md mx-auto flex flex-col h-full">
-                    <div className="flex-grow flex flex-col items-center justify-center text-center">
-                        <WelcomeBanner user={user} />
-                        
-                        <div className="my-8 animate-in fade-in-0 slide-in-from-top-10 duration-1000 delay-300">
-                           <VesperLogo />
-                        </div>
-
-                        <h1 className="text-6xl md:text-7xl font-bold tracking-tight animate-in fade-in-0 slide-in-from-top-10 duration-1000 delay-500">
-                          {t('welcome_title')}
-                        </h1>
-                        <p className="mt-4 text-xl md:text-2xl text-white/80 animate-in fade-in-0 slide-in-from-top-10 duration-1000 delay-700">
-                          {t('welcome_subtitle')}
-                        </p>
+        <div className={cn("flex min-h-screen w-full flex-col items-center bg-gradient-to-br transition-all duration-[5000ms] ease-linear", gradient)}>
+            <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
+                <div className="container flex h-16 items-center justify-between">
+                    <Link href="/" className="flex items-center gap-2 font-bold">
+                        <VesperIcon />
+                        <span>Vesper</span>
+                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Button asChild variant="outline">
+                            <Link href="/integrations">
+                                <Puzzle className="mr-2 h-4 w-4" />
+                                {t('integrations_button')}
+                            </Link>
+                        </Button>
+                        <UserMenu />
                     </div>
+                </div>
+            </header>
 
-                    <div className="space-y-4 pb-8 animate-in fade-in-0 slide-in-from-bottom-10 duration-1000 delay-900">
-                        {featureLinks.map((feature, index) => {
-                             const Icon = feature.icon;
-                             return (
-                                <Link
-                                    href={feature.href}
-                                    key={feature.href}
-                                    className="group glass-btn relative flex w-full items-center gap-4 p-4 text-lg font-medium rounded-2xl text-white transition-all duration-300 hover:border-white/50 transform hover:scale-105"
-                                >
-                                    <Icon className="h-6 w-6" />
-                                    <span>{t(`features.${feature.label.toLowerCase().replace(/ /g, '-')}`)}</span>
+            <main className="flex-1 w-full container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <WelcomeBanner user={user} />
+                
+                <div className="mt-8">
+                    <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('most_popular')}</h2>
+                    <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                        {mostPopularTools.map((tool) => {
+                            const Icon = tool.icon;
+                            return (
+                                <Link href={tool.href} key={tool.href} className="group flex flex-col items-center justify-center gap-2 rounded-xl bg-card p-4 text-center transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                                        <Icon className="h-6 w-6" />
+                                    </div>
+                                    <span className="text-sm font-medium text-foreground">{t(`features.${tool.label.toLowerCase().replace(/ /g, '-')}`)}</span>
                                 </Link>
-                             )
+                            )
                         })}
-                         <div
-                            className="group glass-btn relative flex w-full items-center justify-between gap-4 p-4 text-lg font-medium rounded-2xl text-white transition-all duration-300"
-                        >
-                            <div className="flex items-center gap-4">
-                                <Quote className="h-6 w-6" />
-                                <span>{t(`features.paraphrase`)}</span>
-                            </div>
-                            <Switch id="paraphrase-toggle" />
-                        </div>
+                    </div>
+                </div>
+                
+                <AdBanner />
+
+                <div className="mt-8">
+                    <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('high_quality')}</h2>
+                     <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                        {highQualityTools.map((tool) => {
+                             const Icon = tool.icon;
+                            return (
+                                <Link href={tool.href} key={tool.href} className="group flex flex-col items-center justify-center gap-2 rounded-xl bg-card p-4 text-center transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                                        <Icon className="h-6 w-6" />
+                                    </div>
+                                    <span className="text-sm font-medium text-foreground">{t(`features.${tool.label.toLowerCase().replace(/ /g, '-')}`)}</span>
+                                </Link>
+                            )
+                        })}
                     </div>
                 </div>
             </main>
         </div>
     );
 }
+
+
+    

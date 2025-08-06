@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { User } from "firebase/auth";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 
 interface WelcomeBannerProps {
   user: User | null;
@@ -11,6 +12,7 @@ interface WelcomeBannerProps {
 
 export default function WelcomeBanner({ user }: WelcomeBannerProps) {
   const [greeting, setGreeting] = useState("");
+  const { t } = useLanguage();
 
   useEffect(() => {
     const getGreeting = () => {
@@ -36,17 +38,14 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
     }
   }, [user]);
 
-  if (!greeting) {
-    return null;
-  }
-
   return (
     <div
       className={cn(
-        "w-full text-center py-4 animate-in fade-in-0 slide-in-from-top-10 duration-1000"
+        "w-full text-center py-4"
       )}
     >
-      <h2 className="text-3xl md:text-4xl font-medium text-white/90">{greeting}</h2>
+        {greeting && <h2 className="text-3xl md:text-4xl font-medium text-foreground">{greeting}</h2>}
+        {!greeting && <h2 className="text-3xl md:text-4xl font-medium text-foreground">{t('login_welcome_title')}</h2>}
     </div>
   );
 }
