@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -42,10 +43,10 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
   return (
     <div
       className={cn(
-        "w-full text-center py-12 animate-in fade-in slide-in-from-top-10 duration-700"
+        "w-full text-center py-4 animate-in fade-in-0 slide-in-from-top-10 duration-1000"
       )}
     >
-      <h2 className="text-4xl font-semibold text-foreground transition-transform duration-300 hover:scale-105">{greeting}</h2>
+      <h2 className="text-3xl md:text-4xl font-medium text-white/90">{greeting}</h2>
     </div>
   );
 }

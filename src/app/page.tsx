@@ -1,8 +1,12 @@
+
 "use client";
 
 import Link from "next/link";
 import {
-  Sparkles, Quote, BookText, Languages, Palette, ShieldCheck, Wand2, GraduationCap, AudioLines, FileText, FunctionSquare, Video, PenSquare, Copy, BookA, SpellCheck, BrainCircuit, Share2, StickyNote, Gauge, BookUp, Users, MessageSquare, Puzzle, Camera, Notebook
+  Sparkles,
+  Wand2,
+  Puzzle,
+  Quote,
 } from "lucide-react";
 import UserMenu from "@/components/user-menu";
 import AboutFooter from "@/components/about-footer";
@@ -10,122 +14,94 @@ import { useLanguage } from "@/contexts/language-context";
 import WelcomeBanner from "@/components/welcome-banner";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
-const VesperIcon = () => (
-    <svg
-        width="48"
-        height="48"
-        viewBox="0 0 100 100"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-12 w-12"
-        >
-        <circle cx="40" cy="40" r="30" className="fill-primary" />
-        <circle cx="70" cy="35" r="20" className="fill-primary/70" />
-        <circle cx="65" cy="75" r="25" className="fill-accent" />
-        <circle cx="80" cy="70" r="10" className="fill-primary" />
-    </svg>
+const VesperLogo = () => (
+  <svg
+    width="80"
+    height="80"
+    viewBox="0 0 108 92"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-16 w-16 md:h-20 md:w-20 text-white"
+  >
+    <path
+      d="M26.748 89.25C19.78 89.25 14.85 84.58 14.85 79.6V12.14C14.85 7.16 19.78 2.5 26.748 2.5H35.25C42.22 2.5 47.15 7.16 47.15 12.14V72.93C47.15 77.9 42.22 82.57 35.25 82.57H32.48C31.54 82.57 30.63 82.16 30.01 81.44L18.45 66.86"
+      stroke="currentColor"
+      strokeWidth="5"
+      strokeMiterlimit="10"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M72.2811 89.25C79.2511 89.25 84.1811 84.58 84.1811 79.6V12.14C84.1811 7.16 79.2511 2.5 72.2811 2.5H63.7811C56.8111 2.5 51.8811 7.16 51.8811 12.14V72.93C51.8811 77.9 56.8111 82.57 63.7811 82.57H66.5511C67.4911 82.57 68.4011 82.16 69.0211 81.44L80.5811 66.86"
+      stroke="currentColor"
+      strokeWidth="5"
+      strokeMiterlimit="10"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
 );
 
-const allFeatures = [
-    { href: '/paraphrase', icon: Quote, label: 'Paraphrase' },
-    { href: '/summarize', icon: BookText, label: 'Summarize' },
-    { href: '/grammar', icon: SpellCheck, label: 'Grammar' },
-    { href: '/translate', icon: Languages, label: 'Translate' },
-    { href: '/style', icon: Palette, label: 'Style' },
-    { href: '/explainer', icon: BrainCircuit, label: 'Explainer' },
-    { href: '/diagrams', icon: Share2, label: 'Diagrams' },
-    { href: '/assignment-maker', icon: PenSquare, label: 'Assignment' },
-    { href: '/note-generator', icon: StickyNote, label: 'Note-mentor' },
-    { href: '/flashcards', icon: Copy, label: 'Flashcards' },
-    { href: '/citations', icon: BookA, label: 'Citations' },
-    { href: '/vocabulary', icon: BookUp, label: 'Vocabulary' },
-    { href: '/tone-detection', icon: Gauge, label: 'Tone' },
-    { href: '/video-transcription', icon: Video, label: 'Video to Text' },
-    { href: '/research', icon: GraduationCap, label: 'Research' },
-    { href: '/plagiarism', icon: ShieldCheck, label: 'Plagiarism' },
-    { href: '/tts', icon: AudioLines, label: 'TTS' },
-    { href: '/formula', icon: FunctionSquare, label: 'Formula' },
-    { href: '/lens', icon: Camera, label: 'Lens' },
-    { href: '/batch-summary', icon: FileText, label: 'Batch Summary' },
-    { href: '/batch-paraphrase', icon: FileText, label: 'Batch Paraphrase' },
-    { href: '/notepad', icon: Notebook, label: 'Notepad' },
+const featureLinks = [
+  { href: '/workspace', icon: Wand2, label: 'Workspace' },
+  { href: '/chat', icon: Sparkles, label: 'Vesper AI Studio' },
+  { href: '/integrations', icon: Puzzle, label: 'Integrations' },
 ];
 
 export default function DashboardPage() {
     const { t } = useLanguage();
     const { user } = useAuth();
-    const [animationsEnabled, setAnimationsEnabled] = useState(false);
-
-    useEffect(() => {
-      setAnimationsEnabled(localStorage.getItem("texio-animations-enabled") === "true");
-    }, []);
 
     return (
         <div 
-            className={cn(
-                "flex min-h-screen w-full flex-col transition-all duration-500",
-                animationsEnabled && "animated-background"
-              )}
-            style={{
-                background: `radial-gradient(ellipse 80% 80% at 50% -20%, hsl(var(--primary) / 0.3), transparent),
-                             radial-gradient(ellipse 80% 80% at 50% 120%, hsl(var(--accent) / 0.3), transparent),
-                             hsl(var(--background))`,
-                backgroundSize: '200% 200%',
-            }}
+            className="flex min-h-screen w-full flex-col text-white animated-gradient"
         >
-             <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/30 backdrop-blur-sm">
-                <div className="container flex h-14 items-center justify-end">
-                    <UserMenu />
-                </div>
-            </header>
             <main className="flex flex-1 flex-col items-center p-4 sm:p-8">
-                <div className="w-full max-w-5xl">
-                     <WelcomeBanner user={user} />
-                     <div className="text-center mb-12">
-                        <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-foreground mt-4">
+                <div className="w-full max-w-md mx-auto flex flex-col h-full">
+                    <div className="flex-grow flex flex-col items-center justify-center text-center">
+                        <WelcomeBanner user={user} />
+                        
+                        <div className="my-8 animate-in fade-in-0 slide-in-from-top-10 duration-1000 delay-300">
+                           <VesperLogo />
+                        </div>
+
+                        <h1 className="text-6xl md:text-7xl font-bold tracking-tight animate-in fade-in-0 slide-in-from-top-10 duration-1000 delay-500">
                           {t('welcome_title')}
                         </h1>
-                        <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
+                        <p className="mt-4 text-xl md:text-2xl text-white/80 animate-in fade-in-0 slide-in-from-top-10 duration-1000 delay-700">
                           {t('welcome_subtitle')}
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                         <Link href="/workspace" className="glass-card h-16 text-lg justify-start p-6 text-foreground hover:border-primary/50 transition-all duration-300 flex items-center gap-2 transform hover:-translate-y-1">
-                            <Wand2 className="mr-4 h-6 w-6 text-primary" /> {t('features.workspace')}
-                        </Link>
-                        <Link href="/chat" className="glass-card h-16 text-lg justify-start p-6 text-foreground hover:border-primary/50 transition-all duration-300 flex items-center gap-2 transform hover:-translate-y-1">
-                            <Sparkles className="mr-4 h-6 w-6 text-primary" /> <span>{t('vesper_ai_studio')}</span>
-                        </Link>
-                        <Link href="/integrations" className="glass-card h-16 text-lg justify-start p-6 text-foreground hover:border-primary/50 transition-all duration-300 flex items-center gap-2 transform hover:-translate-y-1">
-                            <Puzzle className="mr-4 h-6 w-6 text-primary" /> {t('integrations_button')}
-                        </Link>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {allFeatures.map((feature) => {
+                    <div className="space-y-4 pb-8 animate-in fade-in-0 slide-in-from-bottom-10 duration-1000 delay-900">
+                        {featureLinks.map((feature, index) => {
                              const Icon = feature.icon;
                              return (
                                 <Link
                                     href={feature.href}
                                     key={feature.href}
-                                    className="group glass-card relative flex flex-col items-center justify-center gap-2 p-6 text-foreground shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/50"
+                                    className="group glass-btn relative flex w-full items-center gap-4 p-4 text-lg font-medium rounded-2xl text-white transition-all duration-300 hover:border-white/50 transform hover:scale-105"
                                 >
-                                    <div className="relative p-3 rounded-full bg-primary/10 transition-colors duration-300">
-                                      <Icon className="h-7 w-7 text-primary transition-transform duration-300 group-hover:scale-110" />
-                                    </div>
-                                    <span className="text-sm font-medium text-center relative">{t(`features.${feature.label.toLowerCase().replace(/ /g, '-')}`)}</span>
+                                    <Icon className="h-6 w-6" />
+                                    <span>{t(`features.${feature.label.toLowerCase().replace(/ /g, '-')}`)}</span>
                                 </Link>
                              )
                         })}
+                         <div
+                            className="group glass-btn relative flex w-full items-center justify-between gap-4 p-4 text-lg font-medium rounded-2xl text-white transition-all duration-300"
+                        >
+                            <div className="flex items-center gap-4">
+                                <Quote className="h-6 w-6" />
+                                <span>{t(`features.paraphrase`)}</span>
+                            </div>
+                            <Switch id="paraphrase-toggle" />
+                        </div>
                     </div>
                 </div>
             </main>
-             <div className="container mx-auto px-4 sm:px-8">
-               <AboutFooter />
-            </div>
         </div>
     );
 }
