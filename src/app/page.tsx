@@ -62,7 +62,16 @@ export default function DashboardPage() {
     const showWelcome = searchParams.get('welcome') === 'true';
 
     return (
-        <div className="flex min-h-screen w-full flex-col" style={{background: 'radial-gradient(circle at top, #4a0e91, #2d0b57 30%, #1a0633 60%, #0c021a)'}}>
+        <div 
+            className="flex min-h-screen w-full flex-col" 
+            style={{
+                backgroundColor: '#1a1a2e',
+                backgroundImage: `
+                    radial-gradient(circle at 15% 25%, hsla(259, 90%, 55%, 0.4) 0%, transparent 25%),
+                    radial-gradient(circle at 85% 75%, hsla(30, 90%, 55%, 0.3) 0%, transparent 25%)
+                `,
+            }}
+        >
              {user && <WelcomeBanner user={user} />}
              <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-transparent backdrop-blur-sm">
                 <div className="container flex h-14 items-center justify-end">
