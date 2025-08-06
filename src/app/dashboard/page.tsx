@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import TaskSummaryDashboard from '@/components/task-summary-dashboard';
 
 interface Project {
   id: string;
@@ -176,7 +177,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/50">
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-          <h1 className="text-2xl font-bold tracking-tight">My Projects</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
            <div className="flex items-center gap-2">
             <Button asChild variant="outline">
               <Link href="/" prefetch={false}>
@@ -188,6 +189,9 @@ export default function DashboardPage() {
         </div>
       </header>
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <TaskSummaryDashboard />
+        <div className="my-8 border-t border-border"></div>
+        <h2 className="text-xl font-bold tracking-tight mb-4">My Saved Projects</h2>
         {loading ? (
             <ProjectsSkeleton />
         ) : projects.length === 0 ? (

@@ -1,23 +1,27 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
-import { ListTodo, Loader2, Sparkles, Calendar as CalendarIcon, Clock, Download, CalendarPlus } from "lucide-react";
+import { useState, useTransition, useEffect } from "react";
+import { ListTodo, Loader2, Sparkles, Calendar as CalendarIcon, Clock, Download, CalendarPlus, Bell, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { taskPlanner, TaskPlannerOutput } from "@/ai/flows/task-planner-flow";
+import { rescheduleTasks } from "@/ai/flows/reschedule-task-flow";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
 import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
+import { useAuth } from "@/contexts/auth-context";
+import { db } from "@/lib/firebase";
+import { doc, setDoc, onSnapshot, deleteDoc, serverTimestamp } from "firebase/firestore";
 
 const timeSlots = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
 
@@ -32,7 +36,41 @@ export function TaskPlannerTab() {
   
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isRescheduling, setIsRescheduling] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) return;
+    const planDocRef = doc(db, 'task_plans', user.uid);
+    const unsubscribe = onSnapshot(planDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            setResult(data.plan);
+            setCheckedTasks(data.progress || {});
+            setTask(data.mainTask);
+        } else {
+            setResult(null);
+            setCheckedTasks({});
+        }
+    });
+    return () => unsubscribe();
+  }, [user]);
+
+  const savePlan = async (plan: TaskPlannerOutput | null, progress?: Record<string, boolean>) => {
+      if (!user) return;
+      const planDocRef = doc(db, 'task_plans', user.uid);
+      if (plan === null) {
+          await deleteDoc(planDocRef);
+      } else {
+          await setDoc(planDocRef, {
+              mainTask: task,
+              plan,
+              progress: progress || checkedTasks,
+              updatedAt: serverTimestamp()
+          }, { merge: true });
+      }
+  };
 
   const handleGeneratePlan = () => {
     if (!task.trim()) {
@@ -58,6 +96,7 @@ export function TaskPlannerTab() {
         });
         if (planResult && planResult.subtasks.length > 0) {
           setResult(planResult);
+          savePlan(planResult, {});
         } else {
           throw new Error("The AI did not generate a plan.");
         }
@@ -69,11 +108,57 @@ export function TaskPlannerTab() {
     });
   };
 
+  const handleReschedule = () => {
+    if (!result) return;
+
+    const incompleteTasks = result.subtasks.filter(t => !checkedTasks[t.title]);
+    if (incompleteTasks.length === 0) {
+        toast({ title: "All tasks complete!", description: "Nothing to reschedule." });
+        return;
+    }
+
+    setIsRescheduling(true);
+    startTransition(async () => {
+        try {
+            const newPlan = await rescheduleTasks({
+                incompleteTasks: incompleteTasks.map(t => t.title),
+                deadline: deadline?.toISOString() || result.subtasks[result.subtasks.length - 1].date,
+                dailyAvailability: availability
+            });
+            const updatedPlan = {
+                ...result,
+                subtasks: [
+                    ...result.subtasks.filter(t => checkedTasks[t.title]),
+                    ...newPlan.rescheduledTasks
+                ]
+            };
+            updatedPlan.subtasks.sort((a, b) => new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime());
+            setResult(updatedPlan);
+            savePlan(updatedPlan);
+        } catch (e) {
+            toast({ variant: "destructive", title: "Rescheduling Failed", description: e instanceof Error ? e.message : "Unknown error" });
+        } finally {
+            setIsRescheduling(false);
+        }
+    });
+  }
+
+  const handleDeletePlan = async () => {
+      if (!user) return;
+      await savePlan(null);
+      setResult(null);
+      setCheckedTasks({});
+      setTask("");
+      toast({ title: "Plan Deleted", description: "Your schedule has been cleared." });
+  }
+
   const handleTaskCheck = (taskTitle: string) => {
-    setCheckedTasks(prev => ({
-        ...prev,
-        [taskTitle]: !prev[taskTitle]
-    }));
+    const newProgress = {
+        ...checkedTasks,
+        [taskTitle]: !checkedTasks[taskTitle]
+    };
+    setCheckedTasks(newProgress);
+    savePlan(result, newProgress);
   };
   
   const handleDownloadPdf = async () => {
@@ -134,6 +219,7 @@ export function TaskPlannerTab() {
   const completedCount = Object.values(checkedTasks).filter(Boolean).length;
   const totalCount = result?.subtasks.length || 0;
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+  const isPlanActive = result && result.subtasks.length > 0;
 
   return (
     <div className="flex flex-col gap-8">
@@ -200,6 +286,23 @@ export function TaskPlannerTab() {
                     </Select>
                </div>
            </div>
+           <Button
+              onClick={handleGeneratePlan}
+              disabled={!task || !deadline || isPending}
+              size="lg"
+              className={cn(
+                "w-full text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95",
+                isPending && "animate-sparkle"
+              )}
+            >
+              {isPending ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-5 w-5" />
+              )}
+              <span>{isPending ? "Generating..." : "Generate Plan"}</span>
+            </Button>
+            {error && <p className="text-sm text-destructive text-center mt-2">{error}</p>}
         </div>
 
         {/* Output Section */}
@@ -212,23 +315,21 @@ export function TaskPlannerTab() {
                     {result && <CardTitle className="text-lg flex justify-between items-center">{result.planTitle}
                     <div className="flex gap-1">
                         <Button variant="outline" size="sm" onClick={handleDownloadPdf}><Download className="h-4 w-4 mr-2"/>PDF</Button>
-                        <Button variant="outline" size="sm" onClick={handleCalendarSync}><CalendarPlus className="h-4 w-4 mr-2"/>Sync</Button>
+                        <Button variant="outline" size="sm" onClick={handleDeletePlan}><Trash2 className="h-4 w-4"/></Button>
                     </div>
                     </CardTitle>}
                 </CardHeader>
                 <CardContent className="flex-grow flex flex-col items-center justify-center p-6">
-                    {isPending && (
+                    {(isPending || isRescheduling) ? (
                         <div className="flex flex-col items-center gap-4 text-muted-foreground animate-in fade-in duration-500">
                             <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                            <p className="font-semibold">Generating your plan...</p>
+                            <p className="font-semibold">{isRescheduling ? "Rescheduling your plan..." : "Generating your plan..."}</p>
                         </div>
-                    )}
-                    {!isPending && !result && (
+                    ) : !result ? (
                          <div className="text-center text-muted-foreground p-4">
                             <p>Your step-by-step plan will appear here.</p>
                         </div>
-                    )}
-                    {!isPending && result && (
+                    ) : (
                         <div className="w-full h-full flex flex-col gap-4 animate-in fade-in duration-500">
                             <div className="flex items-center gap-4">
                                 <Progress value={progress} className="w-full h-3" />
@@ -241,7 +342,7 @@ export function TaskPlannerTab() {
                                         <Checkbox 
                                             id={`task-${index}`}
                                             className="mt-1"
-                                            checked={checkedTasks[subtask.title]}
+                                            checked={!!checkedTasks[subtask.title]}
                                             onCheckedChange={() => handleTaskCheck(subtask.title)}
                                         />
                                         <div className="grid gap-1.5 leading-snug">
@@ -263,25 +364,27 @@ export function TaskPlannerTab() {
             </Card>
         </div>
       </div>
-      <div className="flex flex-col items-center justify-center gap-4 py-4">
-        <Button
-          onClick={handleGeneratePlan}
-          disabled={!task || !deadline || isPending}
-          size="lg"
-          className={cn(
-            "w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto",
-            isPending && "animate-sparkle"
-          )}
-        >
-          {isPending ? (
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          ) : (
-            <Sparkles className="mr-2 h-5 w-5" />
-          )}
-          <span>{isPending ? "Generating..." : "Generate Plan"}</span>
-        </Button>
-        {error && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
-      </div>
+      {isPlanActive && (
+        <Card className="md:col-span-2">
+            <CardHeader><CardTitle>Plan Management</CardTitle></CardHeader>
+            <CardContent className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Button variant="outline" onClick={handleReschedule} disabled={isPending || isRescheduling}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Reschedule Incomplete Tasks
+                </Button>
+                <Button variant="outline" onClick={handleCalendarSync}>
+                    <CalendarPlus className="mr-2 h-4 w-4" />
+                    Sync to Google Calendar
+                </Button>
+                <div className="flex items-center space-x-2">
+                    <Checkbox id="email-reminders" />
+                    <label htmlFor="email-reminders" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Email Reminders
+                    </label>
+                </div>
+            </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
