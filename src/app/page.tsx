@@ -55,7 +55,6 @@ const VesperIcon = () => (
 
 
 const mostPopularTools = [
-  { href: '/chat', icon: Sparkles, label: 'Vesper AI Studio' },
   { href: '/paraphrase', icon: Quote, label: 'Paraphrase' },
   { href: '/summarize', icon: BookText, label: 'Summarize' },
   { href: '/explainer', icon: BrainCircuit, label: 'Explainer' },
@@ -66,8 +65,6 @@ const mostPopularTools = [
 ];
 
 const highQualityTools = [
-  { href: '/workspace', icon: Wand2, label: 'Workspace' },
-  { href: '/lens', icon: Camera, label: 'Lens' },
   { href: '/note-generator', icon: StickyNote, label: 'Note-mentor' },
   { href: '/diagrams', icon: Share2, label: 'Diagrams' },
   { href: '/video-transcription', icon: Video, label: 'Video to Text' },
@@ -105,6 +102,19 @@ export default function DashboardPage() {
         return () => clearInterval(interval);
     }, []);
 
+    const renderToolCard = (tool: { href: string; icon: React.ElementType; label: string }) => {
+        const Icon = tool.icon;
+        const translationKey = `features.${tool.label.toLowerCase().replace(/ /g, '_').replace(/-/g, '_')}`;
+        return (
+            <Link href={tool.href} key={tool.href} className="group flex flex-col items-center justify-center gap-2 rounded-xl bg-card p-4 text-center transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                    <Icon className="h-6 w-6" />
+                </div>
+                <span className="text-sm font-medium text-foreground">{t(translationKey)}</span>
+            </Link>
+        );
+    };
+
     return (
         <div className={cn("flex min-h-screen w-full flex-col items-center bg-gradient-to-br transition-all duration-[5000ms] ease-linear", gradient)}>
             <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
@@ -122,20 +132,34 @@ export default function DashboardPage() {
             <main className="flex-1 w-full container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <WelcomeBanner user={user} />
                 
+                <div className="my-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <Link href="/workspace" className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1">
+                        <Wand2 className="h-8 w-8 text-primary" />
+                        <div>
+                            <h3 className="font-semibold text-foreground">{t('features.workspace')}</h3>
+                            <p className="text-sm text-muted-foreground">Chain AI operations together.</p>
+                        </div>
+                    </Link>
+                    <Link href="/chat" className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1">
+                        <Sparkles className="h-8 w-8 text-primary" />
+                         <div>
+                            <h3 className="font-semibold text-foreground">{t('features.vesper_ai_studio')}</h3>
+                            <p className="text-sm text-muted-foreground">Chat with Vesper AI.</p>
+                        </div>
+                    </Link>
+                    <Link href="/integrations" className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1 sm:col-span-2 lg:col-span-1">
+                        <Puzzle className="h-8 w-8 text-primary" />
+                        <div>
+                            <h3 className="font-semibold text-foreground">{t('features.integrations')}</h3>
+                            <p className="text-sm text-muted-foreground">Works where you do.</p>
+                        </div>
+                    </Link>
+                </div>
+
                 <div className="my-8">
                     <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('most_popular')}</h2>
-                    <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
-                        {mostPopularTools.map((tool) => {
-                            const Icon = tool.icon;
-                            return (
-                                <Link href={tool.href} key={tool.href} className="group flex flex-col items-center justify-center gap-2 rounded-xl bg-card p-4 text-center transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                                        <Icon className="h-6 w-6" />
-                                    </div>
-                                    <span className="text-sm font-medium text-foreground">{t(`features.${tool.label.toLowerCase().replace(/ /g, '-')}`)}</span>
-                                </Link>
-                            )
-                        })}
+                    <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
+                        {mostPopularTools.map(renderToolCard)}
                     </div>
                 </div>
                 
@@ -143,18 +167,8 @@ export default function DashboardPage() {
 
                 <div className="mt-8">
                     <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('high_quality')}</h2>
-                     <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
-                        {highQualityTools.map((tool) => {
-                             const Icon = tool.icon;
-                            return (
-                                <Link href={tool.href} key={tool.href} className="group flex flex-col items-center justify-center gap-2 rounded-xl bg-card p-4 text-center transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                                        <Icon className="h-6 w-6" />
-                                    </div>
-                                    <span className="text-sm font-medium text-foreground">{t(`features.${tool.label.toLowerCase().replace(/ /g, '-')}`)}</span>
-                                </Link>
-                            )
-                        })}
+                     <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
+                        {highQualityTools.map(renderToolCard)}
                     </div>
                 </div>
             </main>
