@@ -4,10 +4,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, where, onSnapshot, orderBy, deleteDoc, doc, updateDoc, arrayUnion, arrayRemove, getDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, deleteDoc, doc, updateDoc, arrayUnion, arrayRemove, getDoc, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
-import { Loader2, Home, Trash2, Edit, Users, UserPlus, MoreVertical } from 'lucide-react';
+import { Loader2, Home, Trash2, Edit, Users, UserPlus, MoreVertical, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,14 +24,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { PlusCircle } from 'lucide-react';
 
 interface Member {
     uid: string;
@@ -51,7 +50,6 @@ interface Group {
 interface Project {
   id: string;
   inputText: string;
-  outputText: string;
   operation: string;
   createdAt: {
     seconds: number;
@@ -108,28 +106,56 @@ export default function GroupDetailPage() {
   const handleInviteMember = async () => {
       if (!inviteEmail.trim() || !group) return;
       setIsInviting(true);
-      // In a real app, you'd use a Cloud Function to look up user by email.
-      // Here we'll simulate by checking if a user with this email exists.
-      // This is insecure on the client, but demonstrates the flow.
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("email", "==", inviteEmail));
-      const querySnapshot = await getDoc(q);
+      
+      try {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", inviteEmail.trim()));
+        const querySnapshot = await getDocs(q);
 
-      // This part is a simplification. A real implementation would use a server-side function
-      // to find the user by email without exposing user data to the client.
-      toast({ variant: 'destructive', title: 'Cannot find user by email', description: 'This is a demo. Please manually ensure the user exists.' });
-      setIsInviting(false);
-      setInviteDialogOpen(false);
+        if (querySnapshot.empty) {
+            toast({ variant: 'destructive', title: 'User not found', description: 'No user exists with this email address.' });
+            return;
+        }
+
+        const invitedUserDoc = querySnapshot.docs[0];
+        const invitedUserData = invitedUserDoc.data();
+        
+        if(group.memberIds.includes(invitedUserData.uid)) {
+            toast({ variant: 'destructive', title: 'User already in group' });
+            return;
+        }
+
+        const newMember: Member = {
+            uid: invitedUserData.uid,
+            email: invitedUserData.email,
+            name: invitedUserData.displayName || invitedUserData.email,
+            role: 'Viewer'
+        };
+
+        const groupRef = doc(db, 'groups', group.id);
+        await updateDoc(groupRef, {
+            members: arrayUnion(newMember),
+            memberIds: arrayUnion(newMember.uid)
+        });
+        
+        toast({ title: 'Member added!', description: `${newMember.email} has been added to the group.` });
+        setInviteEmail("");
+        setInviteDialogOpen(false);
+      } catch (error) {
+        console.error(error);
+        toast({ variant: 'destructive', title: 'Failed to invite member' });
+      } finally {
+        setIsInviting(false);
+      }
   };
   
-  const handleRemoveMember = async (memberToRemoveId: string) => {
-      if (!group) return;
+  const handleRemoveMember = async (memberToRemove: Member) => {
+      if (!group || currentUserRole !== 'Owner' || memberToRemove.uid === group.ownerId) return;
       try {
           const groupRef = doc(db, 'groups', group.id);
-          const memberToRemove = group.members.find(m => m.uid === memberToRemoveId);
           await updateDoc(groupRef, {
               members: arrayRemove(memberToRemove),
-              memberIds: arrayRemove(memberToRemoveId)
+              memberIds: arrayRemove(memberToRemove.uid)
           });
           toast({ title: 'Member removed' });
       } catch (error) {
@@ -138,7 +164,7 @@ export default function GroupDetailPage() {
   };
   
   const handleRoleChange = async (memberId: string, newRole: Member['role']) => {
-      if (!group) return;
+      if (!group || currentUserRole !== 'Owner') return;
       try {
           const groupRef = doc(db, 'groups', group.id);
           const updatedMembers = group.members.map(m => m.uid === memberId ? { ...m, role: newRole } : m);
@@ -150,22 +176,29 @@ export default function GroupDetailPage() {
   };
 
   const handleCreateProject = async () => {
-      if (!group) return;
+      if (!group || !user) return;
       try {
           const newProjectRef = await addDoc(collection(db, 'projects'), {
               groupId: group.id,
-              userId: user?.uid, // creator
-              inputText: 'New Project',
-              outputText: '',
+              userId: user.uid,
+              inputText: 'New Shared Document',
               operation: 'document',
               createdAt: serverTimestamp(),
           });
-          router.push(`/workspace?projectId=${newProjectRef.id}`); // Or a new editor page
+          router.push(`/workspace?projectId=${newProjectRef.id}`);
       } catch (error) {
           toast({ variant: 'destructive', title: 'Failed to create project' });
       }
   }
 
+  const handleDeleteProject = async (projectId: string) => {
+    if (currentUserRole !== 'Owner' && currentUserRole !== 'Editor') {
+        toast({ variant: 'destructive', title: 'Permission Denied'});
+        return;
+    }
+    await deleteDoc(doc(db, "projects", projectId));
+    toast({ title: "Project Deleted" });
+  }
 
   if (loading || authLoading) {
     return <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -174,7 +207,7 @@ export default function GroupDetailPage() {
   }
 
   if (!group) {
-    return <div className="text-center p-8">Group not found.</div>;
+    return <div className="text-center p-8">Group not found or you don't have access.</div>;
   }
 
   return (
@@ -208,26 +241,47 @@ export default function GroupDetailPage() {
                 </Dialog>
             </div>
         </header>
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-2">
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Group Projects</CardTitle>
-                        <CardDescription>Projects shared within this group.</CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Group Projects</CardTitle>
+                            <CardDescription>Projects shared within this group.</CardDescription>
+                        </div>
+                        {(currentUserRole === 'Owner' || currentUserRole === 'Editor') && (
+                            <Button onClick={handleCreateProject}>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Create Project
+                            </Button>
+                        )}
                     </CardHeader>
                     <CardContent>
                         {projects.length === 0 ? (
-                            <div className="text-center py-10">
-                                <p className="text-muted-foreground">No projects yet. Create one!</p>
-                                <Button onClick={handleCreateProject} className="mt-4">Create First Project</Button>
+                            <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground">No shared projects yet.</p>
+                                {(currentUserRole === 'Owner' || currentUserRole === 'Editor') && (
+                                    <Button onClick={handleCreateProject} className="mt-4">Create First Project</Button>
+                                )}
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {/* Project cards would go here */}
                                 {projects.map(p => (
-                                    <Card key={p.id}>
-                                        <CardHeader><CardTitle>{p.operation}</CardTitle></CardHeader>
-                                        <CardContent><p className="line-clamp-2">{p.inputText}</p></CardContent>
+                                    <Card key={p.id} className="hover:shadow-md transition-shadow">
+                                        <CardHeader>
+                                            <CardTitle className="text-lg truncate">{p.inputText}</CardTitle>
+                                            <CardDescription>
+                                                {formatDistanceToNow(new Date(p.createdAt.seconds * 1000), { addSuffix: true })}
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardFooter className="flex justify-end gap-2">
+                                            {(currentUserRole === 'Owner' || currentUserRole === 'Editor') && (
+                                                <Button variant="destructive" size="icon" onClick={() => handleDeleteProject(p.id)}><Trash2 className="h-4 w-4"/></Button>
+                                            )}
+                                            <Button variant="outline" onClick={() => router.push(`/workspace?projectId=${p.id}`)}>
+                                                <Edit className="h-4 w-4 mr-2"/>Open
+                                            </Button>
+                                        </CardFooter>
                                     </Card>
                                 ))}
                             </div>
@@ -245,7 +299,8 @@ export default function GroupDetailPage() {
                             <div key={member.uid} className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <Avatar>
-                                        <AvatarFallback>{member.name?.[0] || '?'}</AvatarFallback>
+                                        <AvatarImage src={(member as any).photoURL}/>
+                                        <AvatarFallback>{member.name?.[0].toUpperCase() || '?'}</AvatarFallback>
                                     </Avatar>
                                     <div>
                                         <p className="font-medium">{member.name}</p>
@@ -257,14 +312,22 @@ export default function GroupDetailPage() {
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4"/></Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent>
-                                            <DropdownMenuItem onSelect={() => handleRoleChange(member.uid, 'Editor')}>Set as Editor</DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => handleRoleChange(member.uid, 'Viewer')}>Set as Viewer</DropdownMenuItem>
-                                            <DropdownMenuItem className="text-destructive" onSelect={() => handleRemoveMember(member.uid)}>Remove</DropdownMenuItem>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuLabel>{member.role}</DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuSub>
+                                                <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
+                                                <DropdownMenuSubContent>
+                                                    <DropdownMenuItem onSelect={() => handleRoleChange(member.uid, 'Editor')}>Editor</DropdownMenuItem>
+                                                    <DropdownMenuItem onSelect={() => handleRoleChange(member.uid, 'Viewer')}>Viewer</DropdownMenuItem>
+                                                </DropdownMenuSubContent>
+                                            </DropdownMenuSub>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem className="text-destructive" onSelect={() => handleRemoveMember(member)}>Remove from group</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 ) : (
-                                    <Badge variant="secondary">{member.role}</Badge>
+                                    <Badge variant={member.role === 'Owner' ? 'default' : 'secondary'}>{member.role}</Badge>
                                 )}
                             </div>
                         ))}
@@ -276,3 +339,4 @@ export default function GroupDetailPage() {
   );
 }
 
+    

@@ -21,7 +21,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -84,6 +83,8 @@ export default function DashboardPage() {
     const q = query(
       collection(db, 'projects'),
       where('userId', '==', user.uid),
+      // Filter out projects that belong to a group
+      where('groupId', '==', null),
       orderBy('createdAt', 'desc')
     );
 
@@ -124,29 +125,16 @@ export default function DashboardPage() {
   };
 
   const handleOpenProject = (project: Project) => {
-    const operationToTab: { [key: string]: string } = {
-        explainer: 'explainer',
-        paraphrase: 'paraphrase',
-        summarize: 'summarize',
-        translate: 'translate',
-        style: 'style',
-    };
-    
-    const tab = operationToTab[project.operation];
-
-    if (tab) {
-        const url = new URL(window.location.origin);
-        url.pathname = '/';
-        url.searchParams.set('tab', tab);
-        
-        if (project.operation === 'explainer') {
-            url.searchParams.set('topic', project.inputText);
-        } else {
-            url.searchParams.set('projectId', project.id);
-        }
-        router.push(url.toString());
+    // This part is tricky because personal projects might not be 'documents'
+    // For now, we assume they are editable in the workspace.
+    // A better implementation would route to the correct tool page.
+    if(project.operation === 'document' || project.operation === 'explainer') {
+        router.push(`/workspace?projectId=${project.id}`);
     } else {
-        router.push(`/?projectId=${project.id}`);
+        const url = new URL(window.location.origin);
+        url.pathname = `/${project.operation}`;
+        url.searchParams.set('projectId', project.id);
+        router.push(url.toString());
     }
   }
 
@@ -199,7 +187,7 @@ export default function DashboardPage() {
             <ProjectsSkeleton />
         ) : projects.length === 0 ? (
           <div className="text-center py-20">
-            <h2 className="text-xl font-semibold">No projects yet!</h2>
+            <h2 className="text-xl font-semibold">No personal projects yet!</h2>
             <p className="text-muted-foreground mt-2">
               Go back to the editor to start creating and saving projects.
             </p>
@@ -246,7 +234,7 @@ export default function DashboardPage() {
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
-                    <Button variant="outline" onClick={() => handleOpenProject(project)} prefetch-intent="false">
+                    <Button variant="outline" onClick={() => handleOpenProject(project)}>
                         <Edit className="mr-2 h-4 w-4"/>
                         Open
                     </Button>
@@ -259,3 +247,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
