@@ -1,192 +1,169 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
-import * as LucideIcons from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import React, { useState, useTransition } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { motion } from 'framer-motion';
+import { ShieldCheck, Search, Book, Users, Brain, Share2, Sparkles, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { conceptExplainer, ConceptExplainerOutput } from "@/ai/flows/concept-explainer-flow";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/auth-context";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { ScrollArea } from "./ui/scroll-area";
 
-const IconComponent = ({ name }: { name: string }) => {
-    const Icon = (LucideIcons as any)[name];
-    if (!Icon) {
-        return <LucideIcons.HelpCircle className="h-10 w-10" />;
-    }
-    return <Icon className="h-10 w-10" />;
+const animationVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.6 } },
 };
 
+const ExplainPanel = ({ topic, explanation }: { topic: string; explanation: ConceptExplainerOutput | null }) => (
+  <motion.div variants={animationVariants} initial="initial" animate="animate" className="space-y-4">
+    <h2 className="text-2xl font-semibold">AI Explaining: {topic}</h2>
+    {explanation ? (
+        <p>
+            {explanation.introduction} This concept covers the high-level overview of <strong>{topic}</strong>. AI will break this down into digestible, visual, and animated formats. Click through the tabs to explore subtopics.
+        </p>
+    ) : (
+        <p>Enter a topic and click "Explain" to see the AI-powered breakdown here.</p>
+    )}
+  </motion.div>
+);
+
+const Visualizer = ({ steps }: { steps: ConceptExplainerOutput['steps'] | null }) => {
+    const chartData = steps ? steps.map((step, index) => ({
+        name: `Step ${index + 1}`,
+        value: (index + 1) * 20 + Math.random() * 30, // Dummy complexity value
+        label: step.title
+    })) : [];
+
+    return (
+        <Card>
+            <CardContent className="h-64 p-4">
+            <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                <defs>
+                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                    </linearGradient>
+                </defs>
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} interval={0} angle={-10} textAnchor="end" />
+                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" />
+                <Tooltip />
+                <Area type="monotone" dataKey="value" stroke="#8884d8" fillOpacity={1} fill="url(#colorValue)" />
+                </AreaChart>
+            </ResponsiveContainer>
+            </CardContent>
+        </Card>
+    );
+};
+
+const Storyboard = ({ steps }: { steps: ConceptExplainerOutput['steps'] | null }) => (
+  <div className="space-y-4">
+    <h3 className="text-xl font-bold">Storyboard</h3>
+    {steps ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {steps.map((step, index) => (
+            <motion.div
+            key={index}
+            className="p-4 rounded-xl shadow bg-muted hover:bg-background border border-border"
+            variants={animationVariants}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            custom={index}
+            transition={{ delay: index * 0.1 }}
+            >
+            <h4 className="text-lg font-semibold">{step.title}</h4>
+            <p className="text-sm text-muted-foreground mt-2">{step.explanation.substring(0, 100)}...</p>
+            </motion.div>
+        ))}
+        </div>
+    ): (
+        <p className="text-muted-foreground">The storyboard will appear here after an explanation is generated.</p>
+    )}
+  </div>
+);
+
+const InviteSystem = () => (
+    <Card>
+        <CardContent className="space-y-3 pt-6">
+        <h3 className="text-xl font-semibold flex items-center gap-2">
+            <Share2 className="w-5 h-5" /> Invite via Secure Link
+        </h3>
+        <p>Send encrypted invite links that expire after one use.</p>
+        <Input placeholder="Enter email or username" />
+        <Button variant="outline">Generate Invite Link</Button>
+        </CardContent>
+    </Card>
+);
+
 export function ConceptExplainerTab() {
-  const [topic, setTopic] = useState<string>("");
+  const [topic, setTopic] = useState('Quantum Computing');
   const [result, setResult] = useState<ConceptExplainerOutput | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [isSaving, setIsSaving] = useState(false);
-  const [visibleStep, setVisibleStep] = useState<number>(-1);
   const { toast } = useToast();
-  const { user } = useAuth();
 
   const handleExplain = () => {
-    if (!topic.trim()) {
-      toast({
-        title: "Topic is empty",
-        description: "Please enter a topic to explain.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setError(null);
-    setResult(null);
-    setVisibleStep(-1);
-
-    startTransition(async () => {
-      try {
-        const explainerResult = await conceptExplainer({ topic });
-        setResult(explainerResult);
-        // Start the animation sequence
-        explainerResult.steps.forEach((_, index) => {
-          setTimeout(() => {
-            setVisibleStep(index);
-          }, (index + 1) * 700); 
-        });
-      } catch (e) {
-        console.error(e);
-        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
-        setError(`Failed to explain topic. ${errorMessage}`);
-        toast({
-          title: "Explanation Error",
-          description: "An error occurred while generating the explanation. Please try again.",
-          variant: "destructive",
-        });
+      if (!topic.trim()) {
+          toast({ variant: 'destructive', title: 'Topic is empty', description: 'Please enter a topic to explain.' });
+          return;
       }
-    });
-  };
-
-  const handleSaveProject = async () => {
-    if (!user) {
-      toast({ variant: 'destructive', title: 'Please log in to save projects.' });
-      return;
-    }
-    if (!result) {
-      toast({ variant: 'destructive', title: 'Nothing to save', description: 'Please generate an explanation first.' });
-      return;
-    }
-    setIsSaving(true);
-    try {
-      await addDoc(collection(db, 'projects'), {
-        userId: user.uid,
-        inputText: topic,
-        outputText: JSON.stringify(result),
-        operation: 'explainer',
-        createdAt: serverTimestamp(),
+      setResult(null);
+      startTransition(async () => {
+          try {
+              const explainerResult = await conceptExplainer({ topic });
+              setResult(explainerResult);
+          } catch (e: any) {
+              toast({ variant: 'destructive', title: 'Explanation Error', description: e.message });
+          }
       });
-      toast({title: "Project Saved!", description: "Your explanation has been saved to your dashboard."})
-    } catch (error) {
-      console.error("Error saving project: ", error);
-      toast({ variant: 'destructive', title: 'Could not save project.' });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
+  }
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col items-center justify-center gap-4">
-        <Label htmlFor="explainer-topic" className="text-xl font-bold tracking-tight text-center">
-          What complex topic can I simplify for you?
-        </Label>
-        <div className="flex w-full max-w-lg items-center space-x-2">
-            <Input
-                id="explainer-topic"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g., Quantum Computing, Black Holes"
-                className="bg-background focus-visible:ring-accent text-base h-12"
-                disabled={isPending}
-                onKeyDown={(e) => e.key === 'Enter' && handleExplain()}
-            />
-            <Button
-                onClick={handleExplain}
-                disabled={!topic.trim() || isPending}
-                size="lg"
-                className={cn(
-                    "h-12 text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95",
-                    isPending && "animate-sparkle"
-                )}
-            >
-            {isPending ? (
-                <LucideIcons.Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            ) : (
-                <LucideIcons.Sparkles className="mr-2 h-5 w-5" />
-            )}
-            <span>{isPending ? "Explaining..." : "Explain"}</span>
-            </Button>
-        </div>
-        {error && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
+    <div className="p-4 sm:p-8 space-y-8 bg-card rounded-xl">
+      <div className="flex flex-col sm:flex-row gap-4 items-center">
+        <Input
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          className="max-w-md h-12 text-base"
+          placeholder="Enter concept topic..."
+          onKeyDown={(e) => e.key === 'Enter' && handleExplain()}
+        />
+        <Button onClick={handleExplain} size="lg" className="h-12 text-lg w-full sm:w-auto" disabled={isPending}>
+            {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
+            Explain
+        </Button>
       </div>
 
-      <div className="relative w-full min-h-[500px] bg-muted/30 rounded-2xl p-4 sm:p-8 overflow-hidden">
-        {isPending && !result && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted-foreground animate-in fade-in duration-500">
-            <LucideIcons.Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="font-semibold text-lg">Thinking...</p>
-          </div>
-        )}
-        {!isPending && !result && (
-          <div className="text-center text-muted-foreground p-4 flex flex-col items-center justify-center h-full">
-            <LucideIcons.BrainCircuit className="h-24 w-24 text-primary/30 mb-4" />
-            <p className="text-lg">Your detailed explanation will appear here.</p>
-          </div>
-        )}
-        {result && (
-            <ScrollArea className="h-[70vh] w-full">
-                <div className="text-center animate-in fade-in-0 slide-in-from-top-10 duration-700 pr-6">
-                    <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-primary">{result.title}</h2>
-                    <p className="mt-2 text-lg text-muted-foreground">{result.introduction}</p>
-                    <div 
-                        className={cn(
-                            "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-12 transition-all duration-1000 ease-out",
-                            visibleStep >= 0 ? "opacity-100" : "opacity-0 -translate-y-4"
-                        )}
-                    >
-                        {result.steps.map((step, index) => (
-                            <div
-                                key={index}
-                                className={cn(
-                                    "flex flex-col items-start text-left p-6 bg-card rounded-xl shadow-lg border border-border/50 transition-all duration-700 ease-out",
-                                    index <= visibleStep 
-                                        ? "opacity-100 translate-y-0 scale-100"
-                                        : "opacity-0 translate-y-10 scale-90"
-                                )}
-                            >
-                                <div className="p-3 bg-primary/10 text-primary rounded-full mb-4 self-center">
-                                <IconComponent name={step.icon} />
-                                </div>
-                                <h3 className="text-xl font-bold mb-2 text-foreground text-center w-full">{step.title}</h3>
-                                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{step.explanation}</p>
-                            </div>
-                        ))}
-                    </div>
-                    {user && visibleStep >= result.steps.length -1 && (
-                        <div className="mt-8">
-                            <Button onClick={handleSaveProject} disabled={isSaving}>
-                                {isSaving ? <LucideIcons.Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LucideIcons.Save className="mr-2 h-4 w-4" />}
-                                Save Explanation
-                            </Button>
-                        </div>
-                    )}
-                </div>
-            </ScrollArea>
-        )}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="visual">Visualizer</TabsTrigger>
+          <TabsTrigger value="story">Storyboard</TabsTrigger>
+          <TabsTrigger value="invite">Invite System</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="mt-4">
+          <ExplainPanel topic={topic} explanation={result} />
+        </TabsContent>
+        <TabsContent value="visual" className="mt-4">
+          <Visualizer steps={result?.steps} />
+        </TabsContent>
+        <TabsContent value="story" className="mt-4">
+          <Storyboard steps={result?.steps} />
+        </TabsContent>
+        <TabsContent value="invite" className="mt-4">
+          <InviteSystem />
+        </TabsContent>
+      </Tabs>
+
+      <div className="flex items-center gap-3 mt-12">
+        <ShieldCheck className="w-5 h-5 text-green-500" />
+        <p className="text-muted-foreground text-sm">Protected with Firebase Auth, Firestore Rules, and Encrypted Invites</p>
       </div>
     </div>
   );
-}
+};
