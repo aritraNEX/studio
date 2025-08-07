@@ -13,20 +13,39 @@ import { useToast } from "@/hooks/use-toast";
 import { conceptExplainer, ConceptExplainerOutput } from "@/ai/flows/concept-explainer-flow";
 import * as LucideIcons from 'lucide-react';
 
-const animationVariants = {
+const containerVariants = {
+  initial: { opacity: 0 },
+  animate: { 
+    opacity: 1,
+    transition: { 
+      duration: 0.5,
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
   initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.6, staggerChildren: 0.1 } },
+  animate: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      type: 'spring',
+      stiffness: 100,
+      damping: 12,
+    } 
+  },
 };
 
 const ExplainPanel = ({ topic, explanation }: { topic: string; explanation: ConceptExplainerOutput | null }) => (
-  <motion.div variants={animationVariants} initial="initial" animate="animate" className="space-y-4">
-    <h2 className="text-2xl font-semibold">AI Explaining: {topic}</h2>
+  <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-4">
+    <motion.h2 variants={itemVariants} className="text-2xl font-semibold">AI Explaining: {topic}</motion.h2>
     {explanation ? (
-        <p className="text-muted-foreground">
+        <motion.p variants={itemVariants} className="text-muted-foreground">
             {explanation.introduction} AI has broken this down into digestible, visual, and animated formats. Click through the tabs to explore subtopics.
-        </p>
+        </motion.p>
     ) : (
-        <p className="text-muted-foreground">Enter a topic and click "Explain" to see the AI-powered breakdown here.</p>
+        <motion.p variants={itemVariants} className="text-muted-foreground">Enter a topic and click "Explain" to see the AI-powered breakdown here.</motion.p>
     )}
   </motion.div>
 );
@@ -73,20 +92,22 @@ const Visualizer = ({ steps }: { steps: ConceptExplainerOutput['steps'] | null }
 const Storyboard = ({ steps }: { steps: ConceptExplainerOutput['steps'] | null }) => (
   <motion.div 
     className="space-y-4"
-    variants={animationVariants}
+    variants={containerVariants}
     initial="initial"
     animate="animate"
   >
-    <h3 className="text-xl font-bold">Storyboard</h3>
+    <motion.h3 variants={itemVariants} className="text-xl font-bold">Storyboard</motion.h3>
     {steps ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {steps.map((step, index) => {
             const Icon = (LucideIcons as any)[step.icon] || LucideIcons.HelpCircle;
             return (
               <motion.div
-              key={index}
-              className="p-4 rounded-xl shadow bg-muted/50 hover:bg-background border border-border flex flex-col items-center text-center"
-              variants={animationVariants}
+                key={index}
+                className="p-4 rounded-xl shadow bg-muted/50 hover:bg-background border border-border flex flex-col items-center text-center"
+                variants={itemVariants}
+                whileHover={{ scale: 1.05, y: -5 }}
+                transition={{ type: 'spring', stiffness: 300 }}
               >
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
                      <Icon className="h-6 w-6" />
@@ -96,24 +117,11 @@ const Storyboard = ({ steps }: { steps: ConceptExplainerOutput['steps'] | null }
               </motion.div>
             )
         })}
-        </div>
+        </motion.div>
     ): (
-        <p className="text-muted-foreground">The storyboard will appear here after an explanation is generated.</p>
+        <motion.p variants={itemVariants} className="text-muted-foreground">The storyboard will appear here after an explanation is generated.</motion.p>
     )}
   </motion.div>
-);
-
-const InviteSystem = () => (
-    <Card>
-        <CardContent className="space-y-3 pt-6">
-        <h3 className="text-xl font-semibold flex items-center gap-2">
-            <Share2 className="w-5 h-5" /> Invite via Secure Link
-        </h3>
-        <p className="text-muted-foreground">Send encrypted invite links that expire after one use.</p>
-        <Input placeholder="Enter email or username" />
-        <Button variant="outline">Generate Invite Link</Button>
-        </CardContent>
-    </Card>
 );
 
 export function ConceptExplainerTab() {
@@ -158,11 +166,10 @@ export function ConceptExplainerTab() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="visual">Visualizer</TabsTrigger>
           <TabsTrigger value="story">Storyboard</TabsTrigger>
-          <TabsTrigger value="invite">Invite System</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">
@@ -174,14 +181,11 @@ export function ConceptExplainerTab() {
         <TabsContent value="story" className="mt-4">
           <Storyboard steps={result?.steps} />
         </TabsContent>
-        <TabsContent value="invite" className="mt-4">
-          <InviteSystem />
-        </TabsContent>
       </Tabs>
 
       <div className="flex items-center gap-3 mt-12">
         <ShieldCheck className="w-5 h-5 text-green-500" />
-        <p className="text-muted-foreground text-sm">Protected with Firebase Auth, Firestore Rules, and Encrypted Invites</p>
+        <p className="text-muted-foreground text-sm">Protected with Firebase Auth and Firestore Rules</p>
       </div>
     </div>
   );
