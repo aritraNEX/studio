@@ -4,41 +4,44 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can read and write to their own user document.
+    // Users can only read and write their own user document.
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Rules for personal and group projects.
-    match /projects/{projectId} {
-      // Allow create for any authenticated user. Specificity is handled in client logic.
-      allow create: if request.auth != null;
-
-      // Allow read/write for personal projects (no groupId).
-      allow read, update, delete: if request.auth.uid == resource.data.userId && resource.data.groupId == null;
-
-      // For shared projects, allow read/write if the user is a member of the group.
-      allow read, update, delete: if resource.data.groupId != null && get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.memberIds_v2[request.auth.uid] != null;
+    // Task plans are private to each user.
+    match /task_plans/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
     // Rules for collaborative groups.
     match /groups/{groupId} {
-      // Allow create for any authenticated user.
+      // Allow read access only to members of the group.
+      allow read: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+      
+      // Allow creation by any authenticated user.
       allow create: if request.auth != null;
-      
-      // Allow read if user is a member.
-      allow read: if request.auth.uid in resource.data.memberIds;
-      
-      // Allow update (inviting/removing members, changing name) only by the owner.
-      allow update: if request.auth.uid == resource.data.ownerId;
-      
-      // Allow delete only by the owner.
-      allow delete: if request.auth.uid == resource.data.ownerId;
+
+      // Allow updates (like adding members, changing name) only by the owner.
+      allow update: if request.auth != null && request.auth.uid == resource.data.ownerId;
+
+      // Allow deletion only by the owner.
+      allow delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
     }
 
-    // Task plans can only be accessed by their owner.
-    match /task_plans/{userId} {
-      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    // Rules for projects (both personal and group-based).
+    match /projects/{projectId} {
+      // Allow any authenticated user to create a project.
+      allow create: if request.auth != null;
+
+      // Allow read, update, delete based on ownership or group membership.
+      allow read, update, delete: if request.auth != null && 
+                                      (
+                                        // Case 1: Personal project (no groupId)
+                                        (resource.data.groupId == null && resource.data.userId == request.auth.uid) ||
+                                        // Case 2: Group project (has a groupId)
+                                        (resource.data.groupId != null && request.auth.uid in get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.memberIds)
+                                      );
     }
   }
 }
