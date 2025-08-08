@@ -6,120 +6,81 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Search, Book, Users, Brain, Share2, Sparkles, Loader2 } from 'lucide-react';
+import { ShieldCheck, Book, Sparkles, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { conceptExplainer, ConceptExplainerOutput } from "@/ai/flows/concept-explainer-flow";
 import * as LucideIcons from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const containerVariants = {
-  initial: { opacity: 0 },
-  animate: { 
+  hidden: { opacity: 0 },
+  visible: {
     opacity: 1,
-    transition: { 
-      duration: 0.5,
+    transition: {
       staggerChildren: 0.1,
     },
   },
 };
 
 const itemVariants = {
-  initial: { opacity: 0, y: 20 },
-  animate: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { 
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
       type: 'spring',
       stiffness: 100,
       damping: 12,
-    } 
+    },
   },
 };
 
-const ExplainPanel = ({ topic, explanation }: { topic: string; explanation: ConceptExplainerOutput | null }) => (
-  <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-4">
-    <motion.h2 variants={itemVariants} className="text-2xl font-semibold">AI Explaining: {topic}</motion.h2>
+const ExplainPanel = ({ explanation }: { explanation: ConceptExplainerOutput | null }) => (
+  <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4">
     {explanation ? (
-        <motion.p variants={itemVariants} className="text-muted-foreground">
-            {explanation.introduction} AI has broken this down into digestible, visual, and animated formats. Click through the tabs to explore subtopics.
-        </motion.p>
+        <>
+            <motion.h2 variants={itemVariants} className="text-3xl font-bold tracking-tight">{explanation.title}</motion.h2>
+            <motion.p variants={itemVariants} className="text-lg text-muted-foreground">
+                {explanation.introduction}
+            </motion.p>
+        </>
     ) : (
         <motion.p variants={itemVariants} className="text-muted-foreground">Enter a topic and click "Explain" to see the AI-powered breakdown here.</motion.p>
     )}
   </motion.div>
 );
 
-const Visualizer = ({ steps }: { steps: ConceptExplainerOutput['steps'] | null }) => {
-    const chartData = steps ? steps.map((step, index) => ({
-        name: `Step ${index + 1}`,
-        value: (index + 1) * 20 + Math.random() * 30, // Dummy complexity value
-        label: step.title
-    })) : [];
-
-    if (!steps) {
-        return <div className="flex items-center justify-center h-64 text-muted-foreground">Generate an explanation to see the visualizer.</div>
-    }
-
-    return (
-        <Card>
-            <CardContent className="h-64 p-4">
-            <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                <defs>
-                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                </defs>
-                <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} interval={0} angle={-10} textAnchor="end" height={60} />
-                <YAxis tick={{fill: 'hsl(var(--muted-foreground))'}} />
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--background))',
-                    borderColor: 'hsl(var(--border))'
-                  }}
-                />
-                <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorValue)" />
-                </AreaChart>
-            </ResponsiveContainer>
-            </CardContent>
-        </Card>
-    );
-};
-
 const Storyboard = ({ steps }: { steps: ConceptExplainerOutput['steps'] | null }) => (
-  <motion.div 
+  <motion.div
     className="space-y-4"
     variants={containerVariants}
-    initial="initial"
-    animate="animate"
+    initial="hidden"
+    animate="visible"
   >
-    <motion.h3 variants={itemVariants} className="text-xl font-bold">Storyboard</motion.h3>
     {steps ? (
-        <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {steps.map((step, index) => {
             const Icon = (LucideIcons as any)[step.icon] || LucideIcons.HelpCircle;
             return (
               <motion.div
                 key={index}
-                className="p-4 rounded-xl shadow bg-muted/50 hover:bg-background border border-border flex flex-col items-center text-center"
+                className="p-6 rounded-xl shadow-lg bg-card border flex flex-col"
                 variants={itemVariants}
-                whileHover={{ scale: 1.05, y: -5 }}
-                transition={{ type: 'spring', stiffness: 300 }}
+                whileHover={{ scale: 1.03, y: -8, shadow: "0px 15px 30px -5px rgba(0,0,0,0.1)" }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
               >
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
                      <Icon className="h-6 w-6" />
                   </div>
-                  <h4 className="text-lg font-semibold">{step.title}</h4>
-                  <p className="text-sm text-muted-foreground mt-2 flex-grow">{step.explanation.substring(0, 100)}...</p>
+                  <h4 className="text-xl font-semibold mb-2">{step.title}</h4>
+                  <p className="text-muted-foreground text-sm leading-relaxed flex-grow">{step.explanation}</p>
               </motion.div>
             )
         })}
         </motion.div>
     ): (
-        <motion.p variants={itemVariants} className="text-muted-foreground">The storyboard will appear here after an explanation is generated.</motion.p>
+        <motion.p variants={itemVariants} className="text-muted-foreground text-center py-10">The storyboard will appear here after an explanation is generated.</motion.p>
     )}
   </motion.div>
 );
@@ -147,46 +108,60 @@ export function ConceptExplainerTab() {
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 bg-card rounded-xl">
-      <h1 className="text-4xl font-bold flex items-center gap-3">
-        <Book className="w-8 h-8" /> Concept Explainer AI Workspace
-      </h1>
-      <div className="flex flex-col sm:flex-row gap-4 items-center">
-        <Input
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          className="max-w-md h-12 text-base"
-          placeholder="Enter concept topic..."
-          onKeyDown={(e) => e.key === 'Enter' && handleExplain()}
-        />
-        <Button onClick={handleExplain} size="lg" className="h-12 text-lg w-full sm:w-auto" disabled={isPending}>
-            {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
-            Explain
-        </Button>
-      </div>
+    <div className="p-4 sm:p-6 space-y-6">
+        <div className="text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground flex items-center justify-center gap-3">
+                <Book className="w-8 h-8" /> Concept Explainer
+            </h1>
+            <p className="text-lg text-muted-foreground mt-2">Let AI break down any complex topic for you.</p>
+        </div>
+      
+        <div className="flex flex-col sm:flex-row gap-2 items-center justify-center max-w-xl mx-auto">
+            <Input
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            className="h-12 text-base flex-grow"
+            placeholder="Enter concept topic..."
+            onKeyDown={(e) => e.key === 'Enter' && handleExplain()}
+            />
+            <Button onClick={handleExplain} size="lg" className="h-12 text-lg w-full sm:w-auto" disabled={isPending || !topic.trim()}>
+                {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
+                Explain
+            </Button>
+        </div>
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="visual">Visualizer</TabsTrigger>
-          <TabsTrigger value="story">Storyboard</TabsTrigger>
-        </TabsList>
+      {isPending && (
+        <div className="flex flex-col items-center justify-center text-center py-20 gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-lg font-semibold text-muted-foreground">AI is thinking...</p>
+        </div>
+      )}
 
-        <TabsContent value="overview" className="mt-4">
-          <ExplainPanel topic={topic} explanation={result} />
-        </TabsContent>
-        <TabsContent value="visual" className="mt-4">
-          <Visualizer steps={result?.steps} />
-        </TabsContent>
-        <TabsContent value="story" className="mt-4">
-          <Storyboard steps={result?.steps} />
-        </TabsContent>
-      </Tabs>
+      {!isPending && result && (
+        <Tabs defaultValue="overview" className="w-full animate-in fade-in-50 duration-500">
+            <div className="flex justify-center mb-4">
+                <TabsList className="grid grid-cols-2 w-full max-w-sm">
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="story">Storyboard</TabsTrigger>
+                </TabsList>
+            </div>
+            <TabsContent value="overview">
+                <Card className="p-6">
+                    <ExplainPanel explanation={result} />
+                </Card>
+            </TabsContent>
+            <TabsContent value="story">
+                <Storyboard steps={result.steps} />
+            </TabsContent>
+        </Tabs>
+      )}
 
-      <div className="flex items-center gap-3 mt-12">
-        <ShieldCheck className="w-5 h-5 text-green-500" />
-        <p className="text-muted-foreground text-sm">Protected with Firebase Auth and Firestore Rules</p>
-      </div>
+      {!isPending && !result && (
+        <div className="text-center text-muted-foreground py-20">
+            <p>Your explanation will appear here.</p>
+        </div>
+      )}
+
     </div>
   );
 };
