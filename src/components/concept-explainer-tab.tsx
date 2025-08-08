@@ -1,13 +1,13 @@
 
 "use client";
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Book, Sparkles, Loader2 } from 'lucide-react';
+import { Book, Sparkles, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { conceptExplainer, ConceptExplainerOutput } from "@/ai/flows/concept-explainer-flow";
 import * as LucideIcons from 'lucide-react';
@@ -90,6 +90,7 @@ export function ConceptExplainerTab() {
   const [result, setResult] = useState<ConceptExplainerOutput | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const [showIntroVideo, setShowIntroVideo] = useState(false);
 
   const handleExplain = () => {
       if (!topic.trim()) {
@@ -101,14 +102,35 @@ export function ConceptExplainerTab() {
           try {
               const explainerResult = await conceptExplainer({ topic });
               setResult(explainerResult);
+              setShowIntroVideo(true);
           } catch (e: any) {
               toast({ variant: 'destructive', title: 'Explanation Error', description: e.message });
           }
       });
   }
+  
+  const handleVideoEnd = () => {
+    setShowIntroVideo(false);
+  };
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
+        {showIntroVideo && (
+            <div className="fixed inset-0 z-[100] bg-black">
+                 <video
+                    key="intro-video"
+                    onEnded={handleVideoEnd}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover animate-in fade-in duration-500"
+                >
+                    <source src="https://cdn.pixabay.com/video/2024/02/09/198881-913725899.mp4" type="video/mp4" />
+                    Your browser does not support HTML5 video.
+                </video>
+            </div>
+        )}
+
         <div className="text-center">
             <h1 className="text-4xl font-bold tracking-tight text-foreground flex items-center justify-center gap-3">
                 <Book className="w-8 h-8" /> Concept Explainer
@@ -118,11 +140,11 @@ export function ConceptExplainerTab() {
       
         <div className="flex flex-col sm:flex-row gap-2 items-center justify-center max-w-xl mx-auto">
             <Input
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            className="h-12 text-base flex-grow"
-            placeholder="Enter concept topic..."
-            onKeyDown={(e) => e.key === 'Enter' && handleExplain()}
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                className="h-12 text-base flex-grow"
+                placeholder="Enter concept topic..."
+                onKeyDown={(e) => e.key === 'Enter' && handleExplain()}
             />
             <Button onClick={handleExplain} size="lg" className="h-12 text-lg w-full sm:w-auto" disabled={isPending || !topic.trim()}>
                 {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
