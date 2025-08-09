@@ -36,6 +36,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const VesperIcon = () => (
     <svg
@@ -102,6 +103,30 @@ export default function DashboardPage() {
             </Link>
         );
     };
+
+    if (!user) {
+        return (
+             <div className="flex min-h-screen w-full flex-col items-center bg-background text-foreground">
+                <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm">
+                    <div className="container flex h-16 items-center justify-between">
+                        <Link href="/" className="flex items-center gap-2 font-bold text-lg">
+                            <VesperIcon />
+                            <span>Vesper</span>
+                        </Link>
+                    </div>
+                </header>
+                <main className="flex-1 w-full container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col items-center justify-center text-center">
+                    <h2 className="text-5xl md:text-6xl font-bold text-gradient mb-4">
+                        Welcome to Vesper
+                    </h2>
+                    <p className="text-lg text-muted-foreground mb-8">Sign in or create an account to continue</p>
+                    <Button asChild size="lg">
+                        <Link href="/login">Sign In / Sign Up</Link>
+                    </Button>
+                </main>
+            </div>
+        )
+    }
 
     return (
         <div className="flex min-h-screen w-full flex-col items-center bg-background text-foreground">
