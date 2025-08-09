@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,12 +11,12 @@ interface WelcomeBannerProps {
 
 export default function WelcomeBanner({ user }: WelcomeBannerProps) {
   const [greeting, setGreeting] = useState("");
-  const [welcomeMessage, setWelcomeMessage] = useState("");
+  const [subtitle, setSubtitle] = useState("");
   const { t } = useLanguage();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const getGreeting = () => {
+    const getGreetingText = () => {
       const hour = new Date().getHours();
       if (hour >= 5 && hour < 12) {
         return "Good morning";
@@ -28,22 +27,21 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
       }
     };
 
-    const getFirstName = (displayName: string | null) => {
+    const getFirstName = (displayName: string | null | undefined) => {
       if (!displayName) return "";
       return `, ${displayName.split(" ")[0]}`;
     };
     
     if (user) {
         const firstName = getFirstName(user.displayName);
-        const timeGreeting = getGreeting();
-        const finalGreeting = `${timeGreeting}${firstName}`;
-        setGreeting(finalGreeting);
+        const timeGreeting = getGreetingText();
+        setGreeting(`${timeGreeting}${firstName}`);
         
         const isFirstTimeUser = searchParams.get('welcome') === 'true';
-        setWelcomeMessage(isFirstTimeUser ? 'Welcome to Vesper!' : 'Welcome back!');
+        setSubtitle(isFirstTimeUser ? 'Welcome to Vesper!' : 'Welcome back!');
     } else {
         setGreeting(t('login_welcome_title'));
-        setWelcomeMessage(t('login_welcome_subtitle'));
+        setSubtitle(t('login_welcome_subtitle'));
     }
   }, [user, searchParams, t]);
 
@@ -55,7 +53,7 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
             {greeting}
         </h2>
        
-        <p className="text-lg text-muted-foreground mt-2">{welcomeMessage}</p>
+        <p className="text-lg text-muted-foreground mt-2">{subtitle}</p>
     </div>
   );
 }
