@@ -40,6 +40,7 @@ import AdBanner from "@/components/ad-banner";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 const VesperIcon = () => (
     <svg
@@ -210,19 +211,18 @@ export default function DashboardPage() {
                 <WelcomeBanner user={user} />
                 
                 <div className="my-8 max-w-2xl mx-auto">
-                    <div className="relative group">
-                         <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-400 to-purple-600 rounded-lg blur opacity-0 group-focus-within:opacity-75 transition-opacity duration-300 animate-glowing-border"></div>
-                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Card className="rounded-full shadow-lg">
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                             <Input
                                 type="text"
                                 placeholder="Search for a tool..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 h-12 text-base rounded-lg border-2 border-transparent focus:ring-0 focus:border-transparent bg-background/80"
+                                className="w-full pl-12 pr-4 py-3 h-14 text-base rounded-full border-0 focus-visible:ring-2 focus-visible:ring-primary bg-card"
                             />
                         </div>
-                    </div>
+                    </Card>
                 </div>
 
                 <div className="my-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

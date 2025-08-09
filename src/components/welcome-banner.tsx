@@ -37,7 +37,8 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
     if (user) {
         const firstName = getFirstName(user.displayName);
         const timeGreeting = getGreeting();
-        setGreeting(`${timeGreeting}${firstName}`);
+        const finalGreeting = `${timeGreeting}${firstName}`;
+        setGreeting(finalGreeting);
         
         const isFirstTimeUser = searchParams.get('welcome') === 'true';
         setWelcomeMessage(isFirstTimeUser ? 'Welcome!' : 'Welcome back!');
@@ -72,13 +73,21 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
         `}
         </style>
 
-        {greeting && (
-            <h2 className="text-3xl md:text-4xl font-bold text-gradient">
+        {user ? (
+             <h2 className="text-3xl md:text-4xl font-bold text-gradient">
+                {greeting}
+            </h2>
+        ) : (
+            <h2 className="text-3xl md:text-4xl font-bold">
                 {greeting}
             </h2>
         )}
+       
 
-        {welcomeMessage && user && <p className="text-lg text-muted-foreground mt-2">{welcomeMessage}</p>}
+        {user ? 
+            <p className="text-lg text-muted-foreground mt-2">{welcomeMessage}</p> :
+            <p className="text-lg text-muted-foreground mt-2">{welcomeMessage}</p>
+        }
     </div>
   );
 }
