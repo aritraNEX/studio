@@ -41,8 +41,11 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
         
         const isFirstTimeUser = searchParams.get('welcome') === 'true';
         setWelcomeMessage(isFirstTimeUser ? 'Welcome!' : 'Welcome back!');
+    } else {
+        setGreeting(t('login_welcome_title'));
+        setWelcomeMessage(t('login_welcome_subtitle'));
     }
-  }, [user, searchParams]);
+  }, [user, searchParams, t]);
 
   return (
     <div
@@ -75,8 +78,7 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
             </h2>
         )}
 
-        {!greeting && <h2 className="text-3xl md:text-4xl font-medium text-foreground">{t('login_welcome_title')}</h2>}
-        {welcomeMessage && <p className="text-lg text-muted-foreground mt-2">{welcomeMessage}</p>}
+        {welcomeMessage && user && <p className="text-lg text-muted-foreground mt-2">{welcomeMessage}</p>}
     </div>
   );
 }
