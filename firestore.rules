@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -9,39 +8,38 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Task plans are private to each user.
+    // Task plans can only be accessed by their owner.
     match /task_plans/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Rules for collaborative groups.
+    // Group documents can be read by any member, but only updated by the owner.
     match /groups/{groupId} {
-      // Allow read access only to members of the group.
-      allow read: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
-      
-      // Allow creation by any authenticated user.
+      allow read: if request.auth != null && request.auth.uid in resource.data.memberIds;
       allow create: if request.auth != null;
-
-      // Allow updates (like adding members, changing name) only by the owner.
-      allow update: if request.auth != null && request.auth.uid == resource.data.ownerId;
-
-      // Allow deletion only by the owner.
-      allow delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
     }
 
-    // Rules for projects (both personal and group-based).
+    // Projects can be personal or belong to a group.
     match /projects/{projectId} {
-      // Allow any authenticated user to create a project.
+      // Allow create for any authenticated user.
       allow create: if request.auth != null;
 
-      // Allow read, update, delete based on ownership or group membership.
-      allow read, update, delete: if request.auth != null && 
-                                      (
-                                        // Case 1: Personal project (no groupId)
-                                        (resource.data.groupId == null && resource.data.userId == request.auth.uid) ||
-                                        // Case 2: Group project (has a groupId)
-                                        (resource.data.groupId != null && request.auth.uid in get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.memberIds)
-                                      );
+      // Allow read if user is the owner OR if the project is in a group they are a member of.
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        (resource.data.groupId != null && get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.memberIds.hasAny([request.auth.uid]))
+      );
+
+      // Allow write/delete if user is the owner OR if they are an Owner/Editor of the group.
+      allow update, delete: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        (resource.data.groupId != null && (
+            get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.ownerId == request.auth.uid ||
+            (get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.members.get(request.auth.uid).role in ['Owner', 'Editor'])
+          )
+        )
+      );
     }
   }
 }
