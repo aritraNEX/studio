@@ -7,6 +7,7 @@ import { auth, storage, db } from "@/lib/firebase";
 import { signOut, updateProfile } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
+import Link from 'next/link';
 import { LogOut, User as UserIcon, Loader2, Save, LayoutDashboard, Camera, Puzzle, Users } from "lucide-react";
 import {
   Dialog,
@@ -15,7 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-  DialogClose,
 } from "./ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -38,10 +38,6 @@ export default function UserMenu() {
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
 
-  const handleNavigate = (path: string) => {
-    router.push(path);
-  };
-  
   const handleSignOut = async () => {
     await signOut(auth);
     router.push('/login');
@@ -96,13 +92,17 @@ export default function UserMenu() {
 
   return (
     <div className="flex items-center gap-2">
-      <Button onClick={() => handleNavigate('/dashboard')} variant="ghost" size="sm" className="hidden sm:flex">
+      <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
+        <Link href="/dashboard">
           <LayoutDashboard className="mr-2 h-4 w-4" />
           {t('profile_my_projects')}
+        </Link>
       </Button>
-      <Button onClick={() => handleNavigate('/groups')} variant="ghost" size="sm" className="hidden sm:flex">
+      <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
+        <Link href="/groups">
           <Users className="mr-2 h-4 w-4" />
           My Groups
+        </Link>
       </Button>
       <ThemeToggle />
       <Dialog>
@@ -169,7 +169,7 @@ export default function UserMenu() {
             </div>
             <div className="grid gap-2">
                 <Label htmlFor="language-select">{t('user_menu.language')}</Label>
-                <Select value={language} onValueChange={(value) => setLanguage(value)}>
+                <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'es')}>
                   <SelectTrigger id="language-select">
                     <SelectValue placeholder="Select language" />
                   </SelectTrigger>
@@ -180,17 +180,23 @@ export default function UserMenu() {
                   </SelectContent>
                 </Select>
             </div>
-            <Button onClick={() => handleNavigate('/dashboard')} variant="outline" className="w-full sm:hidden">
+            <Button asChild variant="outline" className="w-full sm:hidden">
+              <Link href="/dashboard">
                 <LayoutDashboard className="mr-2 h-4 w-4" />
                 {t('profile_my_projects')}
+              </Link>
             </Button>
-             <Button onClick={() => handleNavigate('/groups')} variant="outline" className="w-full sm:hidden">
-                <Users className="mr-2 h-4 w-4" />
-                My Groups
+             <Button asChild variant="outline" className="w-full sm:hidden">
+                <Link href="/groups">
+                    <Users className="mr-2 h-4 w-4" />
+                    My Groups
+                </Link>
             </Button>
-             <Button onClick={() => handleNavigate('/integrations')} variant="outline" className="w-full sm:hidden">
-                <Puzzle className="mr-2 h-4 w-4" />
-                {t('integrations_button')}
+             <Button asChild variant="outline" className="w-full sm:hidden">
+                <Link href="/integrations">
+                    <Puzzle className="mr-2 h-4 w-4" />
+                    {t('integrations_button')}
+                </Link>
             </Button>
           </div>
           <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">

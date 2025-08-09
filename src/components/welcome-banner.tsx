@@ -55,7 +55,7 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
             {greeting}
         </h2>
        
-        <p className="text-lg text-white/80 mt-2">{welcomeMessage}</p>
+        <p className="text-lg text-muted-foreground mt-2">{welcomeMessage}</p>
     </div>
   );
 }

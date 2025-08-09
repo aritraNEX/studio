@@ -34,6 +34,8 @@ import { useLanguage } from "@/contexts/language-context";
 import WelcomeBanner from "@/components/welcome-banner";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 const VesperIcon = () => (
     <svg
@@ -92,20 +94,20 @@ export default function DashboardPage() {
     const renderToolCard = (tool: { href: string; icon: React.ElementType; label: string }) => {
         const Icon = tool.icon;
         return (
-            <Link href={tool.href} key={tool.href} className="group flex flex-col items-center justify-center gap-2 rounded-2xl bg-white/10 dark:bg-card/50 p-4 text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:bg-white/20 dark:hover:bg-card/80">
+            <Link href={tool.href} key={tool.href} className="group flex flex-col items-center justify-center gap-2 rounded-2xl bg-card p-4 text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:bg-card/80">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                     <Icon className="h-6 w-6" />
                 </div>
-                <span className="text-sm font-medium text-white/90">{getTranslatedToolLabel(tool.label)}</span>
+                <span className="text-sm font-medium text-foreground">{getTranslatedToolLabel(tool.label)}</span>
             </Link>
         );
     };
 
     return (
-        <div className="flex min-h-screen w-full flex-col items-center bg-gradient-to-br from-[#1e145f] via-[#2d2182] to-[#4032a8] text-white">
-            <header className="sticky top-0 z-50 w-full bg-transparent">
+        <div className="flex min-h-screen w-full flex-col items-center bg-background text-foreground">
+            <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm">
                 <div className="container flex h-16 items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 font-bold">
+                    <Link href="/" className="flex items-center gap-2 font-bold text-lg">
                         <VesperIcon />
                         <span>Vesper</span>
                     </Link>
@@ -118,34 +120,34 @@ export default function DashboardPage() {
             <main className="flex-1 w-full container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <WelcomeBanner user={user} />
                 
-                <div className="my-8 grid grid-cols-1 gap-4">
-                    <Link href="/workspace" className="flex items-center gap-4 rounded-2xl bg-white/10 dark:bg-card/50 p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-white/20 dark:hover:bg-card/80 text-white">
+                <div className="my-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <Link href="/workspace" className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-card/80 text-foreground">
                         <Wand2 className="h-8 w-8 text-primary" />
                         <div>
                             <h3 className="font-semibold">{t('features.workspace')}</h3>
-                            <p className="text-sm text-white/70">Chain AI operations together.</p>
+                            <p className="text-sm text-muted-foreground">Chain AI operations together.</p>
                         </div>
                     </Link>
-                    <Link href="/chat" className="flex items-center gap-4 rounded-2xl bg-white/10 dark:bg-card/50 p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-white/20 dark:hover:bg-card/80 text-white">
+                    <Link href="/chat" className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-card/80 text-foreground">
                         <Sparkles className="h-8 w-8 text-primary" />
                          <div>
                             <h3 className="font-semibold">{t('features.vesper_ai_studio')}</h3>
-                            <p className="text-sm text-white/70">Chat with Vesper AI.</p>
+                            <p className="text-sm text-muted-foreground">Chat with Vesper AI.</p>
                         </div>
                     </Link>
-                     <Link href="/integrations" className="flex items-center gap-4 rounded-2xl bg-white/10 dark:bg-card/50 p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-white/20 dark:hover:bg-card/80 text-white">
+                     <Link href="/integrations" className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-card/80 text-foreground">
                         <Puzzle className="h-8 w-8 text-primary" />
                         <div>
                             <h3 className="font-semibold">{t('features.integrations')}</h3>
-                            <p className="text-sm text-white/70">Works where you do.</p>
+                            <p className="text-sm text-muted-foreground">Works where you do.</p>
                         </div>
                     </Link>
                 </div>
 
                 {mostPopularTools.length > 0 && (
                     <div className="my-8">
-                        <h2 className="text-2xl font-bold tracking-tight text-white/90">{t('most_popular')}</h2>
-                        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                        <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('most_popular')}</h2>
+                        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-4">
                             {mostPopularTools.map(renderToolCard)}
                         </div>
                     </div>
@@ -153,8 +155,8 @@ export default function DashboardPage() {
                 
                 {highQualityTools.length > 0 && (
                     <div className="mt-8">
-                        <h2 className="text-2xl font-bold tracking-tight text-white/90">{t('high_quality')}</h2>
-                         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                        <h2 className="text-2xl font-bold tracking-tight text-foreground">{t('high_quality')}</h2>
+                         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-4">
                             {highQualityTools.map(renderToolCard)}
                         </div>
                     </div>
