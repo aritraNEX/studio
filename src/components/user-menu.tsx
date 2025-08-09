@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogDescription,
 } from "./ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -27,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { Textarea } from "./ui/textarea";
 import { useLanguage, allLanguageOptions } from '@/contexts/language-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { ScrollArea } from "./ui/scroll-area";
 
 export default function UserMenu() {
   const { user } = useAuth();
@@ -92,18 +94,22 @@ export default function UserMenu() {
 
   return (
     <div className="flex items-center gap-2">
-      <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
-        <Link href="/dashboard">
-          <LayoutDashboard className="mr-2 h-4 w-4" />
-          {t('profile_my_projects')}
-        </Link>
-      </Button>
-      <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
-        <Link href="/groups">
-          <Users className="mr-2 h-4 w-4" />
-          My Groups
-        </Link>
-      </Button>
+      <Link href="/dashboard" passHref>
+        <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
+            <span>
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                {t('profile_my_projects')}
+            </span>
+        </Button>
+      </Link>
+      <Link href="/groups" passHref>
+        <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
+            <span>
+                <Users className="mr-2 h-4 w-4" />
+                My Groups
+            </span>
+        </Button>
+      </Link>
       <ThemeToggle />
       <Dialog>
         <DialogTrigger asChild>
@@ -116,99 +122,100 @@ export default function UserMenu() {
             </Avatar>
           </Button>
         </DialogTrigger>
-        <DialogContent className="w-full max-w-lg">
-          <DialogHeader className="items-center text-center">
-            <div className="relative group">
-                <Avatar className="h-24 w-24 mb-4">
-                <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} className="text-5xl" />
-                <AvatarFallback className="text-5xl">
-                    {user.email ? user.email.charAt(0).toUpperCase() : <UserIcon />}
-                </AvatarFallback>
-                </Avatar>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handlePictureUpload}
-                    className="hidden"
-                    accept="image/png, image/jpeg"
-                />
-                 <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute bottom-4 right-0 rounded-full h-8 w-8 bg-background/80 group-hover:bg-background transition-all"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isSaving}
-                 >
-                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : <Camera className="h-4 w-4" />}
+        <DialogContent className="w-full max-w-lg p-0">
+          <ScrollArea className="max-h-[80vh]">
+            <div className="p-6">
+              <DialogHeader className="items-center text-center">
+                <div className="relative group">
+                    <Avatar className="h-24 w-24 mb-4">
+                    <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} className="text-5xl" />
+                    <AvatarFallback className="text-5xl">
+                        {user.email ? user.email.charAt(0).toUpperCase() : <UserIcon />}
+                    </AvatarFallback>
+                    </Avatar>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handlePictureUpload}
+                        className="hidden"
+                        accept="image/png, image/jpeg"
+                    />
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="absolute bottom-4 right-0 rounded-full h-8 w-8 bg-background/80 group-hover:bg-background transition-all"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isSaving}
+                    >
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : <Camera className="h-4 w-4" />}
+                    </Button>
+                </div>
+                
+                <DialogTitle className="text-2xl flex items-center gap-2">
+                    <Input 
+                        id="displayName"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        className="text-2xl font-bold text-center border-none focus-visible:ring-1 focus-visible:ring-ring"
+                        disabled={isSaving}
+                    />
+                </DialogTitle>
+                <DialogDescription>{user.email}</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="bio">{t('user_menu.bio')}</Label>
+                    <Textarea
+                        id="bio"
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        placeholder={t('user_menu.bio_placeholder')}
+                        className="resize-none"
+                        rows={3}
+                        disabled={isSaving}
+                    />
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="language-select">{t('user_menu.language')}</Label>
+                    <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'es')}>
+                      <SelectTrigger id="language-select">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allLanguageOptions.map(lang => (
+                            <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                </div>
+                <Link href="/dashboard" passHref>
+                    <Button asChild variant="outline" className="w-full sm:hidden">
+                        <span><LayoutDashboard className="mr-2 h-4 w-4" />{t('profile_my_projects')}</span>
+                    </Button>
+                </Link>
+                <Link href="/groups" passHref>
+                  <Button asChild variant="outline" className="w-full sm:hidden">
+                      <span><Users className="mr-2 h-4 w-4" />My Groups</span>
+                  </Button>
+                </Link>
+                <Link href="/integrations" passHref>
+                  <Button asChild variant="outline" className="w-full sm:hidden">
+                      <span><Puzzle className="mr-2 h-4 w-4" />{t('integrations_button')}</span>
+                  </Button>
+                </Link>
+              </div>
+              <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">
+                <Button variant="outline" onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>{t('profile_logout')}</span>
                 </Button>
+                <Button onClick={handleProfileUpdate} disabled={isSaving}>
+                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {t('profile_save_changes')}
+                </Button>
+              </DialogFooter>
             </div>
-            
-            <DialogTitle className="text-2xl flex items-center gap-2">
-                <Input 
-                    id="displayName"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    className="text-2xl font-bold text-center border-none focus-visible:ring-1 focus-visible:ring-ring"
-                    disabled={isSaving}
-                />
-            </DialogTitle>
-             <p className="text-sm text-muted-foreground">{user.email}</p>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-                <Label htmlFor="bio">{t('user_menu.bio')}</Label>
-                <Textarea
-                    id="bio"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    placeholder={t('user_menu.bio_placeholder')}
-                    className="resize-none"
-                    rows={3}
-                    disabled={isSaving}
-                />
-            </div>
-            <div className="grid gap-2">
-                <Label htmlFor="language-select">{t('user_menu.language')}</Label>
-                <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'es')}>
-                  <SelectTrigger id="language-select">
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allLanguageOptions.map(lang => (
-                        <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-            </div>
-            <Button asChild variant="outline" className="w-full sm:hidden">
-              <Link href="/dashboard">
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                {t('profile_my_projects')}
-              </Link>
-            </Button>
-             <Button asChild variant="outline" className="w-full sm:hidden">
-                <Link href="/groups">
-                    <Users className="mr-2 h-4 w-4" />
-                    My Groups
-                </Link>
-            </Button>
-             <Button asChild variant="outline" className="w-full sm:hidden">
-                <Link href="/integrations">
-                    <Puzzle className="mr-2 h-4 w-4" />
-                    {t('integrations_button')}
-                </Link>
-            </Button>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">
-            <Button variant="outline" onClick={handleSignOut}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>{t('profile_logout')}</span>
-            </Button>
-            <Button onClick={handleProfileUpdate} disabled={isSaving}>
-                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                {t('profile_save_changes')}
-            </Button>
-          </DialogFooter>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>

@@ -215,7 +215,7 @@ export default function GroupDetailPage() {
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" onClick={() => router.push('/groups')}><ArrowLeft className="h-4 w-4"/></Button>
+                    <Button variant="outline" size="icon" onClick={() => router.back()}><ArrowLeft className="h-4 w-4"/></Button>
                     <h1 className="text-2xl font-bold tracking-tight">{group.name}</h1>
                 </div>
                  <Dialog open={isInviteDialogOpen} onOpenChange={setInviteDialogOpen}>
@@ -338,5 +338,3 @@ export default function GroupDetailPage() {
     </div>
   );
 }
-
-    

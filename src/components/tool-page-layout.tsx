@@ -53,12 +53,6 @@ export default function ToolPageLayout({ title, subtitle, iconName, children }: 
                 </Link>
             </div>
             <div className="flex items-center gap-2">
-                <Button asChild variant="outline">
-                    <Link href="/chat">
-                         <VesperIcon />
-                         <span className="ml-2">{t('vesper_ai_studio')}</span>
-                    </Link>
-                </Button>
                 <UserMenu />
             </div>
           </div>
