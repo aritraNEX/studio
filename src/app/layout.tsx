@@ -21,7 +21,7 @@ export default function RootLayout({
         <title>Vesper</title>
         <meta name="description" content="Your ultimate AI-powered toolkit." />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#4D00B3" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
