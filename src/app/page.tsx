@@ -92,11 +92,11 @@ export default function DashboardPage() {
     const renderToolCard = (tool: { href: string; icon: React.ElementType; label: string }) => {
         const Icon = tool.icon;
         return (
-            <Link href={tool.href} key={tool.href} className="group flex flex-col items-center justify-center gap-2 rounded-2xl bg-white/90 dark:bg-card p-4 text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+            <Link href={tool.href} key={tool.href} className="group flex flex-col items-center justify-center gap-2 rounded-2xl bg-white/10 dark:bg-card/50 p-4 text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:bg-white/20 dark:hover:bg-card/80">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                     <Icon className="h-6 w-6" />
                 </div>
-                <span className="text-sm font-medium text-foreground">{getTranslatedToolLabel(tool.label)}</span>
+                <span className="text-sm font-medium text-white/90">{getTranslatedToolLabel(tool.label)}</span>
             </Link>
         );
     };
@@ -119,25 +119,25 @@ export default function DashboardPage() {
                 <WelcomeBanner user={user} />
                 
                 <div className="my-8 grid grid-cols-1 gap-4">
-                    <Link href="/workspace" className="flex items-center gap-4 rounded-2xl bg-white/90 dark:bg-card p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-foreground">
+                    <Link href="/workspace" className="flex items-center gap-4 rounded-2xl bg-white/10 dark:bg-card/50 p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-white/20 dark:hover:bg-card/80 text-white">
                         <Wand2 className="h-8 w-8 text-primary" />
                         <div>
                             <h3 className="font-semibold">{t('features.workspace')}</h3>
-                            <p className="text-sm text-muted-foreground">Chain AI operations together.</p>
+                            <p className="text-sm text-white/70">Chain AI operations together.</p>
                         </div>
                     </Link>
-                    <Link href="/chat" className="flex items-center gap-4 rounded-2xl bg-white/90 dark:bg-card p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-foreground">
+                    <Link href="/chat" className="flex items-center gap-4 rounded-2xl bg-white/10 dark:bg-card/50 p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-white/20 dark:hover:bg-card/80 text-white">
                         <Sparkles className="h-8 w-8 text-primary" />
                          <div>
                             <h3 className="font-semibold">{t('features.vesper_ai_studio')}</h3>
-                            <p className="text-sm text-muted-foreground">Chat with Vesper AI.</p>
+                            <p className="text-sm text-white/70">Chat with Vesper AI.</p>
                         </div>
                     </Link>
-                     <Link href="/integrations" className="flex items-center gap-4 rounded-2xl bg-white/90 dark:bg-card p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-foreground">
+                     <Link href="/integrations" className="flex items-center gap-4 rounded-2xl bg-white/10 dark:bg-card/50 p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-white/20 dark:hover:bg-card/80 text-white">
                         <Puzzle className="h-8 w-8 text-primary" />
                         <div>
                             <h3 className="font-semibold">{t('features.integrations')}</h3>
-                            <p className="text-sm text-muted-foreground">Works where you do.</p>
+                            <p className="text-sm text-white/70">Works where you do.</p>
                         </div>
                     </Link>
                 </div>

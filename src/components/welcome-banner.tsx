@@ -40,7 +40,7 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
         setGreeting(finalGreeting);
         
         const isFirstTimeUser = searchParams.get('welcome') === 'true';
-        setWelcomeMessage(isFirstTimeUser ? 'Welcome!' : 'Welcome back!');
+        setWelcomeMessage(isFirstTimeUser ? 'Welcome to Vesper!' : 'Welcome back!');
     } else {
         setGreeting(t('login_welcome_title'));
         setWelcomeMessage(t('login_welcome_subtitle'));
