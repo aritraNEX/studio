@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Globe } from 'lucide-react';
+import { Loader2, Globe } from 'lucide-react';
 import { FaGoogle } from 'react-icons/fa';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -44,13 +44,12 @@ const countryCodes = [
 async function createUserDocument(user: User) {
     if (!user) return;
     const userRef = doc(db, 'users', user.uid);
-    // Use set with merge: true to create or update without overwriting
     await setDoc(userRef, { 
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
         photoURL: user.photoURL,
-        bio: "", // Initialize with an empty bio
+        bio: "",
     }, { merge: true });
 }
 
@@ -70,7 +69,6 @@ export default function LoginPage() {
   const { language, setLanguage, t } = useLanguage();
   
   useEffect(() => {
-    // Ensure recaptchaVerifier is only created once on the client
     if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
@@ -196,7 +194,7 @@ export default function LoginPage() {
 
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#1e145f] via-[#2d2182] to-[#4032a8] p-4 text-white">
       <div id="recaptcha-container"></div>
       <Tabs defaultValue="login" className="w-full max-w-sm">
         <div className="text-center mb-6">
@@ -216,30 +214,30 @@ export default function LoginPage() {
                 </svg>
             </div>
             <h1 className="text-4xl font-bold tracking-tight">{t('login_welcome_title')}</h1>
-            <p className="text-lg text-muted-foreground/80 mt-2">{t('login_welcome_subtitle')}</p>
+            <p className="text-lg text-white/80 mt-2">{t('login_welcome_subtitle')}</p>
         </div>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="login">Login</TabsTrigger>
-          <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          <TabsTrigger value="phone">Phone</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 bg-white/10 text-white/80">
+          <TabsTrigger value="login" className="data-[state=active]:bg-white/20 data-[state=active]:text-white">Login</TabsTrigger>
+          <TabsTrigger value="signup" className="data-[state=active]:bg-white/20 data-[state=active]:text-white">Sign Up</TabsTrigger>
+          <TabsTrigger value="phone" className="data-[state=active]:bg-white/20 data-[state=active]:text-white">Phone</TabsTrigger>
         </TabsList>
         <TabsContent value="login">
-          <Card>
+          <Card className="bg-transparent border-white/20">
             <CardHeader>
               <CardTitle>Login</CardTitle>
-              <CardDescription>Enter your credentials to access your account.</CardDescription>
+              <CardDescription className="text-white/70">Enter your credentials to access your account.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="login-email">Email</Label>
-                <Input id="login-email" type="email" placeholder="m@example.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required />
+                <Input id="login-email" type="email" placeholder="m@example.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required className="bg-white/10 border-white/30 focus:bg-white/20" />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                     <Label htmlFor="login-password">Password</Label>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="link" className="h-auto p-0 text-xs">
+                        <Button variant="link" className="h-auto p-0 text-xs text-white/80 hover:text-white">
                             Forgot Password?
                         </Button>
                       </AlertDialogTrigger>
@@ -264,7 +262,7 @@ export default function LoginPage() {
                       </AlertDialogContent>
                     </AlertDialog>
                 </div>
-                <Input id="login-password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required />
+                <Input id="login-password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required className="bg-white/10 border-white/30 focus:bg-white/20" />
               </div>
             </CardContent>
             <CardFooter className="flex-col gap-4">
@@ -276,19 +274,19 @@ export default function LoginPage() {
           </Card>
         </TabsContent>
         <TabsContent value="signup">
-          <Card>
+          <Card className="bg-transparent border-white/20">
             <CardHeader>
               <CardTitle>Sign Up</CardTitle>
-              <CardDescription>Create a new account to get started.</CardDescription>
+              <CardDescription className="text-white/70">Create a new account to get started.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="signup-email">Email</Label>
-                <Input id="signup-email" type="email" placeholder="m@example.com" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} required />
+                <Input id="signup-email" type="email" placeholder="m@example.com" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} required className="bg-white/10 border-white/30 focus:bg-white/20"/>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="signup-password">Password</Label>
-                <Input id="signup-password" type="password" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} required />
+                <Input id="signup-password" type="password" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} required className="bg-white/10 border-white/30 focus:bg-white/20"/>
               </div>
             </CardContent>
             <CardFooter className="flex-col gap-4">
@@ -300,10 +298,10 @@ export default function LoginPage() {
           </Card>
         </TabsContent>
         <TabsContent value="phone">
-          <Card>
+          <Card className="bg-transparent border-white/20">
             <CardHeader>
               <CardTitle>Sign In with Phone</CardTitle>
-              <CardDescription>We'll send a verification code to your phone.</CardDescription>
+              <CardDescription className="text-white/70">We'll send a verification code to your phone.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {!confirmationResult ? (
@@ -311,7 +309,7 @@ export default function LoginPage() {
                     <Label>Phone Number</Label>
                     <div className="flex gap-2">
                         <Select value={countryCode} onValueChange={setCountryCode}>
-                            <SelectTrigger className="w-[120px]">
+                            <SelectTrigger className="w-[120px] bg-white/10 border-white/30">
                                 <SelectValue placeholder="Select" />
                             </SelectTrigger>
                             <SelectContent>
@@ -322,13 +320,13 @@ export default function LoginPage() {
                                 ))}
                             </SelectContent>
                         </Select>
-                        <Input id="phone-number" type="tel" placeholder="555-555-5555" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))} required />
+                        <Input id="phone-number" type="tel" placeholder="555-555-5555" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))} required className="bg-white/10 border-white/30 focus:bg-white/20"/>
                     </div>
                 </div>
               ) : (
                 <div className="space-y-2">
                   <Label htmlFor="otp">Verification Code</Label>
-                  <Input id="otp" type="text" placeholder="Enter 6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value)} required />
+                  <Input id="otp" type="text" placeholder="Enter 6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value)} required className="bg-white/10 border-white/30 focus:bg-white/20"/>
                 </div>
               )}
             </CardContent>
@@ -349,22 +347,22 @@ export default function LoginPage() {
         </TabsContent>
         <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <span className="w-full border-t border-white/20" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
+                <span className="bg-[#2d2182] px-2 text-white/70">
                 Or continue with
                 </span>
             </div>
         </div>
-        <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isPending}>
+        <Button variant="outline" className="w-full bg-white/10 border-white/30 hover:bg-white/20" onClick={handleGoogleSignIn} disabled={isPending}>
             {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FaGoogle className="mr-2 h-4 w-4" />}
             Google
         </Button>
         <div className="mt-4 flex justify-center items-center gap-2">
-            <Globe className="h-4 w-4 text-muted-foreground" />
+            <Globe className="h-4 w-4 text-white/70" />
             <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'es')}>
-              <SelectTrigger className="w-[180px] bg-transparent border-none focus:ring-0">
+              <SelectTrigger className="w-[180px] bg-transparent border-none focus:ring-0 text-white/70">
                 <SelectValue placeholder="Language" />
               </SelectTrigger>
               <SelectContent>
