@@ -54,6 +54,22 @@ const VesperIcon = () => (
     </svg>
 );
 
+const NewVesperLogo = () => (
+    <svg
+      width="100"
+      height="100"
+      viewBox="0 0 115 106"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M72.484 105.003c27.207-11.205 40.54-41.48 30.523-68.575C93.076 9.49 61.06 0 35.152 0 14.28 0 0 13.098 0 32.555c0 17.58 13.11 32.89 27.873 37.33 13.52 4.07 33.193 11.082 29.623 27.5-3.32 15.22-1.39 6.84 14.988 7.618Z"
+        fill="#45C4B0"
+      />
+      <circle cx="58.5" cy="30.5" r="30.5" fill="#1A5F7A" />
+    </svg>
+);
+
 const allTools = [
     { section: 'most_popular', href: '/paraphrase', icon: Quote, label: 'Paraphrase' },
     { section: 'most_popular', href: '/summarize', icon: BookText, label: 'Summarize' },
@@ -143,6 +159,10 @@ export default function DashboardPage() {
             </header>
 
             <main className="flex-1 w-full container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="flex justify-center mb-6">
+                    <NewVesperLogo />
+                </div>
+
                 <WelcomeBanner user={user} />
                 
                 <div className="my-8 grid grid-cols-1 md:grid-cols-3 gap-4">
