@@ -63,9 +63,33 @@ const NewVesperLogo = () => (
     >
       <path
         d="M72.484 105.003c27.207-11.205 40.54-41.48 30.523-68.575C93.076 9.49 61.06 0 35.152 0 14.28 0 0 13.098 0 32.555c0 17.58 13.11 32.89 27.873 37.33 13.52 4.07 33.193 11.082 29.623 27.5-3.32 15.22-1.39 6.84 14.988 7.618Z"
-        fill="#45C4B0"
+        fill="url(#paint0_linear_1_2)"
       />
-      <circle cx="58.5" cy="30.5" r="30.5" fill="#1A5F7A" />
+      <circle cx="58.5" cy="30.5" r="30.5" fill="url(#paint1_linear_1_2)" />
+      <defs>
+        <linearGradient
+          id="paint0_linear_1_2"
+          x1="57.5"
+          y1="0"
+          x2="57.5"
+          y2="106"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#4D00B3" />
+          <stop offset="1" stopColor="#3366FF" />
+        </linearGradient>
+        <linearGradient
+          id="paint1_linear_1_2"
+          x1="58.5"
+          y1="0"
+          x2="58.5"
+          y2="61"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#4D00B3" stopOpacity="0.7" />
+          <stop offset="1" stopColor="#3366FF" stopOpacity="0.9" />
+        </linearGradient>
+      </defs>
     </svg>
 );
 
@@ -131,6 +155,9 @@ export default function DashboardPage() {
                     </div>
                 </header>
                 <main className="flex-1 w-full container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col items-center justify-center text-center">
+                     <div className="mb-6">
+                        <NewVesperLogo />
+                    </div>
                     <h2 className="text-5xl md:text-6xl font-bold text-gradient mb-4">
                         Welcome to Vesper
                     </h2>
@@ -203,3 +230,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    
