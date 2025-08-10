@@ -107,7 +107,9 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
               const projectData = docSnap.data();
-              if (projectData.userId !== user.uid) {
+              // A personal project can only be opened by its owner.
+              // A group project can be opened by a group member (checked on the workspace page).
+              if (!projectData.groupId && projectData.userId !== user.uid) {
                  toast({ variant: 'destructive', title: 'Access Denied', description: "You don't have permission to view this project." });
                  router.push('/');
                  return;
@@ -159,6 +161,8 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
         outputText: generatedText,
         operation: operation,
         createdAt: serverTimestamp(),
+        // This field is used to filter out personal projects from group views
+        groupId: null, 
       });
       toast({title: "Project Saved!", description: "Your work has been saved to your dashboard."})
     } catch (error) {
