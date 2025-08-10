@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -27,9 +28,10 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
       }
     };
 
-    const getFirstName = (displayName: string | null | undefined) => {
+    const getFirstName = (displayName: string | null | undefined): string => {
       if (!displayName) return "";
-      return `, ${displayName.split(" ")[0]}`;
+      const firstName = displayName.split(" ")[0];
+      return `, ${firstName}`;
     };
     
     if (user) {
