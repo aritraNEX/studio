@@ -403,7 +403,7 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      document.body.removeChild(a);
       URL.revokeObjectURL(link.href);
 
       toast({

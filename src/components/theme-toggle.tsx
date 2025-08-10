@@ -16,35 +16,23 @@ import { Label } from "./ui/label";
 import { useSound } from "@/contexts/sound-context"
 
 export function ThemeToggle() {
-  const [theme, setThemeState] = React.useState<"theme-light" | "dark" | "system">("system");
+  const [theme, setThemeState] = React.useState<"theme-light" | "dark" | "system">("dark"); // Default to dark
   const [isEyeProtectionOn, setEyeProtection] = React.useState(false);
   const [animationsEnabled, setAnimationsEnabled] = React.useState(false);
   const { soundEnabled, setSoundEnabled } = useSound();
 
   React.useEffect(() => {
     try {
-      const savedTheme = localStorage.getItem("texio-theme") as "theme-light" | "dark" | "system" | null;
+      // Keep theme logic but remove user's ability to change it. Default to dark.
       const savedEyeProtection = localStorage.getItem("texio-eye-protection") === "true";
       const savedAnimations = localStorage.getItem("texio-animations-enabled") === "true";
 
-      if (savedTheme) {
-        setThemeState(savedTheme);
-      }
       setEyeProtection(savedEyeProtection);
       setAnimationsEnabled(savedAnimations);
     } catch (error) {
         console.warn("Could not read settings from localStorage", error);
     }
   }, []);
-
-  const setTheme = (newTheme: "theme-light" | "dark" | "system") => {
-    setThemeState(newTheme);
-    try {
-        localStorage.setItem("texio-theme", newTheme);
-    } catch (error) {
-        console.warn("Could not save theme to localStorage", error);
-    }
-  }
 
   const toggleEyeProtection = (checked: boolean) => {
     setEyeProtection(checked);
@@ -106,16 +94,6 @@ export function ThemeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("theme-light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <div className="px-2 py-1.5 text-sm outline-none">
             <div className="flex items-center justify-between">
                 <Label htmlFor="eye-protection-switch" className="flex items-center gap-2 cursor-pointer font-normal">
