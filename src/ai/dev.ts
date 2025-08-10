@@ -18,3 +18,5 @@ import '@/ai/flows/vocabulary-enhancer-flow.ts';
 import '@/ai/flows/image-to-latex-flow.ts';
 import '@/ai/flows/task-planner-flow.ts';
 import '@/ai/flows/reschedule-task-flow.ts';
+import '@/ai/flows/general-chat-flow.ts';
+
