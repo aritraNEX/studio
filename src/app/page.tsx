@@ -3,7 +3,6 @@
 
 import Link from "next/link";
 import {
-  Sparkles,
   Wand2,
   Puzzle,
   Quote,
@@ -165,19 +164,12 @@ export default function DashboardPage() {
 
                 <WelcomeBanner user={user} />
                 
-                <div className="my-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="my-8 grid grid-cols-1 md:grid-cols-2 gap-4">
                      <Link href="/workspace" className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-card/80 text-foreground">
                         <Wand2 className="h-8 w-8 text-primary" />
                         <div>
                             <h3 className="font-semibold">{t('features.workspace')}</h3>
                             <p className="text-sm text-muted-foreground">Chain AI operations together.</p>
-                        </div>
-                    </Link>
-                    <Link href="/chat" className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-card/80 text-foreground">
-                        <Sparkles className="h-8 w-8 text-primary" />
-                         <div>
-                            <h3 className="font-semibold">{t('features.vesper_ai_studio')}</h3>
-                            <p className="text-sm text-muted-foreground">Chat with Vesper AI.</p>
                         </div>
                     </Link>
                      <Link href="/integrations" className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-card/80 text-foreground">
