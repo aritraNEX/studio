@@ -3,9 +3,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithPhoneNumber, sendPasswordResetEmail, RecaptchaVerifier, type ConfirmationResult, type UserCredential, type User } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithPhoneNumber, sendPasswordResetEmail, RecaptchaVerifier, type ConfirmationResult, type UserCredential, type User, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -44,13 +44,19 @@ const countryCodes = [
 async function createUserDocument(user: User) {
     if (!user) return;
     const userRef = doc(db, 'users', user.uid);
-    await setDoc(userRef, { 
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        bio: "",
-    }, { merge: true });
+    const docSnap = await getDoc(userRef);
+
+    // Only create document if it doesn't exist
+    if (!docSnap.exists()) {
+        await setDoc(userRef, { 
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || user.email?.split('@')[0] || 'User',
+            photoURL: user.photoURL || `https://placehold.co/100x100.png?text=${(user.displayName || user.email || 'U').charAt(0).toUpperCase()}`,
+            bio: "",
+            createdAt: serverTimestamp(),
+        });
+    }
 }
 
 export default function LoginPage() {
@@ -78,8 +84,16 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleSuccessfulAuth = async (user: User) => {
+  const handleSuccessfulAuth = async (user: User, isNewUser: boolean = false) => {
+    if (isNewUser) {
+        // If it's a new user from email/password, ensure displayName is set
+        if (!user.displayName && signupEmail) {
+            const nameFromEmail = signupEmail.split('@')[0];
+            await updateProfile(user, { displayName: nameFromEmail });
+        }
+    }
     await createUserDocument(user);
+    toast({ title: isNewUser ? 'Sign up successful!' : 'Login successful!' });
     router.push('/?welcome=true');
   };
 
@@ -87,7 +101,6 @@ export default function LoginPage() {
     setIsPending(true);
     try {
       const { user } = await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
-      toast({ title: 'Successfully logged in!' });
       await handleSuccessfulAuth(user);
     } catch (error: any) {
       let description = error.message;
@@ -108,8 +121,7 @@ export default function LoginPage() {
     setIsPending(true);
     try {
       const { user } = await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
-      toast({ title: 'Successfully signed up!' });
-      await handleSuccessfulAuth(user);
+      await handleSuccessfulAuth(user, true);
     } catch (error: any) {
       let description = error.message;
       if (error.code === 'auth/email-already-in-use') {
@@ -149,7 +161,6 @@ export default function LoginPage() {
     try {
         auth.languageCode = 'en'; 
         const { user } = await signInWithPopup(auth, provider);
-        toast({ title: 'Successfully signed in with Google!' });
         await handleSuccessfulAuth(user);
     } catch (error: any) {
          toast({
@@ -183,7 +194,6 @@ export default function LoginPage() {
     setIsPending(true);
     try {
         const { user } = await confirmationResult.confirm(otp);
-        toast({ title: 'Successfully signed in!' });
         await handleSuccessfulAuth(user);
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Invalid OTP', description: 'The OTP you entered is incorrect. Please try again.' });

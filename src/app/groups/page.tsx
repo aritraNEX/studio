@@ -116,7 +116,7 @@ export default function GroupsPage() {
         const docRef = await addDoc(collection(db, 'groups'), {
             name: newGroupName,
             ownerId: user.uid,
-            members: [initialMember],
+            members: [initialMember], // Essential for role-based security
             memberIds: [user.uid],
             createdAt: serverTimestamp(),
         });
@@ -125,6 +125,7 @@ export default function GroupsPage() {
         setNewGroupName("");
         router.push(`/groups/${docRef.id}`);
     } catch (e) {
+        console.error("Group creation failed: ", e);
         toast({ variant: 'destructive', title: 'Failed to create group' });
     } finally {
         setIsCreating(false);

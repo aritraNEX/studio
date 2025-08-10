@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
 // Extend the Firebase User type to include our custom fields
@@ -24,11 +24,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+    let docUnsubscribe: Unsubscribe | null = null;
+
+    const authUnsubscribe = onAuthStateChanged(auth, (authUser) => {
+      // If there's an existing doc listener, unsubscribe from it
+      if (docUnsubscribe) {
+        docUnsubscribe();
+      }
+
       if (authUser) {
-        // User is signed in, now listen for Firestore document changes
         const userDocRef = doc(db, 'users', authUser.uid);
-        const unsubDoc = onSnapshot(userDocRef, (docSnap) => {
+        docUnsubscribe = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             const firestoreData = docSnap.data();
             setUser({
@@ -36,14 +42,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               ...firestoreData,
             });
           } else {
-            // Document might not exist yet for a new user
+            // Document might not exist yet for a new user, just set authUser
             setUser(authUser);
           }
+          // Only stop loading after we've attempted to fetch the Firestore doc
+          setLoading(false);
+        }, (error) => {
+          console.error("Error listening to user document:", error);
+          setUser(authUser); // Still set the auth user
           setLoading(false);
         });
-
-        // Return a cleanup function to unsubscribe from both listeners
-        return () => unsubDoc();
       } else {
         // User is signed out
         setUser(null);
@@ -51,9 +59,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      authUnsubscribe();
+      if (docUnsubscribe) {
+        docUnsubscribe();
+      }
+    };
   }, []);
-
+  
+  // This top-level loader ensures no part of the app renders until authentication is resolved.
   if (loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background z-[200]">
