@@ -113,20 +113,11 @@ const processImageTextFlow = ai.defineFlow(
     }
 
     try {
-        // If we have raw text, use the cheaper, more direct prompt.
-        if(input.text) {
-             const {output} = await processTextOnlyPrompt({
-                text: input.text,
-                instruction: instruction,
-            });
-            if (!output) throw new Error('The model did not return any output.');
-            return output;
-        }
-
-        // If we have a fileUrl, use the multi-modal prompt.
-        const {output} = await processImageTextPrompt({
+        const promptToUse = input.fileUrl ? processImageTextPrompt : processTextOnlyPrompt;
+        
+        const {output} = await promptToUse({
             fileUrl: input.fileUrl,
-            text: input.text, // This will be undefined here but schema needs it
+            text: input.text,
             instruction: instruction,
         });
         
