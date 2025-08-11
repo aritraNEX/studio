@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { flashcardGenerator, FlashcardGeneratorOutput } from "@/ai/flows/flashcard-generator-flow";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
 
