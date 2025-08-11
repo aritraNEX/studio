@@ -56,26 +56,43 @@ const PromptInputSchema = z.object({
     text: z.string().describe('The text to be analyzed for vocabulary enhancement.'),
 });
 
-const PromptOutputSchema = VocabularyEnhancerOutputSchema.omit({ enhancedText: true });
+const PromptOutputSchema = z.object({
+    suggestions: z
+    .array(
+      z.object({
+        originalWord: z.string().describe('The original word from the text that can be improved.'),
+        startIndex: z.number().describe('The starting index of the original word in the text.'),
+        endIndex: z.number().describe('The ending index of the original word in the text.'),
+        suggestions: z
+          .array(
+            z.object({
+              word: z.string().describe('The suggested replacement word.'),
+              reason: z.string().describe('A brief explanation of why this word is a good alternative (e.g., "more descriptive", "more formal").'),
+            })
+          )
+          .min(1)
+          .describe('A list of suggested alternative words.'),
+      })
+    )
+    .describe('An array of vocabulary suggestions for the input text. If no suggestions are found, return an empty array.'),
+});
 
 
 const vocabularyEnhancerPrompt = ai.definePrompt({
   name: 'vocabularyEnhancerPrompt',
   input: {schema: PromptInputSchema},
   output: {schema: PromptOutputSchema},
-  prompt: `You are an expert editor and writing coach. Your task is to analyze the provided text and suggest vocabulary enhancements to improve its quality, clarity, and impact.
+  prompt: `You are an expert editor. Your task is to analyze the provided text and suggest vocabulary enhancements.
 
 Analyze the following text:
 "{{{text}}}"
 
-Follow these steps:
-1.  Read the entire text to understand its context and tone.
-2.  Identify words that are generic, overused, repetitive, or could be replaced with a more precise or impactful alternative.
-3.  For each word you identify, you MUST provide its exact start and end index within the original text. This is critical for mapping.
-4.  For each identified word, provide 1-3 alternative word suggestions.
-5.  For each suggestion, provide a very brief, helpful reason (e.g., "more descriptive," "stronger verb," "more formal," "less repetitive").
-6.  If the text is already well-written and has no obvious words to improve, return an empty 'suggestions' array.
-7.  Return your findings in the specified JSON format. Ensure all indexes are correct.
+**CRITICAL INSTRUCTIONS:**
+1.  Identify words that are generic, overused, or could be replaced with a more impactful alternative.
+2.  For each identified word, you MUST provide its exact start and end index within the original text. This is critical for mapping.
+3.  For each identified word, provide 1-3 alternative word suggestions with a brief, helpful reason.
+4.  If the text is well-written and has no words to improve, return an empty 'suggestions' array.
+5.  **DO NOT** return the original text. Your output must ONLY be the 'suggestions' array in the specified JSON format.
 `,
 });
 
@@ -103,14 +120,24 @@ const vocabularyEnhancerFlow = ai.defineFlow(
 
     try {
         const {output} = await vocabularyEnhancerPrompt({ text: textToProcess });
-        if (!output || !output.suggestions) {
+        
+        if (!output) {
+          // If the model returns nothing, assume no suggestions.
           return { enhancedText: textToProcess, suggestions: [] };
         }
+
+        // Validate that suggestions are valid before returning
+        const validSuggestions = output.suggestions.filter(s => {
+            const extracted = textToProcess?.substring(s.startIndex, s.endIndex);
+            return extracted === s.originalWord;
+        });
+
         // Sort by start index to ensure proper processing order on the client
-        output.suggestions.sort((a, b) => a.startIndex - b.startIndex);
+        validSuggestions.sort((a, b) => a.startIndex - b.startIndex);
+
         return {
           enhancedText: textToProcess,
-          suggestions: output.suggestions,
+          suggestions: validSuggestions,
         };
     } catch (e: any) {
         console.error("Error in vocabularyEnhancerFlow: ", e);
