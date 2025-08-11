@@ -153,11 +153,14 @@ export default function GroupDetailPage() {
       if (!group || currentUserRole !== 'Owner' || memberToRemove.uid === group.ownerId) return;
       try {
           const groupRef = doc(db, 'groups', group.id);
-          await updateDoc(groupRef, {
-              members: arrayRemove(memberToRemove),
-              memberIds: arrayRemove(memberToRemove.uid)
-          });
-          toast({ title: 'Member removed' });
+          const memberData = group.members.find(m => m.uid === memberToRemove.uid);
+          if (memberData) {
+            await updateDoc(groupRef, {
+                members: arrayRemove(memberData),
+                memberIds: arrayRemove(memberToRemove.uid)
+            });
+            toast({ title: 'Member removed' });
+          }
       } catch (error) {
           toast({ variant: 'destructive', title: 'Failed to remove member' });
       }
@@ -184,6 +187,10 @@ export default function GroupDetailPage() {
               inputText: 'New Shared Document',
               operation: 'document',
               createdAt: serverTimestamp(),
+              lastEditedBy: user.uid,
+              lastEditedAt: serverTimestamp(),
+              ownerId: user.uid,
+              members: group.members,
           });
           router.push(`/workspace?projectId=${newProjectRef.id}`);
       } catch (error) {
@@ -271,7 +278,7 @@ export default function GroupDetailPage() {
                                         <CardHeader>
                                             <CardTitle className="text-lg truncate">{p.inputText}</CardTitle>
                                             <CardDescription>
-                                                {formatDistanceToNow(new Date(p.createdAt.seconds * 1000), { addSuffix: true })}
+                                                {p.createdAt ? formatDistanceToNow(new Date(p.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now'}
                                             </CardDescription>
                                         </CardHeader>
                                         <CardFooter className="flex justify-end gap-2">
