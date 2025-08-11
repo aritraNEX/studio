@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useTransition, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Copy, Loader2, Sparkles, Upload, Download, ChevronDown, Send, AudioLines, Share2, Link, Save, FileText, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLoading } from "@/contexts/loading-context";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -66,7 +67,7 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
   const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
   const [generatedText, setGeneratedText] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const { isLoading, startLoading, stopLoading } = useLoading();
   const [isParsing, setIsParsing] = useState(false);
   const [targetLanguage, setTargetLanguage] = useState<string>('Spanish');
   const [targetStyle, setTargetStyle] = useState<string>('Formal');
@@ -260,67 +261,68 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
     }
   };
 
-  const handleProcess = () => {
-    startTransition(async () => {
-        if (!inputText.trim() && !fileDataUri) {
-            toast({
-                variant: 'destructive',
-                title: 'No Input Provided',
-                description: 'Please enter text or upload a file.',
-            });
-            return;
-        }
-        
-        const finalStyle = customStyle.trim() || targetStyle;
-
-        if (operation === 'translate' && !targetLanguage.trim()) {
-            toast({
-                title: "Language required",
-                description: "Please enter a target language for translation.",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        if (operation === 'style' && !finalStyle) {
+  const handleProcess = async () => {
+    if (!inputText.trim() && !fileDataUri) {
         toast({
-            title: "Style required",
-            description: "Please select or enter a style for rewriting.",
+            variant: 'destructive',
+            title: 'No Input Provided',
+            description: 'Please enter text or upload a file.',
+        });
+        return;
+    }
+    
+    const finalStyle = customStyle.trim() || targetStyle;
+
+    if (operation === 'translate' && !targetLanguage.trim()) {
+        toast({
+            title: "Language required",
+            description: "Please enter a target language for translation.",
             variant: "destructive",
         });
         return;
-        }
+    }
 
-        setError(null);
-        setGeneratedText("");
-        
-        try {
-            const isImage = fileDataUri?.startsWith("data:image");
-            const payload = {
-                operation,
-                ...(isImage ? { fileUrl: fileDataUri! } : { text: inputText! }),
-                ...(operation === 'translate' ? { targetLanguage } : {}),
-                ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
-            };
-
-            const result = await processImageText(payload);
-
-            if (result && result.processedText) {
-            setGeneratedText(result.processedText);
-            } else {
-            throw new Error("The processed text is empty.");
-            }
-        } catch (e) {
-            console.error(e);
-            const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-            setError(`Failed to ${operation} text. Please try again.`);
-            toast({
-            title: `${operation.charAt(0).toUpperCase() + operation.slice(1)} Error`,
-            description: errorMessage,
-            variant: "destructive",
-            });
-        }
+    if (operation === 'style' && !finalStyle) {
+    toast({
+        title: "Style required",
+        description: "Please select or enter a style for rewriting.",
+        variant: "destructive",
     });
+    return;
+    }
+
+    setError(null);
+    setGeneratedText("");
+    
+    startLoading();
+    try {
+        const isImage = fileDataUri?.startsWith("data:image");
+        const payload = {
+            operation,
+            ...(isImage ? { fileUrl: fileDataUri! } : { text: inputText! }),
+            ...(operation === 'translate' ? { targetLanguage } : {}),
+            ...(operation === 'style' ? { targetStyle: finalStyle } : {}),
+        };
+
+        const result = await processImageText(payload);
+
+        if (result && result.processedText) {
+        setGeneratedText(result.processedText);
+        } else {
+        throw new Error("The processed text is empty.");
+        }
+    } catch (e) {
+        console.error(e);
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        setError(`Failed to ${operation} text. Please try again.`);
+        toast({
+        title: `${operation.charAt(0).toUpperCase() + operation.slice(1)} Error`,
+        description: errorMessage,
+        variant: "destructive",
+        });
+    } finally {
+        stopLoading();
+    }
   };
 
   const handleCopy = (textToCopy: string) => {
@@ -542,7 +544,7 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Or enter text here..."
               className="h-40 resize-y bg-background focus-visible:ring-accent"
-              disabled={isPending}
+              disabled={isLoading}
             />
       </div>
       <div className="flex flex-col gap-4 h-full">
@@ -617,10 +619,10 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
           Result
         </Label>
         <div className="relative flex-grow min-h-[24rem]">
-            {isPending || isParsing ? (
+            {isParsing ? (
                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted-foreground bg-background/50 rounded-lg">
                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                    <p className="font-semibold">{isParsing ? "Reading file..." : "Generating your result..."}</p>
+                    <p className="font-semibold">Reading file...</p>
                 </div>
             ) : (
                 <Textarea
@@ -631,10 +633,11 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
                     placeholder={"Your result will appear here..."}
                     className="h-full resize-y pr-36 bg-background focus-visible:ring-accent"
                     style={{ fontFamily: selectedFont }}
+                    readOnly={isLoading}
                 />
             )}
           
-          {!isPending && !isParsing && (
+          {!isLoading && !isParsing && (
             <div className="absolute top-2 right-2 flex items-center">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -642,7 +645,7 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
                             variant="ghost"
                             size="icon"
                             className="text-muted-foreground hover:text-foreground"
-                            disabled={!generatedText || isPending}
+                            disabled={!generatedText || isLoading}
                             aria-label="Share result"
                         >
                             <Share2 className="h-5 w-5" />
@@ -661,7 +664,7 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
                 size="icon"
                 className="text-muted-foreground hover:text-foreground"
                 onClick={() => handleCopy(generatedText)}
-                disabled={!generatedText || isPending}
+                disabled={!generatedText || isLoading}
                 aria-label="Copy to clipboard"
                 >
                 <Copy className="h-5 w-5" />
@@ -671,7 +674,7 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
                 size="icon"
                 className="text-muted-foreground hover:text-foreground"
                 onClick={() => handleDownloadPdf(generatedText, `vesper-result-${operation}.pdf`)}
-                disabled={!generatedText || isPending}
+                disabled={!generatedText || isLoading}
                 aria-label="Download as PDF"
                 >
                 <Download className="h-5 w-5" />
@@ -713,19 +716,19 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
          <div className="flex flex-wrap items-center justify-center gap-4">
           <Button
             onClick={handleProcess}
-            disabled={(!inputText.trim() && !fileDataUri) || isPending || isParsing || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
+            disabled={(!inputText.trim() && !fileDataUri) || isLoading || isParsing || (operation === 'translate' && !targetLanguage.trim()) || (operation === 'style' && !finalStyle)}
             size="lg"
             className={cn(
                 "w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto",
-                isPending && "animate-sparkle"
+                isLoading && "animate-sparkle"
             )}
           >
-            {isPending ? (
+            {isLoading ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             ) : (
               <Sparkles className="mr-2 h-5 w-5" />
             )}
-            <span>{isPending ? buttonTextPending : buttonText}</span>
+            <span>{isLoading ? buttonTextPending : buttonText}</span>
           </Button>
 
           {generatedText && (

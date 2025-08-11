@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { conceptExplainer, ConceptExplainerOutput } from "@/ai/flows/concept-explainer-flow";
 import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLoading } from '@/contexts/loading-context';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -88,25 +89,26 @@ const Storyboard = ({ steps }: { steps: ConceptExplainerOutput['steps'] | null }
 export function ConceptExplainerTab() {
   const [topic, setTopic] = useState('Quantum Computing');
   const [result, setResult] = useState<ConceptExplainerOutput | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const { isLoading, startLoading, stopLoading } = useLoading();
   const { toast } = useToast();
   const [showIntroVideo, setShowIntroVideo] = useState(false);
 
-  const handleExplain = () => {
+  const handleExplain = async () => {
       if (!topic.trim()) {
           toast({ variant: 'destructive', title: 'Topic is empty', description: 'Please enter a topic to explain.' });
           return;
       }
       setResult(null);
-      startTransition(async () => {
-          try {
-              const explainerResult = await conceptExplainer({ topic });
-              setResult(explainerResult);
-              setShowIntroVideo(true);
-          } catch (e: any) {
-              toast({ variant: 'destructive', title: 'Explanation Error', description: e.message });
-          }
-      });
+      startLoading();
+      try {
+          const explainerResult = await conceptExplainer({ topic });
+          setResult(explainerResult);
+          setShowIntroVideo(true);
+      } catch (e: any) {
+          toast({ variant: 'destructive', title: 'Explanation Error', description: e.message });
+      } finally {
+          stopLoading();
+      }
   }
   
   const handleVideoEnd = () => {
@@ -146,20 +148,19 @@ export function ConceptExplainerTab() {
                 placeholder="Enter concept topic..."
                 onKeyDown={(e) => e.key === 'Enter' && handleExplain()}
             />
-            <Button onClick={handleExplain} size="lg" className="h-12 text-lg w-full sm:w-auto" disabled={isPending || !topic.trim()}>
-                {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
+            <Button onClick={handleExplain} size="lg" className="h-12 text-lg w-full sm:w-auto" disabled={isLoading || !topic.trim()}>
+                {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
                 Explain
             </Button>
         </div>
 
-      {isPending && (
+      {isLoading && !result && (
         <div className="flex flex-col items-center justify-center text-center py-20 gap-4">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
             <p className="text-lg font-semibold text-muted-foreground">AI is thinking...</p>
         </div>
       )}
 
-      {!isPending && result && (
+      {!isLoading && result && (
         <Tabs defaultValue="overview" className="w-full animate-in fade-in-50 duration-500">
             <div className="flex justify-center mb-4">
                 <TabsList className="grid grid-cols-2 w-full max-w-sm">
@@ -178,7 +179,7 @@ export function ConceptExplainerTab() {
         </Tabs>
       )}
 
-      {!isPending && !result && (
+      {!isLoading && !result && (
         <div className="text-center text-muted-foreground py-20">
             <p>Your explanation will appear here.</p>
         </div>

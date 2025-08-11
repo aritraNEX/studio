@@ -15,17 +15,18 @@ import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import { cn } from "@/lib/utils";
 import React from 'react';
 import { useLanguage } from "@/contexts/language-context";
+import { useLoading } from "@/contexts/loading-context";
 
 export function AssignmentMakerTab() {
   const [topic, setTopic] = useState<string>("");
   const [instructions, setInstructions] = useState<string>("");
   const [result, setResult] = useState<AssignmentMakerOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const { isLoading, startLoading, stopLoading } = useLoading();
   const { toast } = useToast();
   const { t } = useLanguage();
 
-  const handleGenerateAssignment = () => {
+  const handleGenerateAssignment = async () => {
     if (!topic.trim()) {
       toast({
         title: t("assignment.toast.topic_empty_title"),
@@ -38,25 +39,26 @@ export function AssignmentMakerTab() {
     setError(null);
     setResult(null);
 
-    startTransition(async () => {
-      try {
-        const assignmentResult = await assignmentMaker({ topic, instructions });
-        if (assignmentResult) {
-          setResult(assignmentResult);
-        } else {
-          throw new Error(t("assignment.toast.no_result_error"));
-        }
-      } catch (e) {
-        console.error(e);
-        const errorMessage = e instanceof Error ? e.message : t("unknown_error");
-        setError(`${t("assignment.toast.generation_failed_desc")} ${errorMessage}`);
-        toast({
-          title: t("assignment.toast.generation_failed_title"),
-          description: t("assignment.toast.generation_failed_desc"),
-          variant: "destructive",
-        });
+    startLoading();
+    try {
+      const assignmentResult = await assignmentMaker({ topic, instructions });
+      if (assignmentResult) {
+        setResult(assignmentResult);
+      } else {
+        throw new Error(t("assignment.toast.no_result_error"));
       }
-    });
+    } catch (e) {
+      console.error(e);
+      const errorMessage = e instanceof Error ? e.message : t("unknown_error");
+      setError(`${t("assignment.toast.generation_failed_desc")} ${errorMessage}`);
+      toast({
+        title: t("assignment.toast.generation_failed_title"),
+        description: t("assignment.toast.generation_failed_desc"),
+        variant: "destructive",
+      });
+    } finally {
+      stopLoading();
+    }
   };
   
   const handleCopy = (textToCopy: string) => {
@@ -189,7 +191,7 @@ export function AssignmentMakerTab() {
             onChange={(e) => setTopic(e.target.value)}
             placeholder={t("assignment.topic_placeholder")}
             className="bg-background focus-visible:ring-accent"
-            disabled={isPending}
+            disabled={isLoading}
           />
            <Label htmlFor="assignment-instructions" className="font-semibold text-md">
             {t("assignment.instructions_label")}
@@ -200,7 +202,7 @@ export function AssignmentMakerTab() {
             onChange={(e) => setInstructions(e.target.value)}
             placeholder={t("assignment.instructions_placeholder")}
             className="h-72 resize-y bg-background focus-visible:ring-accent"
-            disabled={isPending}
+            disabled={isLoading}
           />
         </div>
         <div className="flex flex-col gap-4">
@@ -209,19 +211,17 @@ export function AssignmentMakerTab() {
             </Label>
             <Card className="min-h-96 bg-background/50 flex flex-col">
                 <CardContent className="flex-grow flex items-center justify-center p-6">
-                    {isPending && (
-                        <div className="flex flex-col items-center gap-4 text-muted-foreground animate-in fade-in duration-500">
-                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                            <p className="font-semibold">{t("assignment.status.generating")}</p>
-                            <p className="text-sm text-center">{t("assignment.status.writing")}</p>
+                    {isLoading && (
+                        <div className="text-center text-muted-foreground p-4">
+                             <p>{t("assignment.status.placeholder")}</p>
                         </div>
                     )}
-                    {!isPending && !result && (
+                    {!isLoading && !result && (
                          <div className="text-center text-muted-foreground p-4">
                              <p>{t("assignment.status.placeholder")}</p>
                         </div>
                     )}
-                    {!isPending && result && (
+                    {!isLoading && result && (
                         <ScrollArea className="h-[32rem] w-full">
                             <div className="w-full flex flex-col gap-4 animate-in fade-in duration-500 pr-4">
                                 <h2 className="text-2xl font-bold tracking-tight">{result.title}</h2>
@@ -258,7 +258,7 @@ export function AssignmentMakerTab() {
         </div>
       </div>
       <div className="flex flex-col items-center justify-center gap-4 py-4">
-         {result && !isPending && (
+         {result && !isLoading && (
             <div className="flex flex-wrap items-center justify-center gap-4">
                  <Button
                     onClick={() => handleCopy(result.content)}
@@ -282,19 +282,19 @@ export function AssignmentMakerTab() {
          )}
         <Button
           onClick={handleGenerateAssignment}
-          disabled={!topic.trim() || isPending}
+          disabled={!topic.trim() || isLoading}
           size="lg"
           className={cn(
             "w-full max-w-xs text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 sm:w-auto mt-4",
-            isPending && "animate-sparkle"
+            isLoading && "animate-sparkle"
           )}
         >
-          {isPending ? (
+          {isLoading ? (
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
           ) : (
             <Sparkles className="mr-2 h-5 w-5" />
           )}
-          <span>{isPending ? t("button.generating") : t("assignment.generate_button")}</span>
+          <span>{isLoading ? t("button.generating") : t("assignment.generate_button")}</span>
         </Button>
         {error && <p className="text-sm text-destructive text-center mt-4">{error}</p>}
       </div>
