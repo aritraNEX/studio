@@ -6,6 +6,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
+import { ToolSuggestionProvider } from './tool-suggestion-context';
 
 // Extend the Firebase User type to include our custom fields
 interface VesperUser extends User {
@@ -78,7 +79,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
-      {children}
+      <ToolSuggestionProvider>
+        {children}
+      </ToolSuggestionProvider>
     </AuthContext.Provider>
   );
 };

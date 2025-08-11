@@ -1,0 +1,124 @@
+
+{
+  "tools": [
+    {
+      "toolId": "paraphrase",
+      "name": "Paraphraser",
+      "category": "Writing",
+      "description": "Rephrase your text to make it unique and clear.",
+      "relevanceTags": ["writing", "editing", "content creation"]
+    },
+    {
+      "toolId": "summarize",
+      "name": "Summarizer",
+      "category": "Writing",
+      "description": "Condense long texts into short, concise summaries.",
+      "relevanceTags": ["writing", "reading", "research"]
+    },
+    {
+      "toolId": "grammar",
+      "name": "Grammar Checker",
+      "category": "Writing",
+      "description": "Correct spelling, grammar, and punctuation mistakes.",
+      "relevanceTags": ["writing", "editing", "proofreading"]
+    },
+    {
+      "toolId": "explainer",
+      "name": "Concept Explainer",
+      "category": "Learning",
+      "description": "Break down complex topics into simple, easy-to-understand steps.",
+      "relevanceTags": ["learning", "education", "research"]
+    },
+    {
+      "toolId": "assignment-maker",
+      "name": "Assignment Mentor",
+      "category": "Academic",
+      "description": "Generate well-researched and structured assignments on any topic.",
+      "relevanceTags": ["academic", "writing", "education"]
+    },
+    {
+      "toolId": "note-generator",
+      "name": "Note-Mentor",
+      "category": "Academic",
+      "description": "Generate structured study notes on any topic to learn faster.",
+      "relevanceTags": ["academic", "learning", "study"]
+    },
+    {
+      "toolId": "citations",
+      "name": "Citation Generator",
+      "category": "Academic",
+      "description": "Generate academic citations in APA, MLA, and Chicago styles.",
+      "relevanceTags": ["academic", "writing", "research"]
+    },
+    {
+      "toolId": "plagiarism",
+      "name": "Plagiarism Checker",
+      "category": "Academic",
+      "description": "Check for unoriginal content in your text.",
+      "relevanceTags": ["academic", "writing", "proofreading"]
+    },
+    {
+      "toolId": "flashcards",
+      "name": "Flashcard Generator",
+      "category": "Learning",
+      "description": "Create study flashcards from your notes or any text.",
+      "relevanceTags": ["learning", "study", "education"]
+    },
+    {
+      "toolId": "vocabulary",
+      "name": "Vocabulary Enhancer",
+      "category": "Writing",
+      "description": "Improve your writing by finding better words and synonyms.",
+      "relevanceTags": ["writing", "editing", "creative"]
+    },
+    {
+      "toolId": "tone-detection",
+      "name": "Tone Detector",
+      "category": "Writing",
+      "description": "Analyze the tone of your text to ensure the right message.",
+      "relevanceTags": ["writing", "communication", "editing"]
+    },
+    {
+      "toolId": "research",
+      "name": "Research Assistant",
+      "category": "Research",
+      "description": "Fact-check claims and generate citations for your text.",
+      "relevanceTags": ["research", "academic", "writing"]
+    },
+    {
+      "toolId": "task-planner",
+      "name": "AI Task Planner",
+      "category": "Productivity",
+      "description": "Break down any task into a manageable, scheduled plan.",
+      "relevanceTags": ["productivity", "planning", "organization"]
+    },
+    {
+      "toolId": "diagrams",
+      "name": "Diagram Generator",
+      "category": "Visual",
+      "description": "Create diagrams, flowcharts, and mind maps from text.",
+      "relevanceTags": ["visual", "planning", "learning"]
+    },
+    {
+      "toolId": "video-transcription",
+      "name": "Video to Text",
+      "category": "Media",
+      "description": "Transcribe speech from a video into text with timestamps.",
+      "relevanceTags": ["media", "video", "transcription"]
+    },
+    {
+      "toolId": "tts",
+      "name": "Text to Speech",
+      "category": "Media",
+      "description": "Convert text into natural-sounding audio.",
+      "relevanceTags": ["media", "audio", "accessibility"]
+    },
+    {
+      "toolId": "formula",
+      "name": "Formula Editor",
+      "category": "Technical",
+      "description": "Write, render, and recognize math formulas with ease.",
+      "relevanceTags": ["technical", "math", "academic"]
+    }
+  ]
+}

@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import ToolSuggestionCard from "@/components/tool-suggestion-card";
 
 const VesperIcon = () => (
     <svg
@@ -190,6 +191,8 @@ export default function DashboardPage() {
                 </div>
 
                 <WelcomeBanner user={user} />
+
+                <ToolSuggestionCard />
                 
                 <div className="my-8 grid grid-cols-1 md:grid-cols-2 gap-4">
                      <Link href="/workspace" className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-card/80 text-foreground">
@@ -230,5 +233,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-
-    
