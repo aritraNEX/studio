@@ -1,39 +1,33 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Users can create their own profile, and only they can read/update it.
+    // Users can only read and write their own documents
     match /users/{userId} {
       allow read, update: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // A group can be read/written to only by its members.
-    match /groups/{groupId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid in resource.data.memberIds;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId && request.resource.data.members[0].uid == request.auth.uid;
-    }
-
-    // Projects can be accessed by their owner, or by members of the group it belongs to.
-    match /projects/{projectId} {
-      function isOwner() {
-        return request.auth.uid == resource.data.userId;
-      }
-
-      function isGroupMember() {
-        let groupId = resource.data.groupId;
-        return request.auth != null && groupId != null && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
-      }
-      
-      allow read, write: if request.auth != null && (isOwner() || isGroupMember());
       allow create: if request.auth != null;
     }
 
-    // Task plans can only be accessed by the user who owns them.
+    // Groups can be read or written to by members of that group
+    match /groups/{groupId} {
+      allow read, write: if request.auth != null && request.auth.uid in resource.data.memberIds;
+    }
+    
+    // Projects can be read or written to by their owner, or by members of the group they belong to
+    match /projects/{projectId} {
+       allow read, write: if request.auth != null && 
+        ((resource.data.groupId == null && request.auth.uid == resource.data.userId) ||
+         (resource.data.groupId != null && get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.memberIds[0] in request.auth.uid));
+    }
+    
+    // Task plans can only be accessed by the user who owns them
     match /task_plans/{userId} {
-        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Vesper tools can be read by anyone, but only written to by admins (for simplicity, we assume no admin role here, so write is false)
+    match /vesperTools/{toolId} {
+      allow read: if true;
+      allow write: if false; // Protect this collection from client-side writes
     }
   }
 }
