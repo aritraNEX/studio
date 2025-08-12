@@ -1,61 +1,9 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // Helper Functions
-    function isAuth() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    function isParticipant(projectId) {
-      return request.auth.uid in get(/databases/$(database)/documents/projects/$(projectId)).data.participants;
-    }
-    
-    // User Profiles: Can read/write their own data
-    match /users/{userId} {
-      allow read: if isAuth();
-      allow create, update: if isOwner(userId);
-      allow delete: if false; // Generally, don't allow users to delete their own profiles
-    }
-
-    // Projects: Can CRUD if they are a participant
-    match /projects/{projectId} {
-      allow read, update: if isAuth() && isParticipant(projectId);
-      allow create: if isAuth() && isOwner(request.resource.data.ownerId);
-      allow delete: if isAuth() && isOwner(resource.data.ownerId);
-    }
-    
-    // Task Plans: Users can only manage their own
-    match /task_plans/{userId} {
-       allow read, write, delete: if isOwner(userId);
-    }
-
-    // Vocab Sessions, Suggestions, and other user-specific data
-    match /vocab_sessions/{sessionId} {
-      allow read, write: if isOwner(get(/databases/$(database)/documents/vocab_sessions/$(sessionId)).data.userId);
-    }
-    
-    match /tool_suggestions/{suggestionId} {
-       allow read, write: if isOwner(get(/databases/$(database)/documents/tool_suggestions/$(suggestionId)).data.userId);
-    }
-
-    // Global, read-only data
-    match /vesperTools/{toolId} {
-      allow read: if true;
-      allow write: if false; // Should be managed via Admin SDK
-    }
-    
-    // Admin-only collections
-    match /audit_logs/{logId} {
-      allow read, write: if false; // Admin SDK only
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
     }
   }
 }
-
-    
