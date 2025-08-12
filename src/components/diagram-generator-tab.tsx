@@ -12,6 +12,8 @@ import { Loader2, Sparkles, Download, Copy, Share2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "./ui/card";
 import { cn } from "@/lib/utils";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
+import { SpeechRecognitionButton } from "./speech-recognition-button";
 
 type DiagramType = 'flowchart' | 'mindmap' | 'concept' | 'timeline';
 
@@ -38,6 +40,12 @@ export function DiagramGeneratorTab() {
   const { toast } = useToast();
   const mermaidRef = useRef<HTMLDivElement>(null);
   const [diagramSvg, setDiagramSvg] = useState<string>("");
+
+  const { isListening, toggleListening, hasSupport } = useSpeechRecognition({
+      onTranscript: (transcript) => {
+        setTopic(transcript);
+      }
+  });
 
   useEffect(() => {
     const renderDiagram = async () => {
@@ -123,14 +131,21 @@ export function DiagramGeneratorTab() {
           What would you like to visualize?
         </Label>
         <div className="flex w-full max-w-2xl flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
-            <Input
-                id="diagram-topic"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g., The process of photosynthesis"
-                className="bg-background focus-visible:ring-accent text-base h-12 flex-grow"
-                disabled={isPending}
-            />
+            <div className="relative w-full">
+                <Input
+                    id="diagram-topic"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder="e.g., The process of photosynthesis"
+                    className="bg-background focus-visible:ring-accent text-base h-12 flex-grow pr-12"
+                    disabled={isPending}
+                />
+                 {hasSupport && (
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <SpeechRecognitionButton isListening={isListening} onClick={toggleListening} />
+                    </div>
+                )}
+            </div>
              <Select onValueChange={(v: DiagramType) => setDiagramType(v)} defaultValue={diagramType} disabled={isPending}>
                 <SelectTrigger className="w-full sm:w-[180px] h-12 bg-background">
                     <SelectValue placeholder="Select type" />

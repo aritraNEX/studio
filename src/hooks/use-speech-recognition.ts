@@ -15,8 +15,26 @@ interface SpeechRecognition extends EventTarget {
   onend: () => void;
 }
 
+interface SpeechRecognitionResult {
+    isFinal: boolean;
+    [key: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+    transcript: string;
+    confidence: number;
+}
+
+interface SpeechRecognitionResultList {
+    length: number;
+    item(index: number): SpeechRecognitionResult;
+    [index: number]: SpeechRecognitionResult;
+}
+
+
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
+  resultIndex: number;
 }
 
 interface SpeechRecognitionErrorEvent extends Event {
@@ -30,7 +48,7 @@ declare global {
   }
 }
 
-export const useSpeechRecognition = (onTranscript: (transcript: string) => void) => {
+export const useSpeechRecognition = ({ onTranscript }: { onTranscript: (transcript: string) => void; }) => {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 

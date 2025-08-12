@@ -30,6 +30,8 @@ import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/fires
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLoading } from "@/contexts/loading-context";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
+import { SpeechRecognitionButton } from "./speech-recognition-button";
 
 
 type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'tts' | 'grammar';
@@ -83,6 +85,13 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+
+  const { isListening, toggleListening, hasSupport } = useSpeechRecognition({
+      onTranscript: (transcript) => {
+        setInputText(prev => prev + transcript);
+      }
+  });
+
 
   useEffect(() => {
     pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`;
@@ -538,14 +547,21 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
             </div>
             )}
         </label>
-         <Textarea
-              id={`input-text-${operation}`}
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="Or enter text here..."
-              className="h-40 resize-y bg-background focus-visible:ring-accent"
-              disabled={isLoading}
-            />
+         <div className="relative">
+             <Textarea
+                  id={`input-text-${operation}`}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder="Or enter text here..."
+                  className="h-40 resize-y bg-background focus-visible:ring-accent pr-10"
+                  disabled={isLoading}
+                />
+             {hasSupport && (
+                <div className="absolute bottom-2 right-2">
+                    <SpeechRecognitionButton isListening={isListening} onClick={toggleListening} />
+                </div>
+             )}
+         </div>
       </div>
       <div className="flex flex-col gap-4 h-full">
         {operation === 'translate' && (

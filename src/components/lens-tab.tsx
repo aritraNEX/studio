@@ -13,6 +13,8 @@ import { generalChatFlow } from "@/ai/flows/general-chat-flow";
 import { Card, CardContent } from "./ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { Textarea } from "./ui/textarea";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
+import { SpeechRecognitionButton } from "./speech-recognition-button";
 
 const fileToDataUri = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -33,6 +35,12 @@ export function LensTab() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  const { isListening, toggleListening, hasSupport } = useSpeechRecognition({
+      onTranscript: (transcript) => {
+        setQuery(transcript);
+      }
+  });
 
   const handleFileUpload = async (file: File) => {
     if (!file || !file.type.startsWith("image/")) {
@@ -147,15 +155,22 @@ export function LensTab() {
           )}
         </label>
          <div className="flex w-full items-center space-x-2">
-            <Input
-                id="lens-query"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ask something about the image..."
-                className="bg-background focus-visible:ring-accent text-base h-12"
-                disabled={!fileDataUri || isPending}
-                onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
-            />
+            <div className="relative w-full">
+                <Input
+                    id="lens-query"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Ask something about the image..."
+                    className="bg-background focus-visible:ring-accent text-base h-12 pr-12"
+                    disabled={!fileDataUri || isPending}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
+                />
+                {hasSupport && (
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <SpeechRecognitionButton isListening={isListening} onClick={toggleListening} />
+                    </div>
+                )}
+            </div>
             <Button
                 onClick={handleAsk}
                 disabled={!fileDataUri || !query.trim() || isPending}

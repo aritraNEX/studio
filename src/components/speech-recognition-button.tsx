@@ -20,15 +20,15 @@ export function SpeechRecognitionButton({ isListening, onClick, disabled }: Spee
             onClick={onClick}
             disabled={disabled}
             className={cn(
-                "h-8 w-8 text-muted-foreground transition-all duration-300",
-                isListening && "text-primary scale-110"
+                "h-8 w-8 rounded-full text-muted-foreground transition-all duration-300",
+                isListening && "text-primary scale-110 bg-primary/20",
+                isListening && "animate-pulse"
             )}
             aria-label={isListening ? "Stop listening" : "Start listening"}
         >
             {isListening ? (
                  <div className="relative h-5 w-5">
-                    <Mic className="absolute inset-0 h-5 w-5 animate-pulse" />
-                    <Mic className="absolute inset-0 h-5 w-5" />
+                    <Mic className="h-5 w-5" />
                 </div>
             ) : (
                 <Mic className="h-5 w-5" />

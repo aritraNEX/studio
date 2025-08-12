@@ -22,6 +22,8 @@ import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 import { useAuth } from "@/contexts/auth-context";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, onSnapshot, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
+import { SpeechRecognitionButton } from "./speech-recognition-button";
 
 const timeSlots = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
 
@@ -39,6 +41,12 @@ export function TaskPlannerTab() {
   const [isRescheduling, setIsRescheduling] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  const { isListening, toggleListening, hasSupport } = useSpeechRecognition({
+      onTranscript: (transcript) => {
+        setTask(transcript);
+      }
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -228,14 +236,21 @@ export function TaskPlannerTab() {
         <div className="flex flex-col gap-6 p-6 border rounded-lg bg-card shadow-sm">
            <div className="space-y-2">
             <Label htmlFor="task-input" className="font-semibold text-md">Main Task or Goal</Label>
-            <Input
-              id="task-input"
-              value={task}
-              onChange={(e) => setTask(e.target.value)}
-              placeholder="e.g., Launch a new marketing campaign"
-              className="bg-background focus-visible:ring-accent"
-              disabled={isPending}
-            />
+             <div className="relative">
+                <Input
+                  id="task-input"
+                  value={task}
+                  onChange={(e) => setTask(e.target.value)}
+                  placeholder="e.g., Launch a new marketing campaign"
+                  className="bg-background focus-visible:ring-accent pr-10"
+                  disabled={isPending}
+                />
+                 {hasSupport && (
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+                        <SpeechRecognitionButton isListening={isListening} onClick={toggleListening} />
+                    </div>
+                 )}
+            </div>
            </div>
            <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">

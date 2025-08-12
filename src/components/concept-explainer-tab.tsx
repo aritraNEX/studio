@@ -13,6 +13,8 @@ import { conceptExplainer, ConceptExplainerOutput } from "@/ai/flows/concept-exp
 import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLoading } from '@/contexts/loading-context';
+import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
+import { SpeechRecognitionButton } from './speech-recognition-button';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -93,6 +95,12 @@ export function ConceptExplainerTab() {
   const { toast } = useToast();
   const [showIntroVideo, setShowIntroVideo] = useState(false);
 
+  const { isListening, toggleListening, hasSupport } = useSpeechRecognition({
+      onTranscript: (transcript) => {
+        setTopic(transcript);
+      }
+  });
+
   const handleExplain = async () => {
       if (!topic.trim()) {
           toast({ variant: 'destructive', title: 'Topic is empty', description: 'Please enter a topic to explain.' });
@@ -141,13 +149,20 @@ export function ConceptExplainerTab() {
         </div>
       
         <div className="flex flex-col sm:flex-row gap-2 items-center justify-center max-w-xl mx-auto">
-            <Input
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                className="h-12 text-base flex-grow"
-                placeholder="Enter concept topic..."
-                onKeyDown={(e) => e.key === 'Enter' && handleExplain()}
-            />
+            <div className="relative w-full">
+                <Input
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    className="h-12 text-base flex-grow pr-12"
+                    placeholder="Enter concept topic..."
+                    onKeyDown={(e) => e.key === 'Enter' && handleExplain()}
+                />
+                {hasSupport && (
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <SpeechRecognitionButton isListening={isListening} onClick={toggleListening} />
+                    </div>
+                )}
+            </div>
             <Button onClick={handleExplain} size="lg" className="h-12 text-lg w-full sm:w-auto" disabled={isLoading || !topic.trim()}>
                 {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
                 Explain
