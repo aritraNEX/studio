@@ -41,7 +41,7 @@ export default function WorkspacePage() {
     const [loading, setLoading] = useState(true);
 
     const currentUserRole = groupData?.members.find(m => m.uid === user?.uid)?.role;
-    const canEdit = currentUserRole === 'Owner' || currentUserRole === 'Editor';
+    const canEdit = projectData?.groupId ? (currentUserRole === 'Owner' || currentUserRole === 'Editor') : (projectData?.userId === user?.uid);
 
     useEffect(() => {
         if (!projectId || !user) {
@@ -57,7 +57,7 @@ export default function WorkspacePage() {
                 setProjectData(data);
                 setContent(data.outputText || '');
                 
-                // Fetch group data
+                // Fetch group data if it's a group project
                 if (data.groupId) {
                     const groupDocRef = doc(db, 'groups', data.groupId);
                     const groupSnap = await getDoc(groupDocRef);
@@ -71,6 +71,12 @@ export default function WorkspacePage() {
                              router.push('/dashboard');
                         }
                     }
+                } else {
+                    // It's a personal project, check ownership
+                    if (data.userId !== user.uid) {
+                        toast({ variant: 'destructive', title: "Access Denied" });
+                        router.push('/dashboard');
+                    }
                 }
             } else {
                 toast({ variant: 'destructive', title: 'Project not found' });
@@ -83,7 +89,7 @@ export default function WorkspacePage() {
     }, [projectId, user, router, toast]);
 
     const handleSave = () => {
-        if (!projectId) return;
+        if (!projectId || !canEdit) return;
         startSavingTransition(async () => {
             const projectDocRef = doc(db, 'projects', projectId);
             try {
