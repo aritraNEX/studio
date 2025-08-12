@@ -22,7 +22,6 @@ import * as LucideIcons from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import UserMenu from "./user-menu";
 import { Button } from "./ui/button";
-import { WorkspaceTools } from "./workspace-tools";
 
 const VesperIcon = () => (
     <svg
@@ -88,11 +87,6 @@ export default function WorkspaceSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-            <SidebarGroupLabel>Your Workspace</SidebarGroupLabel>
-            <WorkspaceTools />
-        </SidebarGroup>
-        <SidebarSeparator />
          <SidebarMenu>
           {allTools.map((tool) => {
             const Icon = (LucideIcons as any)[tool.icon] || LucideIcons.HelpCircle;

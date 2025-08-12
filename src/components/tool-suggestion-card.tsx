@@ -46,7 +46,7 @@ export default function ToolSuggestionCard() {
         });
 
         const usedTools = recentProjects.map(p => p.operation);
-        // Assuming current category from the most recent project, or 'general'
+        // Correctly use the 'operation' field for the current category.
         const currentCategory = recentProjects[0]?.operation || 'writing';
 
         const finalSuggestions = getSuggestions(usedTools, currentCategory);
@@ -63,6 +63,8 @@ export default function ToolSuggestionCard() {
   }, [user, getSuggestions]);
 
   const getIconByName = (iconName: string): React.ElementType => {
+    // A helper to dynamically get the icon component from lucide-react
+    if (!iconName) return Lightbulb;
     const iconKey = iconName.charAt(0).toUpperCase() + iconName.slice(1);
     return (LucideIcons as any)[iconKey] || Lightbulb;
   }
@@ -94,7 +96,7 @@ export default function ToolSuggestionCard() {
         <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {suggestions.map((tool) => {
-                    const Icon = getIconByName(tool.toolId);
+                    const Icon = getIconByName(tool.icon || tool.toolId);
                     return (
                         <Link href={`/${tool.toolId}`} key={tool.toolId} className="group">
                              <div className="p-4 bg-background/60 rounded-lg border hover:border-primary/50 hover:bg-primary/5 transition-all h-full flex flex-col">
