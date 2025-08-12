@@ -30,20 +30,6 @@
       "relevanceTags": ["learning", "education", "research"]
     },
     {
-      "toolId": "assignment-maker",
-      "name": "Assignment Mentor",
-      "category": "Academic",
-      "description": "Generate well-researched and structured assignments on any topic.",
-      "relevanceTags": ["academic", "writing", "education"]
-    },
-    {
-      "toolId": "note-generator",
-      "name": "Note-Mentor",
-      "category": "Academic",
-      "description": "Generate structured study notes on any topic to learn faster.",
-      "relevanceTags": ["academic", "learning", "study"]
-    },
-    {
       "toolId": "citations",
       "name": "Citation Generator",
       "category": "Academic",

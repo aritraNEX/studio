@@ -43,9 +43,6 @@
         "style": "Style",
         "explainer": "Explainer",
         "diagrams": "Diagrams",
-        "assignment": "Assignment",
-        "assignment_maker": "Assignment",
-        "note_mentor": "Note-mentor",
         "flashcards": "Flashcards",
         "citations": "Citations",
         "vocabulary": "Vocabulary",
@@ -61,28 +58,6 @@
         "vesper_ai_studio": "Vesper AI Studio",
         "integrations": "Integrations",
         "task_planner": "Task Planner"
-    },
-    "assignment": {
-        "topic_label": "Assignment Topic",
-        "topic_placeholder": "e.g., The impact of AI on modern education",
-        "instructions_label": "Optional Instructions",
-        "instructions_placeholder": "e.g., Focus on the benefits and challenges. Include at least 3 references. The tone should be academic.",
-        "output_label": "Generated Assignment",
-        "status": {
-            "generating": "Generating your assignment...",
-            "writing": "The AI is researching and writing.",
-            "placeholder": "Your generated assignment will appear here."
-        },
-        "toast": {
-            "topic_empty_title": "Topic is empty",
-            "topic_empty_desc": "Please enter a topic for the assignment.",
-            "no_result_error": "The assignment maker returned no result.",
-            "generation_failed_title": "Assignment Error",
-            "generation_failed_desc": "An error occurred while generating the assignment. Please try again.",
-            "copied_desc": "The assignment text has been copied."
-        },
-        "generate_button": "Generate Assignment",
-        "no_references": "No references were generated."
     },
     "user_menu": {
         "bio": "Bio",

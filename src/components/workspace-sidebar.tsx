@@ -48,8 +48,6 @@ const allTools = [
     { href: '/grammar', icon: 'SpellCheck', label: 'Grammar' },
     { href: '/vocabulary', icon: 'BookUp', label: 'Vocabulary' },
     { href: '/style', icon: 'Palette', label: 'Style' },
-    { href: '/assignment-maker', icon: 'PenSquare', label: 'Assignment' },
-    { href: '/note-generator', icon: 'StickyNote', label: 'Note-mentor' },
     { href: '/diagrams', icon: 'Share2', label: 'Diagrams' },
     { href: '/video-transcription', icon: 'Video', label: 'Video to Text' },
     { href: '/tts', icon: 'AudioLines', label: 'TTS' },

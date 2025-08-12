@@ -7,16 +7,13 @@ import '@/ai/flows/plagiarism-check-flow.ts';
 import '@/ai/flows/text-to-speech-flow.ts';
 import '@/ai/flows/research-assistant-flow.ts';
 import '@/ai/flows/transcription-flow.ts';
-import '@/ai/flows/assignment-maker-flow.ts';
 import '@/ai/flows/flashcard-generator-flow.ts';
 import '@/ai/flows/citation-generator-flow.ts';
 import '@/ai/flows/concept-explainer-flow.ts';
 import '@/ai/flows/diagram-generator-flow.ts';
-import '@/ai/flows/note-generator-flow.ts';
 import '@/ai/flows/tone-detection-flow.ts';
 import '@/ai/flows/vocabulary-enhancer-flow.ts';
 import '@/ai/flows/image-to-latex-flow.ts';
 import '@/ai/flows/task-planner-flow.ts';
 import '@/ai/flows/reschedule-task-flow.ts';
 import '@/ai/flows/general-chat-flow.ts';
-

@@ -43,9 +43,6 @@
         "style": "Estilo",
         "explainer": "Explicador",
         "diagrams": "Diagramas",
-        "assignment": "Tarea",
-        "assignment_maker": "Tarea",
-        "note_mentor": "Tutor de notas",
         "flashcards": "Tarjetas",
         "citations": "Citas",
         "vocabulary": "Vocabulario",
@@ -61,28 +58,6 @@
         "vesper_ai_studio": "Vesper AI Studio",
         "integrations": "Integraciones",
         "task_planner": "Planificador de Tareas"
-    },
-    "assignment": {
-        "topic_label": "Tema de la Tarea",
-        "topic_placeholder": "Ej: El impacto de la IA en la educación moderna",
-        "instructions_label": "Instrucciones Opcionales",
-        "instructions_placeholder": "Ej: Enfócate en beneficios y desafíos. Incluye al menos 3 referencias. Tono académico.",
-        "output_label": "Tarea Generada",
-        "status": {
-            "generating": "Generando tu tarea...",
-            "writing": "La IA está investigando y escribiendo.",
-            "placeholder": "Tu tarea generada aparecerá aquí."
-        },
-        "toast": {
-            "topic_empty_title": "El tema está vacío",
-            "topic_empty_desc": "Por favor, introduce un tema para la tarea.",
-            "no_result_error": "El generador de tareas no devolvió ningún resultado.",
-            "generation_failed_title": "Error en la Tarea",
-            "generation_failed_desc": "Ocurrió un error al generar la tarea. Inténtalo de nuevo.",
-            "copied_desc": "El texto de la tarea ha sido copiado."
-        },
-        "generate_button": "Generar Tarea",
-        "no_references": "No se generaron referencias."
     },
     "user_menu": {
         "bio": "Biografía",
