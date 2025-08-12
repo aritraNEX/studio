@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { collection, query, where, onSnapshot, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/auth-context';
-import { Loader2, Home, Trash2, Edit, Users } from 'lucide-react';
+import { Loader2, Home, Trash2, Edit, Users, Share2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,12 +25,16 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import TaskSummaryDashboard from '@/components/task-summary-dashboard';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Project {
   id: string;
   inputText: string;
   outputText: string;
   operation: string;
+  ownerId: string;
+  participants?: { uid: string, displayName: string, photoURL: string }[];
   createdAt: {
     seconds: number;
     nanoseconds: number;
@@ -82,9 +86,7 @@ export default function DashboardPage() {
 
     const q = query(
       collection(db, 'projects'),
-      where('userId', '==', user.uid),
-      // Filter out projects that belong to a group
-      where('groupId', '==', null),
+      where('participants', 'array-contains', user.uid),
       orderBy('createdAt', 'desc')
     );
 
@@ -125,9 +127,6 @@ export default function DashboardPage() {
   };
 
   const handleOpenProject = (project: Project) => {
-    // This part is tricky because personal projects might not be 'documents'
-    // For now, we assume they are editable in the workspace.
-    // A better implementation would route to the correct tool page.
     if(project.operation === 'document' || project.operation === 'explainer') {
         router.push(`/workspace?projectId=${project.id}`);
     } else {
@@ -170,24 +169,18 @@ export default function DashboardPage() {
                 Editor
               </Link>
             </Button>
-             <Button asChild variant="outline">
-              <Link href="/groups" prefetch={false}>
-                <Users className="mr-2 h-4 w-4" />
-                Groups
-              </Link>
-            </Button>
           </div>
         </div>
       </header>
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <TaskSummaryDashboard />
         <div className="my-8 border-t border-border"></div>
-        <h2 className="text-xl font-bold tracking-tight mb-4">My Personal Projects</h2>
+        <h2 className="text-xl font-bold tracking-tight mb-4">My Projects</h2>
         {loading ? (
             <ProjectsSkeleton />
         ) : projects.length === 0 ? (
           <div className="text-center py-20">
-            <h2 className="text-xl font-semibold">No personal projects yet!</h2>
+            <h2 className="text-xl font-semibold">No projects yet!</h2>
             <p className="text-muted-foreground mt-2">
               Go back to the editor to start creating and saving projects.
             </p>
@@ -212,32 +205,57 @@ export default function DashboardPage() {
                         Output: {getOutputDescription(project)}
                     </p>
                 </CardContent>
-                <CardFooter className="flex justify-end gap-2">
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="icon">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete your project.
-                            </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteProject(project.id)}>
-                                Delete
-                            </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                    <Button variant="outline" onClick={() => handleOpenProject(project)}>
-                        <Edit className="mr-2 h-4 w-4"/>
-                        Open
-                    </Button>
+                <CardFooter className="flex justify-between items-center">
+                    <div className="flex items-center">
+                        {(project.participants?.length ?? 1) > 1 ? (
+                             <TooltipProvider>
+                                <div className="flex -space-x-2">
+                                {project.participants?.slice(0, 3).map(p => (
+                                    <Tooltip key={p.uid}>
+                                        <TooltipTrigger asChild>
+                                             <Avatar className="h-6 w-6 border-2 border-background">
+                                                <AvatarImage src={p.photoURL} />
+                                                <AvatarFallback>{p.displayName?.[0]}</AvatarFallback>
+                                             </Avatar>
+                                        </TooltipTrigger>
+                                        <TooltipContent>{p.displayName}</TooltipContent>
+                                    </Tooltip>
+                                ))}
+                                </div>
+                             </TooltipProvider>
+                        ) : (
+                            <Badge variant="outline">Personal</Badge>
+                        )}
+                    </div>
+                    <div className="flex gap-2">
+                        {project.ownerId === user?.uid && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" size="icon">
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete your project.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteProject(project.id)}>
+                                        Delete
+                                    </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
+                        <Button variant="outline" onClick={() => handleOpenProject(project)}>
+                            <Edit className="mr-2 h-4 w-4"/>
+                            Open
+                        </Button>
+                    </div>
                 </CardFooter>
               </Card>
             ))}
@@ -247,3 +265,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

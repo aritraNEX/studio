@@ -8,7 +8,7 @@ import { signOut, updateProfile } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
 import Link from 'next/link';
-import { LogOut, User as UserIcon, Loader2, Save, LayoutDashboard, Camera, Puzzle, Users } from "lucide-react";
+import { LogOut, User as UserIcon, Loader2, Save, LayoutDashboard, Camera, Puzzle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -102,14 +102,6 @@ export default function UserMenu() {
             </span>
         </Button>
       </Link>
-      <Link href="/groups" passHref>
-        <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
-            <span>
-                <Users className="mr-2 h-4 w-4" />
-                My Groups
-            </span>
-        </Button>
-      </Link>
       <ThemeToggle />
       <Dialog>
         <DialogTrigger asChild>
@@ -193,11 +185,6 @@ export default function UserMenu() {
                         <span><LayoutDashboard className="mr-2 h-4 w-4" />{t('profile_my_projects')}</span>
                     </Button>
                 </Link>
-                <Link href="/groups" passHref>
-                  <Button asChild variant="outline" className="w-full sm:hidden">
-                      <span><Users className="mr-2 h-4 w-4" />My Groups</span>
-                  </Button>
-                </Link>
                 <Link href="/integrations" passHref>
                   <Button asChild variant="outline" className="w-full sm:hidden">
                       <span><Puzzle className="mr-2 h-4 w-4" />{t('integrations_button')}</span>
@@ -221,3 +208,5 @@ export default function UserMenu() {
     </div>
   );
 }
+
+    
