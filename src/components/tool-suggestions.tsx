@@ -43,13 +43,25 @@ export function ToolSuggestions() {
     const now = new Date().getTime();
 
     if (lastUpdated && storedSuggestions && (now - parseInt(lastUpdated) < thirtyMinutes)) {
-      setSuggestions(JSON.parse(storedSuggestions));
-    } else {
-      const newSuggestions = getSuggestions();
-      setSuggestions(newSuggestions);
-      localStorage.setItem('toolSuggestions', JSON.stringify(newSuggestions));
-      localStorage.setItem('toolSuggestionsLastUpdated', now.toString());
+       try {
+        const parsedSuggestions = JSON.parse(storedSuggestions);
+        // Ensure the current tool is not in the stored suggestions
+        const filteredSuggestions = parsedSuggestions.filter((tool: any) => tool.id !== currentToolId);
+        if (filteredSuggestions.length >= 5) {
+          setSuggestions(filteredSuggestions.slice(0, 5));
+          return; // Exit if we have enough valid suggestions
+        }
+       } catch (e) {
+         // ignore parsing error, regenerate below
+       }
     }
+    
+    // If cache is old, invalid, or doesn't have enough items after filtering, regenerate.
+    const newSuggestions = getSuggestions();
+    setSuggestions(newSuggestions);
+    localStorage.setItem('toolSuggestions', JSON.stringify(newSuggestions));
+    localStorage.setItem('toolSuggestionsLastUpdated', now.toString());
+
 
     const interval = setInterval(() => {
         const newSuggestions = getSuggestions();
