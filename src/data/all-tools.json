@@ -1,0 +1,150 @@
+
+[
+  {
+    "id": "paraphrase",
+    "name": "Paraphraser",
+    "description": "Rephrase your text to make it unique and clear.",
+    "icon": "Quote",
+    "category": "writing"
+  },
+  {
+    "id": "summarize",
+    "name": "Summarizer",
+    "description": "Condense long texts into short, concise summaries.",
+    "icon": "BookText",
+    "category": "writing"
+  },
+  {
+    "id": "explainer",
+    "name": "Concept Explainer",
+    "description": "Break down complex topics into simple, easy-to-understand steps.",
+    "icon": "BrainCircuit",
+    "category": "learning"
+  },
+  {
+    "id": "grammar",
+    "name": "Grammar Checker",
+    "description": "Correct spelling, grammar, and punctuation mistakes.",
+    "icon": "SpellCheck",
+    "category": "writing"
+  },
+  {
+    "id": "vocabulary",
+    "name": "Vocabulary Enhancer",
+    "description": "Improve your writing by finding better words and synonyms.",
+    "icon": "BookUp",
+    "category": "writing"
+  },
+  {
+    "id": "style",
+    "name": "Style Editor",
+    "description": "Rewrite text in a different style or tone.",
+    "icon": "Palette",
+    "category": "writing"
+  },
+  {
+    "id": "diagrams",
+    "name": "Diagram Generator",
+    "description": "Create diagrams, flowcharts, and mind maps from text.",
+    "icon": "Share2",
+    "category": "visual"
+  },
+  {
+    "id": "video-transcription",
+    "name": "Video to Text",
+    "description": "Transcribe speech from a video into text with timestamps.",
+    "icon": "Video",
+    "category": "media"
+  },
+  {
+    "id": "tts",
+    "name": "Text to Speech",
+    "description": "Convert text into natural-sounding audio.",
+    "icon": "AudioLines",
+    "category": "media"
+  },
+  {
+    "id": "translate",
+    "name": "Translator",
+    "description": "Translate text between dozens of languages.",
+    "icon": "Languages",
+    "category": "language"
+  },
+  {
+    "id": "citations",
+    "name": "Citation Generator",
+    "description": "Generate academic citations in APA, MLA, and Chicago styles.",
+    "icon": "BookA",
+    "category": "academic"
+  },
+  {
+    "id": "tone-detection",
+    "name": "Tone Detector",
+    "description": "Analyze the tone of your text to ensure the right message.",
+    "icon": "Gauge",
+    "category": "writing"
+  },
+  {
+    "id": "plagiarism",
+    "name": "Plagiarism Checker",
+    "description": "Check for unoriginal content in your text.",
+    "icon": "ShieldCheck",
+    "category": "academic"
+  },
+  {
+    "id": "research",
+    "name": "Research Assistant",
+    "description": "Fact-check claims and generate citations for your text.",
+    "icon": "GraduationCap",
+    "category": "academic"
+  },
+  {
+    "id": "formula",
+    "name": "Formula Editor",
+    "description": "Write, render, and recognize math formulas with ease.",
+    "icon": "FunctionSquare",
+    "category": "technical"
+  },
+  {
+    "id": "flashcards",
+    "name": "Flashcard Generator",
+    "description": "Create study flashcards from your notes or any text.",
+    "icon": "Copy",
+    "category": "learning"
+  },
+  {
+    "id": "batch-summary",
+    "name": "Batch Summarizer",
+    "description": "Summarize multiple documents at once.",
+    "icon": "FileText",
+    "category": "productivity"
+  },
+  {
+    "id": "batch-paraphrase",
+    "name": "Batch Paraphraser",
+    "description": "Paraphrase multiple documents at once.",
+    "icon": "FileText",
+    "category": "productivity"
+  },
+  {
+    "id": "notepad",
+    "name": "Notepad",
+    "description": "A simple place for your thoughts, saved in your browser.",
+    "icon": "Notebook",
+    "category": "productivity"
+  },
+  {
+    "id": "task-planner",
+    "name": "AI Task Planner",
+    "description": "Break down any task into a manageable, scheduled plan.",
+    "icon": "ListTodo",
+    "category": "productivity"
+  },
+  {
+    "id": "lens",
+    "name": "Vesper Lens",
+    "description": "Analyze images and ask questions about their content.",
+    "icon": "Camera",
+    "category": "media"
+  }
+]

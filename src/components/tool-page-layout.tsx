@@ -8,6 +8,7 @@ import UserMenu from "./user-menu";
 import * as LucideIcons from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { ArrowLeft } from "lucide-react";
+import { ToolSuggestions } from "./tool-suggestions";
 
 interface ToolPageLayoutProps {
   title: string;
@@ -68,6 +69,7 @@ export default function ToolPageLayout({ title, subtitle, iconName, children }: 
                 </div>
             </div>
             {children}
+            <ToolSuggestions />
         </main>
       </div>
     );
