@@ -26,7 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import TaskSummaryDashboard from '@/components/task-summary-dashboard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Project {
   id: string;
@@ -78,36 +78,62 @@ export default function DashboardPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      router.push('/login');
-      return;
+    if (authLoading || !user) {
+        if (!authLoading && !user) {
+           router.push('/login');
+        }
+        return;
     }
 
-    const q = query(
-      collection(db, 'projects'),
+    const projectsRef = collection(db, 'projects');
+
+    // Query for projects where the user is the owner
+    const ownerQuery = query(
+      projectsRef,
+      where('ownerId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    // Query for projects where the user is a participant (but not necessarily the owner)
+    const participantQuery = query(
+      projectsRef,
       where('participants', 'array-contains', user.uid),
       orderBy('createdAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const userProjects: Project[] = [];
-      querySnapshot.forEach((doc) => {
-        userProjects.push({ id: doc.id, ...doc.data() } as Project);
-      });
-      setProjects(userProjects);
-      setLoading(false);
+    const ownedUnsubscribe = onSnapshot(ownerQuery, (ownerSnapshot) => {
+        const ownedProjects = ownerSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+        
+        // Now listen to shared projects
+        const sharedUnsubscribe = onSnapshot(participantQuery, (participantSnapshot) => {
+            const sharedProjects = participantSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+            
+            // Combine and deduplicate
+            const allProjectsMap = new Map<string, Project>();
+            [...ownedProjects, ...sharedProjects].forEach(p => allProjectsMap.set(p.id, p));
+            
+            const combinedProjects = Array.from(allProjectsMap.values());
+            combinedProjects.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+            
+            setProjects(combinedProjects);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching shared projects: ", error);
+            toast({ variant: "destructive", title: "Error fetching shared projects" });
+            setLoading(false);
+        });
+
+        // Return the unsubscribe function for the shared projects query
+        return () => sharedUnsubscribe();
     }, (error) => {
-      console.error("Error fetching projects: ", error);
-      toast({
-        variant: "destructive",
-        title: "Error fetching projects",
-        description: "Could not load your projects. Please try again later.",
-      });
-      setLoading(false);
+        console.error("Error fetching owned projects: ", error);
+        toast({ variant: "destructive", title: "Error fetching your projects" });
+        setLoading(false);
     });
 
-    return () => unsubscribe();
+    // Return the unsubscribe function for the owned projects query
+    return () => ownedUnsubscribe();
+
   }, [user, authLoading, router, toast]);
 
   const handleDeleteProject = async (projectId: string) => {
@@ -209,19 +235,21 @@ export default function DashboardPage() {
                     <div className="flex items-center">
                         {(project.participants?.length ?? 1) > 1 ? (
                              <TooltipProvider>
-                                <div className="flex -space-x-2">
-                                {project.participants?.slice(0, 3).map(p => (
-                                    <Tooltip key={p.uid}>
-                                        <TooltipTrigger asChild>
-                                             <Avatar className="h-6 w-6 border-2 border-background">
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <div className="flex -space-x-2">
+                                        {project.participants?.slice(0, 3).map(p => (
+                                             <Avatar key={p.uid} className="h-6 w-6 border-2 border-background">
                                                 <AvatarImage src={p.photoURL} />
                                                 <AvatarFallback>{p.displayName?.[0]}</AvatarFallback>
                                              </Avatar>
-                                        </TooltipTrigger>
-                                        <TooltipContent>{p.displayName}</TooltipContent>
-                                    </Tooltip>
-                                ))}
-                                </div>
+                                        ))}
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                    {project.participants?.map(p => p.displayName).join(', ')}
+                                    </TooltipContent>
+                                </Tooltip>
                              </TooltipProvider>
                         ) : (
                             <Badge variant="outline">Personal</Badge>
@@ -265,5 +293,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
