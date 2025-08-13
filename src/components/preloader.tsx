@@ -1,26 +1,48 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+
+const messages = [
+    "Initializing Vesper Protocol...",
+    "Analyzing Data Streams...",
+    "Decrypting Response Matrix...",
+    "Optimizing Neural Pathways...",
+    "Vesper Ready for Commands."
+];
 
 const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void }) => {
   const [show, setShow] = useState(true);
   const [appIsReady, setAppIsReady] = useState(false);
   const [minimumTimeElapsed, setMinimumTimeElapsed] = useState(false);
+  const [text, setText] = useState(messages[0]);
+  const [animationClass, setAnimationClass] = useState('animate-[typing_2s_steps(20)_forwards,blink_0.8s_step-end_infinite_alternate]');
+  const indexRef = useRef(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Set a timer for the minimum display duration of the animation.
     const minTimeTimer = setTimeout(() => {
       setMinimumTimeElapsed(true);
-    }, 1500); // Adjusted time
+    }, 4500); // 3 cycles of messages
 
     // Listen for the event that signals the app's content is ready.
     const hidePreloader = () => setAppIsReady(true);
     window.addEventListener('app-ready', hidePreloader);
 
+    intervalRef.current = setInterval(() => {
+        indexRef.current = (indexRef.current + 1) % messages.length;
+        setAnimationClass(''); // Reset animation
+        setTimeout(() => {
+            setText(messages[indexRef.current]);
+            setAnimationClass('animate-[typing_2s_steps(20)_forwards,blink_0.8s_step-end_infinite_alternate]');
+        }, 50);
+    }, 3000);
+
     return () => {
       clearTimeout(minTimeTimer);
+      if (intervalRef.current) clearInterval(intervalRef.current);
       window.removeEventListener('app-ready', hidePreloader);
     };
   }, []);
@@ -37,6 +59,7 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
   useEffect(() => {
     // This effect handles the final fade-out animation of the component.
     if (!show) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
         const fadeOutTimer = setTimeout(() => {
             onAnimationComplete();
         }, 500); // Match duration of opacity transition
@@ -52,27 +75,12 @@ const Preloader = ({ onAnimationComplete }: { onAnimationComplete: () => void })
         show ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
-      <div className="z-10 text-center animate-in fade-in duration-1000">
-          <div className="mx-auto w-fit mb-4">
-             <svg
-                width="48"
-                height="48"
-                viewBox="0 0 100 100"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-16 w-16"
-              >
-                <circle cx="40" cy="40" r="30" className="fill-primary" />
-                <circle cx="70" cy="35" r="20" className="fill-primary/70" />
-                <circle cx="65" cy="75" r="25" className="fill-accent" />
-                <circle cx="80" cy="70" r="10" className="fill-primary" />
-              </svg>
-          </div>
-          <div>
-            <h1 className="text-5xl font-bold tracking-tight text-foreground">Vesper</h1>
-            <p className="mt-2 text-lg text-muted-foreground">Preparing the magic...</p>
-          </div>
-      </div>
+        <div className="preloader-spin"></div>
+        <div className="mt-5 w-fit">
+            <div className={cn('preloader-typing-text', animationClass)}>
+                {text}
+            </div>
+        </div>
     </div>
   );
 };
