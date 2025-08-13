@@ -2,6 +2,7 @@
 
 import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AboutFooter() {
   const router = useRouter();
@@ -34,6 +35,9 @@ export default function AboutFooter() {
            <ul className="text-sm space-y-1">
             <li><a onClick={() => handleNavigate('/privacy')} className="text-muted-foreground hover:text-primary cursor-pointer">Privacy Policy</a></li>
             <li><a onClick={() => handleNavigate('/terms')} className="text-muted-foreground hover:text-primary cursor-pointer">Terms of Service</a></li>
+            <li>
+                <Link href="/admin" className="text-muted-foreground hover:text-primary cursor-pointer">Admin</Link>
+            </li>
           </ul>
         </div>
       </div>
