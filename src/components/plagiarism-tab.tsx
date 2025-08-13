@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
+import { InProgressLoader } from "./in-progress-loader";
 
 const fileToDataUri = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -169,13 +170,7 @@ export function PlagiarismTab() {
                     <CardTitle className="text-lg">Plagiarism Analysis</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-grow flex items-center justify-center">
-                    {isPending && (
-                        <div className="flex flex-col items-center gap-4 text-muted-foreground animate-in fade-in duration-500">
-                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                            <p className="font-semibold">Analyzing your text...</p>
-                            <p className="text-sm text-center">This may take a moment.</p>
-                        </div>
-                    )}
+                    {isPending && <InProgressLoader />}
                     {!isPending && !result && (
                          <div className="text-center text-muted-foreground p-4">
                             <p>Your plagiarism report will appear here.</p>
@@ -192,8 +187,8 @@ export function PlagiarismTab() {
                                         "font-bold text-xl",
                                         {
                                             "text-destructive": result.plagiarismScore > 75,
-                                            "text-chart-4": result.plagiarismScore > 40 && result.plagiarismScore <= 75,
-                                            "text-chart-2": result.plagiarismScore <= 40,
+                                            "text-yellow-500": result.plagiarismScore > 40 && result.plagiarismScore <= 75,
+                                            "text-green-500": result.plagiarismScore <= 40,
                                         }
                                     )}>
                                         {result.plagiarismScore}%

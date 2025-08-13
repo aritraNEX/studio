@@ -33,8 +33,8 @@ export function ToolSuggestions() {
       const availableTools = allTools.filter(tool => tool.id !== currentToolId);
       // Shuffle the array to get a random order
       const shuffled = shuffleArray([...availableTools]);
-      // Take the first 5
-      return shuffled.slice(0, 5);
+      // Take the first 11
+      return shuffled.slice(0, 11);
     };
 
     const lastUpdated = localStorage.getItem('toolSuggestionsLastUpdated');
@@ -47,8 +47,8 @@ export function ToolSuggestions() {
         const parsedSuggestions = JSON.parse(storedSuggestions);
         // Ensure the current tool is not in the stored suggestions
         const filteredSuggestions = parsedSuggestions.filter((tool: any) => tool.id !== currentToolId);
-        if (filteredSuggestions.length >= 5) {
-          setSuggestions(filteredSuggestions.slice(0, 5));
+        if (filteredSuggestions.length >= 11) {
+          setSuggestions(filteredSuggestions.slice(0, 11));
           return; // Exit if we have enough valid suggestions
         }
        } catch (e) {
@@ -82,7 +82,7 @@ export function ToolSuggestions() {
       <h2 className="text-2xl font-bold text-center mb-6 text-glow">
         More tools you might like
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
         {suggestions.map((tool) => {
           const Icon = (LucideIcons as any)[tool.icon] || LucideIcons.Wand2;
           return (

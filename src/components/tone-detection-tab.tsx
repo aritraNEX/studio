@@ -20,6 +20,7 @@ import {
 import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
+import { InProgressLoader } from "./in-progress-loader";
 
 const toneColors: Record<string, string> = {
     "formal": "bg-blue-500",
@@ -285,12 +286,7 @@ export function ToneDetectionTab() {
                     </div>
                 </CardHeader>
                 <CardContent className="flex-grow flex items-center justify-center p-6">
-                    {isPending && (
-                        <div className="flex flex-col items-center gap-4 text-muted-foreground animate-in fade-in duration-500">
-                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                            <p className="font-semibold">Analyzing your text...</p>
-                        </div>
-                    )}
+                    {isPending && <InProgressLoader />}
                     {!isPending && !result && (
                          <div className="text-center text-muted-foreground p-4">
                             <p>The detected tones and their confidence scores will appear here.</p>

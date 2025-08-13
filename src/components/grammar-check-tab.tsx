@@ -15,6 +15,7 @@ import * as diffmatchpatch from 'diff-match-patch';
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
+import { InProgressLoader } from "./in-progress-loader";
 
 const dmp = new diffmatchpatch.diff_match_patch();
 const { DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL } = diffmatchpatch;
@@ -305,12 +306,7 @@ export function GrammarCheckTab() {
           <Label className="font-semibold text-md">Corrected Text</Label>
           <Card className="min-h-96 bg-background/50 flex flex-col">
             <CardContent className="flex-grow flex items-center justify-center p-6">
-              {isPending && (
-                <div className="flex flex-col items-center gap-4 text-muted-foreground animate-in fade-in duration-500">
-                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                  <p className="font-semibold">Checking your text...</p>
-                </div>
-              )}
+              {isPending && <InProgressLoader />}
               {!isPending && !result && (
                 <div className="text-center text-muted-foreground p-4">
                   <p>Corrections and suggestions will appear here.</p>

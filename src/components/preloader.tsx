@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 const messages = [
-    "Initializing Vesper Protocol...",
+    "Initializing Vesper...",
     "Analyzing Data Streams...",
     "Decrypting Response Matrix...",
     "Optimizing Neural Pathways...",

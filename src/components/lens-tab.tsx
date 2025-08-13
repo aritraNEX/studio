@@ -15,6 +15,7 @@ import { ScrollArea } from "./ui/scroll-area";
 import { Textarea } from "./ui/textarea";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { SpeechRecognitionButton } from "./speech-recognition-button";
+import { InProgressLoader } from "./in-progress-loader";
 
 const fileToDataUri = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -87,12 +88,8 @@ export function LensTab() {
   };
   
   const handleAsk = () => {
-    if (!fileDataUri) {
-      toast({ variant: 'destructive', title: 'No Image', description: 'Please upload an image first.' });
-      return;
-    }
     if (!query.trim()) {
-      toast({ variant: 'destructive', title: 'No Query', description: 'Please enter a question about the image.' });
+      toast({ variant: 'destructive', title: 'No Query', description: 'Please enter a question or command.' });
       return;
     }
     
@@ -101,7 +98,7 @@ export function LensTab() {
 
     startTransition(async () => {
       try {
-        const response = await generalChatFlow({ query, fileUrl: fileDataUri });
+        const response = await generalChatFlow({ query, fileUrl: fileDataUri || undefined });
         setResult(response.answer);
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
@@ -121,7 +118,7 @@ export function LensTab() {
     <div className="grid md:grid-cols-2 gap-8 items-start">
       <div className="flex flex-col gap-4">
         <Label className="font-semibold text-md">
-          Upload an Image
+          Upload an Image (Optional)
         </Label>
         <label
             htmlFor="lens-upload"
@@ -160,9 +157,9 @@ export function LensTab() {
                     id="lens-query"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Ask something about the image..."
+                    placeholder="Ask anything..."
                     className="bg-background focus-visible:ring-accent text-base h-12 pr-12"
-                    disabled={!fileDataUri || isPending}
+                    disabled={isPending}
                     onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
                 />
                 {hasSupport && (
@@ -173,7 +170,7 @@ export function LensTab() {
             </div>
             <Button
                 onClick={handleAsk}
-                disabled={!fileDataUri || !query.trim() || isPending}
+                disabled={!query.trim() || isPending}
                 size="lg"
                 className="h-12"
             >
@@ -196,15 +193,10 @@ export function LensTab() {
         </div>
         <Card className="min-h-[28rem] bg-background/50 flex flex-col">
             <CardContent className="flex-grow flex items-center justify-center p-6 w-full">
-                 {isPending && (
-                    <div className="flex flex-col items-center gap-4 text-muted-foreground animate-in fade-in duration-500">
-                        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                        <p className="font-semibold">Analyzing...</p>
-                    </div>
-                 )}
+                 {isPending && <InProgressLoader />}
                  {!isPending && !result && (
                     <div className="text-center text-muted-foreground p-4">
-                        <p>Upload an image and ask a question to see the AI's response here.</p>
+                        <p>Upload an image and ask a question, or just ask anything to see the AI's response here.</p>
                     </div>
                  )}
                  {!isPending && result && (

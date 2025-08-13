@@ -14,6 +14,7 @@ import { Card, CardContent } from "./ui/card";
 import { cn } from "@/lib/utils";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { SpeechRecognitionButton } from "./speech-recognition-button";
+import { InProgressLoader } from "./in-progress-loader";
 
 type DiagramType = 'flowchart' | 'mindmap' | 'concept' | 'timeline';
 
@@ -179,12 +180,7 @@ export function DiagramGeneratorTab() {
 
       <Card className="relative w-full min-h-[500px] bg-muted/30 rounded-2xl p-4 sm:p-8 overflow-auto">
         <CardContent className="w-full h-full flex items-center justify-center">
-             {isPending && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted-foreground animate-in fade-in duration-500">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="font-semibold text-lg">Drawing your diagram...</p>
-              </div>
-            )}
+             {isPending && <InProgressLoader />}
             {!isPending && !result && (
               <div className="text-center text-muted-foreground p-4 flex flex-col items-center justify-center h-full">
                 <Share2 className="h-24 w-24 text-primary/30 mb-4" />

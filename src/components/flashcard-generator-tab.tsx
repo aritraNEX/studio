@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
+import { InProgressLoader } from "./in-progress-loader";
 
 
 type AnimationStyle = 'flip-h' | 'flip-v' | 'fade' | 'slide-up' | 'zoom';
@@ -315,12 +316,7 @@ export function FlashcardGeneratorTab() {
                             { 'transform -rotate-x-180': isFlipped && animationStyle === 'flip-v' }
                         )}
                     >
-                        {isPending && (
-                            <div className="flex flex-col items-center gap-4 text-muted-foreground animate-in fade-in duration-500">
-                                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                                <p className="font-semibold">Generating your flashcards...</p>
-                            </div>
-                        )}
+                        {isPending && <InProgressLoader />}
                         {!isPending && !currentCard && (
                              <div className={cn("text-center p-4", colorTheme.id === 'default' ? 'text-muted-foreground' : colorTheme.textClass)}>
                                  <p>Your flashcards will appear here. Click a card to flip it.</p>

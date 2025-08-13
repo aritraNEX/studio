@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { imageToLatex } from "@/ai/flows/image-to-latex-flow";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { InProgressLoader } from "./in-progress-loader";
 
 const fileToDataUri = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -130,8 +131,7 @@ export function FormulaTab() {
           )}
           {isPending && (
             <div className="flex flex-col items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p>Analyzing Image...</p>
+              <InProgressLoader />
             </div>
           )}
           {!previewUrl && !isPending && (

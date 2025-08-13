@@ -19,6 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { cn } from "@/lib/utils";
+import { InProgressLoader } from "./in-progress-loader";
 
 const voices = ['Algenib', 'Achernar', 'Schedar', 'Umbriel', 'Zephyr'];
 
@@ -96,12 +97,7 @@ export function TtsTab() {
                     <CardTitle className="text-lg">Audio Player</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-grow flex flex-col items-center justify-center p-6 gap-4">
-                    {isPending && (
-                        <div className="flex flex-col items-center gap-4 text-muted-foreground animate-in fade-in duration-500">
-                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                            <p className="font-semibold">Generating audio...</p>
-                        </div>
-                    )}
+                    {isPending && <InProgressLoader />}
                     {!isPending && !audioUrl && (
                          <div className="text-center text-muted-foreground p-4">
                             <p>Your audio will appear here.</p>
