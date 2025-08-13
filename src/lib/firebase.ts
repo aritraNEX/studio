@@ -3,6 +3,7 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, enableMultiTabIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getPerformance } from "firebase/performance";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -20,8 +21,11 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Enable offline persistence
+// Initialize Performance Monitoring
+let perf;
 if (typeof window !== 'undefined') {
+  perf = getPerformance(app);
+  // Enable offline persistence
   enableMultiTabIndexedDbPersistence(db).catch((err) => {
     if (err.code === 'failed-precondition') {
       console.warn('Firestore persistence failed: Multiple tabs open, persistence can only be enabled in one tab at a time.');
@@ -31,4 +35,4 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export { app, auth, db, storage };
+export { app, auth, db, storage, perf };

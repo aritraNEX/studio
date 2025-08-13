@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, query, where, onSnapshot, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, perf } from '@/lib/firebase';
+import { trace } from "firebase/performance";
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, Home, Trash2, Edit, Users, Share2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -85,6 +86,9 @@ export default function DashboardPage() {
         return;
     }
 
+    const t = perf ? trace(perf, "load-dashboard-projects") : null;
+    t?.start();
+
     const projectsRef = collection(db, 'projects');
 
     // Query for projects where the user is the owner
@@ -117,10 +121,12 @@ export default function DashboardPage() {
             
             setProjects(combinedProjects);
             setLoading(false);
+            t?.stop();
         }, (error) => {
             console.error("Error fetching shared projects: ", error);
             toast({ variant: "destructive", title: "Error fetching shared projects" });
             setLoading(false);
+            t?.stop();
         });
 
         // Return the unsubscribe function for the shared projects query
@@ -129,6 +135,7 @@ export default function DashboardPage() {
         console.error("Error fetching owned projects: ", error);
         toast({ variant: "destructive", title: "Error fetching your projects" });
         setLoading(false);
+        t?.stop();
     });
 
     // Return the unsubscribe function for the owned projects query
