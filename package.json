@@ -47,7 +47,7 @@
     "diff-match-patch": "^1.0.5",
     "dotenv": "^16.5.0",
     "embla-carousel-react": "^8.6.0",
-    "firebase": "^10.12.2",
+    "firebase": "^10.14.0",
     "firebase-admin": "^12.2.0",
     "framer-motion": "^11.2.10",
     "genkit": "^1.14.0",
