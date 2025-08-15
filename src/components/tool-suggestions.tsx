@@ -37,39 +37,15 @@ export function ToolSuggestions() {
       return shuffled.slice(0, 11);
     };
 
-    const lastUpdated = localStorage.getItem('toolSuggestionsLastUpdated');
-    const storedSuggestions = localStorage.getItem('toolSuggestions');
+    // Generate suggestions immediately on component mount
+    setSuggestions(getSuggestions());
 
-    const now = new Date().getTime();
-
-    if (lastUpdated && storedSuggestions && (now - parseInt(lastUpdated) < thirtyMinutes)) {
-       try {
-        const parsedSuggestions = JSON.parse(storedSuggestions);
-        // Ensure the current tool is not in the stored suggestions
-        const filteredSuggestions = parsedSuggestions.filter((tool: any) => tool.id !== currentToolId);
-        if (filteredSuggestions.length >= 11) {
-          setSuggestions(filteredSuggestions.slice(0, 11));
-          return; // Exit if we have enough valid suggestions
-        }
-       } catch (e) {
-         // ignore parsing error, regenerate below
-       }
-    }
-    
-    // If cache is old, invalid, or doesn't have enough items after filtering, regenerate.
-    const newSuggestions = getSuggestions();
-    setSuggestions(newSuggestions);
-    localStorage.setItem('toolSuggestions', JSON.stringify(newSuggestions));
-    localStorage.setItem('toolSuggestionsLastUpdated', now.toString());
-
-
+    // Set up an interval to refresh suggestions every 30 minutes
     const interval = setInterval(() => {
-        const newSuggestions = getSuggestions();
-        setSuggestions(newSuggestions);
-        localStorage.setItem('toolSuggestions', JSON.stringify(newSuggestions));
-        localStorage.setItem('toolSuggestionsLastUpdated', new Date().getTime().toString());
+        setSuggestions(getSuggestions());
     }, thirtyMinutes);
 
+    // Clean up the interval when the component unmounts
     return () => clearInterval(interval);
   }, [currentToolId]);
 
