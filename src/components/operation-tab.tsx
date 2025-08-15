@@ -26,7 +26,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLoading } from "@/contexts/loading-context";
@@ -112,34 +112,35 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
     if (projectId && user) {
       const fetchProject = async () => {
         setIsParsing(true); // Show loading state while fetching
-        const docRef = doc(db, 'projects', projectId);
+        const userDocRef = doc(db, 'users', user.uid);
         try {
-            const docSnap = await getDoc(docRef);
+            const docSnap = await getDoc(userDocRef);
             if (docSnap.exists()) {
-              const projectData = docSnap.data();
+              const userData = docSnap.data();
+              const project = userData.projects?.find((p: any) => p.id === projectId);
               
-              if (!projectData.participants?.includes(user.uid)) {
-                 toast({ variant: 'destructive', title: 'Access Denied', description: "You don't have permission to view this project." });
-                 router.push('/');
-                 return;
-              }
-              if (projectData.operation === operation) {
-                setGeneratedText(projectData.outputText);
-                const savedInput = projectData.inputText;
-                if (savedInput) {
-                    if (savedInput.startsWith('data:')) {
-                        setFileDataUri(savedInput);
-                        setFileName("Loaded Project Document");
-                        if (savedInput.startsWith('data:image')) {
-                            setLocalPreviewUrl(savedInput);
+              if (project) {
+                 if (project.operation === operation) {
+                    setGeneratedText(project.outputText);
+                    const savedInput = project.inputText;
+                    if (savedInput) {
+                        if (savedInput.startsWith('data:')) {
+                            setFileDataUri(savedInput);
+                            setFileName("Loaded Project Document");
+                            if (savedInput.startsWith('data:image')) {
+                                setLocalPreviewUrl(savedInput);
+                            }
+                        } else {
+                            setInputText(savedInput);
                         }
-                    } else {
-                        setInputText(savedInput);
                     }
-                }
+                  }
+              } else {
+                toast({ variant: 'destructive', title: 'Project not found in your data.' });
+                router.push('/');
               }
             } else {
-              toast({ variant: 'destructive', title: 'Project not found.' });
+              toast({ variant: 'destructive', title: 'User data not found.' });
               router.push('/');
             }
         } catch (e) {
@@ -164,16 +165,20 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
     }
     setIsSaving(true);
     try {
-      await addDoc(collection(db, 'projects'), {
-        ownerId: user.uid,
-        participants: [user.uid],
-        roles: { [user.uid]: 'owner' },
-        inputText: fileDataUri || inputText,
-        outputText: generatedText,
-        operation: operation,
-        createdAt: serverTimestamp(),
+      const userDocRef = doc(db, "users", user.uid);
+      const newProject = {
+          id: `proj_${Date.now()}`, // Simple unique ID
+          inputText: fileDataUri || inputText,
+          outputText: generatedText,
+          operation: operation,
+          createdAt: new Date().toISOString(),
+      };
+      
+      await updateDoc(userDocRef, {
+          projects: arrayUnion(newProject)
       });
-      toast({title: "Project Saved!", description: "Your work has been saved to your dashboard."})
+
+      toast({title: "Project Saved!", description: "Your work has been saved to your profile."})
     } catch (error) {
       console.error("Error saving project: ", error);
       toast({ variant: 'destructive', title: 'Could not save project.' });
@@ -413,8 +418,7 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(link.href);
+      document.body.removeChild(link);
 
       toast({
           title: "PDF Downloaded",

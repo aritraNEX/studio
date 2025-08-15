@@ -21,7 +21,7 @@ import { ScrollArea } from "./ui/scroll-area";
 import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 import { useAuth } from "@/contexts/auth-context";
 import { db } from "@/lib/firebase";
-import { doc, setDoc, onSnapshot, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { SpeechRecognitionButton } from "./speech-recognition-button";
 
@@ -50,13 +50,15 @@ export function TaskPlannerTab() {
 
   useEffect(() => {
     if (!user) return;
-    const planDocRef = doc(db, 'task_plans', user.uid);
-    const unsubscribe = onSnapshot(planDocRef, (docSnap) => {
+    const userDocRef = doc(db, 'users', user.uid);
+    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
         if (docSnap.exists()) {
             const data = docSnap.data();
-            setResult(data.plan);
-            setCheckedTasks(data.progress || {});
-            setTask(data.mainTask);
+            if (data.taskPlan) {
+              setResult(data.taskPlan.plan);
+              setCheckedTasks(data.taskPlan.progress || {});
+              setTask(data.taskPlan.mainTask);
+            }
         } else {
             setResult(null);
             setCheckedTasks({});
@@ -67,16 +69,17 @@ export function TaskPlannerTab() {
 
   const savePlan = async (plan: TaskPlannerOutput | null, progress?: Record<string, boolean>) => {
       if (!user) return;
-      const planDocRef = doc(db, 'task_plans', user.uid);
+      const userDocRef = doc(db, 'users', user.uid);
       if (plan === null) {
-          await deleteDoc(planDocRef);
+          await updateDoc(userDocRef, { taskPlan: null });
       } else {
-          await setDoc(planDocRef, {
+          await updateDoc(userDocRef, { 
+            taskPlan: {
               mainTask: task,
               plan,
               progress: progress || checkedTasks,
-              updatedAt: serverTimestamp()
-          }, { merge: true });
+            }
+          });
       }
   };
 

@@ -12,14 +12,14 @@ import { TaskPlannerOutput } from '@/ai/flows/task-planner-flow';
 import Link from 'next/link';
 import { Button } from './ui/button';
 
-interface TaskPlan {
+interface TaskPlanData {
     plan: TaskPlannerOutput;
     progress: Record<string, boolean>;
 }
 
 export default function TaskSummaryDashboard() {
   const { user } = useAuth();
-  const [taskPlan, setTaskPlan] = useState<TaskPlan | null>(null);
+  const [taskPlanData, setTaskPlanData] = useState<TaskPlanData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,12 +27,13 @@ export default function TaskSummaryDashboard() {
         setLoading(false);
         return;
     }
-    const planDocRef = doc(db, 'task_plans', user.uid);
-    const unsubscribe = onSnapshot(planDocRef, (docSnap) => {
+    const userDocRef = doc(db, 'users', user.uid);
+    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
       if (docSnap.exists()) {
-        setTaskPlan(docSnap.data() as TaskPlan);
+        const userData = docSnap.data();
+        setTaskPlanData(userData.taskPlan || null);
       } else {
-        setTaskPlan(null);
+        setTaskPlanData(null);
       }
       setLoading(false);
     });
@@ -52,12 +53,12 @@ export default function TaskSummaryDashboard() {
     );
   }
   
-  if (!taskPlan) {
+  if (!taskPlanData) {
     return null; // Don't show the card if there's no plan
   }
 
-  const upcomingTasks = taskPlan.plan.subtasks
-    .filter(task => !taskPlan.progress[task.title])
+  const upcomingTasks = taskPlanData.plan.subtasks
+    .filter(task => !taskPlanData.progress[task.title])
     .filter(task => new Date(`${task.date}T${task.time}`) >= new Date())
     .slice(0, 3);
 

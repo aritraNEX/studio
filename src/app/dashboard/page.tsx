@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, where, onSnapshot, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db, perf } from '@/lib/firebase';
 import { trace } from "firebase/performance";
 import { useAuth } from '@/contexts/auth-context';
@@ -34,12 +34,7 @@ interface Project {
   inputText: string;
   outputText: string;
   operation: string;
-  ownerId: string;
-  participants?: { uid: string, displayName: string, photoURL: string }[];
-  createdAt: {
-    seconds: number;
-    nanoseconds: number;
-  };
+  createdAt: string;
 }
 
 function ProjectsSkeleton() {
@@ -89,66 +84,42 @@ export default function DashboardPage() {
     const t = perf ? trace(perf, "load-dashboard-projects") : null;
     t?.start();
 
-    const projectsRef = collection(db, 'projects');
-
-    // Query for projects where the user is the owner
-    const ownerQuery = query(
-      projectsRef,
-      where('ownerId', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    // Query for projects where the user is a participant (but not necessarily the owner)
-    const participantQuery = query(
-      projectsRef,
-      where('participants', 'array-contains', user.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    const ownedUnsubscribe = onSnapshot(ownerQuery, (ownerSnapshot) => {
-        const ownedProjects = ownerSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
-        
-        // Now listen to shared projects
-        const sharedUnsubscribe = onSnapshot(participantQuery, (participantSnapshot) => {
-            const sharedProjects = participantSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
-            
-            // Combine and deduplicate
-            const allProjectsMap = new Map<string, Project>();
-            [...ownedProjects, ...sharedProjects].forEach(p => allProjectsMap.set(p.id, p));
-            
-            const combinedProjects = Array.from(allProjectsMap.values());
-            combinedProjects.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
-            
-            setProjects(combinedProjects);
-            setLoading(false);
-            t?.stop();
-        }, (error) => {
-            console.error("Error fetching shared projects: ", error);
-            toast({ variant: "destructive", title: "Error fetching shared projects" });
-            setLoading(false);
-            t?.stop();
-        });
-
-        // Return the unsubscribe function for the shared projects query
-        return () => sharedUnsubscribe();
+    const userDocRef = doc(db, 'users', user.uid);
+    
+    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const userData = docSnap.data();
+            const userProjects = userData.projects || [];
+            // Sort projects by creation date, most recent first
+            userProjects.sort((a: Project, b: Project) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setProjects(userProjects);
+        } else {
+            setProjects([]);
+        }
+        setLoading(false);
+        t?.stop();
     }, (error) => {
-        console.error("Error fetching owned projects: ", error);
+        console.error("Error fetching user projects: ", error);
         toast({ variant: "destructive", title: "Error fetching your projects" });
         setLoading(false);
         t?.stop();
     });
 
-    // Return the unsubscribe function for the owned projects query
-    return () => ownedUnsubscribe();
+    return () => unsubscribe();
 
   }, [user, authLoading, router, toast]);
 
   const handleDeleteProject = async (projectId: string) => {
+    if (!user) return;
+    
+    const updatedProjects = projects.filter(p => p.id !== projectId);
+    const userDocRef = doc(db, 'users', user.uid);
+
     try {
-        await deleteDoc(doc(db, "projects", projectId));
+        await updateDoc(userDocRef, { projects: updatedProjects });
         toast({
             title: "Project Deleted",
-            description: "The project has been successfully deleted.",
+            description: "The project has been successfully deleted from your profile.",
         })
     } catch (error) {
         toast({
@@ -226,11 +197,11 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg capitalize pr-2">{project.operation}</CardTitle>
                     <Badge variant="secondary">
-                        {project.createdAt?.seconds ? formatDistanceToNow(new Date(project.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now'}
+                        {project.createdAt ? formatDistanceToNow(new Date(project.createdAt), { addSuffix: true }) : 'Just now'}
                     </Badge>
                   </div>
                    <CardDescription className="line-clamp-2 pt-2">
-                      Input: {project.inputText}
+                      Input: {project.inputText.startsWith('data:') ? 'Uploaded File' : project.inputText}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow">
@@ -239,53 +210,29 @@ export default function DashboardPage() {
                     </p>
                 </CardContent>
                 <CardFooter className="flex justify-between items-center">
-                    <div className="flex items-center">
-                        {(project.participants?.length ?? 1) > 1 ? (
-                             <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <div className="flex -space-x-2">
-                                        {project.participants?.slice(0, 3).map(p => (
-                                             <Avatar key={p.uid} className="h-6 w-6 border-2 border-background">
-                                                <AvatarImage src={p.photoURL} />
-                                                <AvatarFallback>{p.displayName?.[0]}</AvatarFallback>
-                                             </Avatar>
-                                        ))}
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                    {project.participants?.map(p => p.displayName).join(', ')}
-                                    </TooltipContent>
-                                </Tooltip>
-                             </TooltipProvider>
-                        ) : (
-                            <Badge variant="outline">Personal</Badge>
-                        )}
-                    </div>
+                    <Badge variant="outline">Personal</Badge>
                     <div className="flex gap-2">
-                        {project.ownerId === user?.uid && (
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="icon">
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete your project.
-                                    </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDeleteProject(project.id)}>
-                                        Delete
-                                    </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        )}
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="icon">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete your project.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteProject(project.id)}>
+                                    Delete
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                         <Button variant="outline" onClick={() => handleOpenProject(project)}>
                             <Edit className="mr-2 h-4 w-4"/>
                             Open
