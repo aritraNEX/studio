@@ -21,17 +21,25 @@ export default function InvitePage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const inviteId = params.inviteId as string;
 
   const [invite, setInvite] = useState<Invite | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
+  const [inviteId, setInviteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = params?.inviteId as string | undefined;
+    if (id) {
+        setInviteId(id);
+    }
+  }, [params]);
 
   useEffect(() => {
     if (!inviteId) return;
 
     const fetchInvite = async () => {
+      setLoading(true);
       const inviteRef = doc(db, 'invites', inviteId);
       const inviteSnap = await getDoc(inviteRef);
 
@@ -47,7 +55,7 @@ export default function InvitePage() {
   }, [inviteId]);
   
   const handleJoinWorkspace = async () => {
-      if (!user || !invite) return;
+      if (!user || !invite || !inviteId) return;
       
       setIsJoining(true);
       const batch = writeBatch(db);
@@ -63,7 +71,7 @@ export default function InvitePage() {
       };
       batch.update(workspaceRef, {
         [`members.${user.uid}`]: newMember,
-        memberUids: {[user.uid]: true} // Using a map for security rules
+        'memberUids': { [user.uid]: true } // Use a map for security rules
       });
 
       // 2. Delete the one-time invite
@@ -99,9 +107,11 @@ export default function InvitePage() {
                 </CardHeader>
                 <CardContent>
                     <p className="mb-4">Please log in or sign up to accept the invitation.</p>
-                    <Button asChild>
-                        <Link href={`/login?redirect=/invite/${inviteId}`}>Continue</Link>
-                    </Button>
+                    {inviteId && (
+                         <Button asChild>
+                            <Link href={`/login?redirect=/invite/${inviteId}`}>Continue</Link>
+                        </Button>
+                    )}
                 </CardContent>
             </Card>
         </div>
@@ -152,4 +162,3 @@ export default function InvitePage() {
 
   return null; // Should not be reached
 }
-
