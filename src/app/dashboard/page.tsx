@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { db, perf } from '@/lib/firebase';
 import { trace } from "firebase/performance";
 import { useAuth } from '@/contexts/auth-context';
@@ -34,7 +34,10 @@ interface Project {
   inputText: string;
   outputText: string;
   operation: string;
-  createdAt: string;
+  createdAt: {
+    seconds: number;
+    nanoseconds: number;
+  };
 }
 
 function ProjectsSkeleton() {
@@ -74,28 +77,24 @@ export default function DashboardPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (authLoading || !user) {
-        if (!authLoading && !user) {
-           router.push('/login');
-        }
+    if (authLoading) return;
+    if (!user) {
+        router.push('/login');
         return;
     }
 
     const t = perf ? trace(perf, "load-dashboard-projects") : null;
     t?.start();
 
-    const userDocRef = doc(db, 'users', user.uid);
+    const projectsRef = collection(db, 'projects');
+    const q = query(projectsRef, where("userId", "==", user.uid), orderBy("createdAt", "desc"));
     
-    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const userData = docSnap.data();
-            const userProjects = userData.projects || [];
-            // Sort projects by creation date, most recent first
-            userProjects.sort((a: Project, b: Project) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            setProjects(userProjects);
-        } else {
-            setProjects([]);
-        }
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const userProjects: Project[] = [];
+        querySnapshot.forEach((doc) => {
+            userProjects.push({ id: doc.id, ...doc.data() } as Project);
+        });
+        setProjects(userProjects);
         setLoading(false);
         t?.stop();
     }, (error) => {
@@ -112,16 +111,14 @@ export default function DashboardPage() {
   const handleDeleteProject = async (projectId: string) => {
     if (!user) return;
     
-    const updatedProjects = projects.filter(p => p.id !== projectId);
-    const userDocRef = doc(db, 'users', user.uid);
-
     try {
-        await updateDoc(userDocRef, { projects: updatedProjects });
+        await deleteDoc(doc(db, "projects", projectId));
         toast({
             title: "Project Deleted",
-            description: "The project has been successfully deleted from your profile.",
+            description: "The project has been successfully deleted.",
         })
     } catch (error) {
+        console.error("Error deleting project:", error);
         toast({
             variant: "destructive",
             title: "Deletion Failed",
@@ -152,6 +149,15 @@ export default function DashboardPage() {
       }
       return project.outputText;
   }
+  
+  const formatProjectDate = (createdAt: Project['createdAt']) => {
+    if (!createdAt || !createdAt.seconds) {
+        return 'Just now';
+    }
+    const date = new Date(createdAt.seconds * 1000 + (createdAt.nanoseconds || 0) / 1000000);
+    return formatDistanceToNow(date, { addSuffix: true });
+  };
+
 
   if (authLoading) {
     return (
@@ -197,7 +203,7 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg capitalize pr-2">{project.operation}</CardTitle>
                     <Badge variant="secondary">
-                        {project.createdAt ? formatDistanceToNow(new Date(project.createdAt), { addSuffix: true }) : 'Just now'}
+                        {formatProjectDate(project.createdAt)}
                     </Badge>
                   </div>
                    <CardDescription className="line-clamp-2 pt-2">

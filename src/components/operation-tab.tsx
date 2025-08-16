@@ -26,7 +26,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
 import { db } from "@/lib/firebase";
-import { doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDoc, doc } from "firebase/firestore";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLoading } from "@/contexts/loading-context";
@@ -112,14 +112,13 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
     if (projectId && user) {
       const fetchProject = async () => {
         setIsParsing(true); // Show loading state while fetching
-        const userDocRef = doc(db, 'users', user.uid);
+        const projectDocRef = doc(db, 'projects', projectId);
         try {
-            const docSnap = await getDoc(userDocRef);
+            const docSnap = await getDoc(projectDocRef);
             if (docSnap.exists()) {
-              const userData = docSnap.data();
-              const project = userData.projects?.find((p: any) => p.id === projectId);
+              const project = docSnap.data();
               
-              if (project) {
+              if (project.userId === user.uid) { // Basic security check
                  if (project.operation === operation) {
                     setGeneratedText(project.outputText);
                     const savedInput = project.inputText;
@@ -136,12 +135,12 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
                     }
                   }
               } else {
-                toast({ variant: 'destructive', title: 'Project not found in your data.' });
-                router.push('/');
+                toast({ variant: 'destructive', title: 'Access Denied.' });
+                router.push('/dashboard');
               }
             } else {
-              toast({ variant: 'destructive', title: 'User data not found.' });
-              router.push('/');
+              toast({ variant: 'destructive', title: 'Project not found.' });
+              router.push('/dashboard');
             }
         } catch (e) {
             console.error(e);
@@ -165,20 +164,17 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
     }
     setIsSaving(true);
     try {
-      const userDocRef = doc(db, "users", user.uid);
-      const newProject = {
-          id: `proj_${Date.now()}`, // Simple unique ID
-          inputText: fileDataUri || inputText,
-          outputText: generatedText,
-          operation: operation,
-          createdAt: new Date().toISOString(),
+      const projectData = {
+        userId: user.uid,
+        inputText: fileDataUri || inputText,
+        outputText: generatedText,
+        operation: operation,
+        createdAt: serverTimestamp(),
       };
       
-      await updateDoc(userDocRef, {
-          projects: arrayUnion(newProject)
-      });
+      const docRef = await addDoc(collection(db, 'projects'), projectData);
 
-      toast({title: "Project Saved!", description: "Your work has been saved to your profile."})
+      toast({title: "Project Saved!", description: `Your work has been saved with ID: ${docRef.id}`})
     } catch (error) {
       console.error("Error saving project: ", error);
       toast({ variant: 'destructive', title: 'Could not save project.' });
