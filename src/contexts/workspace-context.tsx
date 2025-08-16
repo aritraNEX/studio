@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 export type Operation = 'paraphrase' | 'summarize' | 'translate' | 'style' | 'grammar';
 
@@ -17,18 +17,33 @@ export interface WorkspaceStep {
 
 interface WorkspaceContextType {
   workspaceSteps: WorkspaceStep[];
-  setWorkspaceSteps: (steps: WorkspaceStep[]) => void;
+  setWorkspaceSteps: React.Dispatch<React.SetStateAction<WorkspaceStep[]>>;
   addWorkspaceStep: (step: WorkspaceStep) => void;
   removeWorkspaceStep: (id: number) => void;
-  workspaceText: string; // Legacy for TTS
+  workspaceText: string; 
   setWorkspaceText: (text: string) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
 export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
-  const [workspaceSteps, setWorkspaceSteps] = useState<WorkspaceStep[]>([]);
-  const [workspaceText, setWorkspaceText] = useState(""); // Legacy for TTS
+  const [workspaceSteps, setWorkspaceSteps] = useState<WorkspaceStep[]>(() => {
+    // Lazy initialization from localStorage
+    if (typeof window !== 'undefined') {
+        const savedSteps = localStorage.getItem('workspaceSteps');
+        return savedSteps ? JSON.parse(savedSteps) : [];
+    }
+    return [];
+  });
+  
+  const [workspaceText, setWorkspaceText] = useState("");
+
+  useEffect(() => {
+    // Persist steps to localStorage whenever they change
+     if (typeof window !== 'undefined') {
+        localStorage.setItem('workspaceSteps', JSON.stringify(workspaceSteps));
+     }
+  }, [workspaceSteps]);
 
   const addWorkspaceStep = (step: WorkspaceStep) => {
     setWorkspaceSteps(prev => [...prev, step]);
@@ -61,3 +76,4 @@ export const useWorkspace = () => {
   }
   return context;
 };
+

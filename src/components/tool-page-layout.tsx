@@ -7,8 +7,15 @@ import { Button } from "./ui/button";
 import UserMenu from "./user-menu";
 import * as LucideIcons from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Wand2 } from "lucide-react";
 import { ToolSuggestions } from "./tool-suggestions";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 
 interface ToolPageLayoutProps {
   title: string;
@@ -54,6 +61,20 @@ export default function ToolPageLayout({ title, subtitle, iconName, children }: 
                 </Link>
             </div>
             <div className="flex items-center gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button asChild variant="outline" size="icon" className="h-8 w-8">
+                        <Link href="/workspace">
+                          <Wand2 className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Workspace</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <UserMenu />
             </div>
           </div>

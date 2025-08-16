@@ -27,7 +27,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useAuth } from "@/contexts/auth-context";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, getDoc, doc } from "firebase/firestore";
-import { useWorkspace } from "@/contexts/workspace-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLoading } from "@/contexts/loading-context";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
@@ -47,7 +46,6 @@ const allOperations: Operation[] = ['paraphrase', 'summarize', 'translate', 'sty
 
 interface OperationTabProps {
   operation: Operation;
-  onSendTo: (text: string, operation: Operation) => void;
 }
 
 const fileToDataUri = (file: File): Promise<string> => {
@@ -60,10 +58,9 @@ const fileToDataUri = (file: File): Promise<string> => {
 };
 
 
-export function OperationTab({ operation, onSendTo }: OperationTabProps) {
+export function OperationTab({ operation }: OperationTabProps) {
   const searchParams = useSearchParams();
   const projectId = searchParams.get('projectId');
-  const { workspaceText } = useWorkspace();
   const [inputText, setInputText] = useState<string>("");
   const [fileDataUri, setFileDataUri] = useState<string | null>(null);
   const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
@@ -80,7 +77,6 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
   const outputTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [appUrl, setAppUrl] = useState('');
   const { user } = useAuth();
-  const { addWorkspaceStep, setWorkspaceText } = useWorkspace();
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
@@ -100,13 +96,6 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
   useEffect(() => {
     setAppUrl(window.location.origin);
   }, []);
-
-  useEffect(() => {
-    if(workspaceText && operation !== 'style' && operation !== 'translate'){
-        setInputText(workspaceText);
-        setWorkspaceText("");
-    }
-  }, [workspaceText, operation, setWorkspaceText]);
 
   useEffect(() => {
     if (projectId && user) {
@@ -456,19 +445,6 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const handleAddToWorkspace = () => {
-    if (!generatedText) return;
-    const finalStyle = customStyle.trim() || targetStyle;
-    addWorkspaceStep({
-        id: Date.now(),
-        operation: operation,
-        text: generatedText,
-        options: operation === 'translate' ? { lang: targetLanguage } : operation === 'style' ? { style: finalStyle } : undefined
-    });
-    router.push('/workspace');
-    toast({title: "Added to Workspace!", description: "The result has been added as a new step in your workspace."});
-  };
-
   const buttonText = {
       paraphrase: 'Paraphrase',
       summarize: 'Summarize',
@@ -702,24 +678,13 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
           <div className="flex flex-col gap-4 mt-4 p-4 border rounded-lg bg-muted/50 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row items-center gap-4">
                 <Button 
-                    onClick={() => {
-                        setWorkspaceText(generatedText);
-                        router.push('/tts');
-                    }}
+                    onClick={() => router.push('/tts')}
                     className="w-full sm:w-auto"
                 >
                     <AudioLines className="mr-2 h-5 w-5" />
                     Listen with Text-to-Speech
                 </Button>
-                <Button 
-                    onClick={handleAddToWorkspace} 
-                    variant="outline"
-                    className="w-full sm:w-auto"
-                >
-                    <Wand2 className="mr-2 h-5 w-5" />
-                    Add to Workspace
-                </Button>
-                <Button onClick={handleSaveProject} disabled={isSaving || !user} className="w-full sm:w-auto">
+                 <Button onClick={handleSaveProject} disabled={isSaving || !user} className="w-full sm:w-auto">
                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Save Project
                 </Button>
@@ -771,5 +736,3 @@ export function OperationTab({ operation, onSendTo }: OperationTabProps) {
     </div>
   );
 }
-
-    

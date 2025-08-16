@@ -1,163 +1,177 @@
 
 "use client";
 
-import { useEffect, useState, useTransition } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { Textarea } from '@/components/ui/textarea';
+import {
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  where,
+  addDoc,
+  getDocs,
+  writeBatch,
+} from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
+import { Loader2, Plus, Users, Settings, Filter, LayoutGrid, List } from 'lucide-react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, ArrowLeft, Users, FileText } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-interface Member {
-    uid: string;
-    email: string;
-    name: string;
-    role: 'Owner' | 'Editor' | 'Viewer';
-    photoURL?: string;
-}
-
-interface Group {
-    id: string;
-    name: string;
-    members: Member[];
-}
+import { CreateWorkspace } from '@/components/workspace/create-workspace';
+import { KanbanColumn } from '@/components/workspace/kanban-column';
+import { MembersDialog } from '@/components/workspace/members-dialog';
+import { CreateTaskDialog } from '@/components/workspace/create-task-dialog';
+import { ITask, IWorkspace } from '@/lib/workspace-utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WorkspacePage() {
-    const { user } = useAuth();
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const projectId = searchParams.get('projectId');
-    const { toast } = useToast();
+  const { user } = useAuth();
+  const router = useRouter();
+  const [workspaces, setWorkspaces] = useState<IWorkspace[]>([]);
+  const [activeWorkspace, setActiveWorkspace] = useState<IWorkspace | null>(null);
+  const [tasks, setTasks] = useState<ITask[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
 
-    const [content, setContent] = useState('');
-    const [projectData, setProjectData] = useState<any>(null);
-    const [groupData, setGroupData] = useState<Group | null>(null);
-    const [isSaving, startSavingTransition] = useTransition();
-    const [loading, setLoading] = useState(true);
-
-    const currentUserRole = groupData?.members.find(m => m.uid === user?.uid)?.role;
-    const canEdit = projectData?.groupId ? (currentUserRole === 'Owner' || currentUserRole === 'Editor') : (projectData?.userId === user?.uid);
-
-    useEffect(() => {
-        if (!projectId || !user) {
-            if(!user) router.push('/login');
-            else if(!projectId) router.push('/dashboard');
-            return;
-        }
-
-        const projectDocRef = doc(db, 'projects', projectId);
-        const unsubscribeProject = onSnapshot(projectDocRef, async (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                setProjectData(data);
-                setContent(data.outputText || '');
-                
-                // Fetch group data if it's a group project
-                if (data.groupId) {
-                    const groupDocRef = doc(db, 'groups', data.groupId);
-                    const groupSnap = await getDoc(groupDocRef);
-                    if (groupSnap.exists()) {
-                        const group = { id: groupSnap.id, ...groupSnap.data() } as Group;
-                        // Security check: is user part of this group?
-                        if (group.members.some(m => m.uid === user.uid)) {
-                            setGroupData(group);
-                        } else {
-                             toast({ variant: 'destructive', title: "Access Denied" });
-                             router.push('/dashboard');
-                        }
-                    }
-                } else {
-                    // It's a personal project, check ownership
-                    if (data.userId !== user.uid) {
-                        toast({ variant: 'destructive', title: "Access Denied" });
-                        router.push('/dashboard');
-                    }
-                }
-            } else {
-                toast({ variant: 'destructive', title: 'Project not found' });
-                router.push('/dashboard');
-            }
-            setLoading(false);
-        });
-
-        return () => unsubscribeProject();
-    }, [projectId, user, router, toast]);
-
-    const handleSave = () => {
-        if (!projectId || !canEdit) return;
-        startSavingTransition(async () => {
-            const projectDocRef = doc(db, 'projects', projectId);
-            try {
-                await updateDoc(projectDocRef, {
-                    outputText: content,
-                    lastEditedAt: serverTimestamp(),
-                    lastEditedBy: user?.uid,
-                });
-                toast({ title: 'Document Saved!' });
-            } catch (error) {
-                toast({ variant: 'destructive', title: 'Failed to save document' });
-            }
-        });
-    };
-
-    if (loading) {
-        return (
-             <div className="flex h-screen w-full items-center justify-center bg-background">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-        )
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+      return;
     }
 
-    return (
-        <div className="flex flex-col h-screen bg-background">
-            <header className="flex items-center justify-between p-3 border-b sticky top-0 bg-background/80 backdrop-blur-sm z-10">
-                <div className="flex items-center gap-3">
-                    <Button variant="outline" size="icon" onClick={() => router.back()}><ArrowLeft className="h-4 w-4" /></Button>
-                    <div>
-                        <h1 className="text-xl font-bold flex items-center gap-2"><FileText className="h-5 w-5"/>{projectData?.inputText || 'Untitled Document'}</h1>
-                        {groupData && <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Users className="h-3 w-3"/>{groupData.name}</p>}
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    {groupData && (
-                        <div className="flex -space-x-2 overflow-hidden">
-                            <TooltipProvider>
-                                {groupData.members.map(member => (
-                                    <Tooltip key={member.uid}>
-                                        <TooltipTrigger>
-                                            <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                                                <AvatarImage src={member.photoURL} />
-                                                <AvatarFallback>{member.name?.[0].toUpperCase()}</AvatarFallback>
-                                            </Avatar>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>{member.name}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                ))}
-                             </TooltipProvider>
-                        </div>
-                    )}
-                    <Button onClick={handleSave} disabled={isSaving || !canEdit}>
-                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        {isSaving ? 'Saving...' : 'Save'}
-                    </Button>
-                </div>
-            </header>
-            <main className="flex-1 p-4">
-                <Textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Start writing your collaborative document..."
-                    className="w-full h-full resize-none border-none focus-visible:ring-0 text-base p-4"
-                    disabled={isSaving || !canEdit}
-                />
-            </main>
-        </div>
+    const q = query(
+      collection(db, 'workspaces'),
+      where('memberUids', 'array-contains', user.uid)
     );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const userWorkspaces = snapshot.docs.map(
+          (doc) => ({ id: doc.id, ...doc.data() } as IWorkspace)
+        );
+        setWorkspaces(userWorkspaces);
+        if (userWorkspaces.length > 0 && !activeWorkspace) {
+          setActiveWorkspace(userWorkspaces[0]);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error fetching workspaces:', error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user, router, activeWorkspace]);
+
+  useEffect(() => {
+    if (activeWorkspace) {
+      const tasksQuery = query(
+        collection(db, 'tasks'),
+        where('workspaceId', '==', activeWorkspace.id)
+      );
+      const unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
+        const workspaceTasks = snapshot.docs.map(
+          (doc) => ({ id: doc.id, ...doc.data() } as ITask)
+        );
+        setTasks(workspaceTasks);
+      });
+      return () => unsubscribeTasks();
+    }
+  }, [activeWorkspace]);
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="flex justify-between items-center mb-4">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-10 w-24" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (workspaces.length === 0) {
+    return <CreateWorkspace />;
+  }
+  
+  if (!activeWorkspace) {
+      return (
+           <div className="flex h-screen w-full items-center justify-center bg-background">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+      )
+  }
+
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <div className="flex h-screen w-full flex-col bg-muted/40">
+        <header className="flex h-16 items-center justify-between border-b bg-background px-6">
+          <div>
+            <h1 className="text-xl font-bold">{activeWorkspace.name}</h1>
+            <p className="text-sm text-muted-foreground">{activeWorkspace.description}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsMembersDialogOpen(true)}
+            >
+              <Users className="mr-2 h-4 w-4" />
+              <span>{activeWorkspace.members.length} Members</span>
+            </Button>
+            <Button onClick={() => setIsCreateTaskOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Task
+            </Button>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-x-auto p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <KanbanColumn
+                    status="To-Do"
+                    tasks={tasks.filter((t) => t.status === 'To-Do')}
+                    workspaceId={activeWorkspace.id}
+                />
+                <KanbanColumn
+                    status="In Progress"
+                    tasks={tasks.filter((t) => t.status === 'In Progress')}
+                    workspaceId={activeWorkspace.id}
+                />
+                <KanbanColumn
+                    status="Done"
+                    tasks={tasks.filter((t) => t.status === 'Done')}
+                    workspaceId={activeWorkspace.id}
+                />
+                 <KanbanColumn
+                    status="Backlog"
+                    tasks={tasks.filter((t) => t.status === 'Backlog')}
+                    workspaceId={activeWorkspace.id}
+                />
+            </div>
+        </main>
+      </div>
+       <MembersDialog
+        workspace={activeWorkspace}
+        open={isMembersDialogOpen}
+        onOpenChange={setIsMembersDialogOpen}
+      />
+      <CreateTaskDialog
+        workspaceId={activeWorkspace.id}
+        members={activeWorkspace.members}
+        open={isCreateTaskOpen}
+        onOpenChange={setIsCreateTaskOpen}
+      />
+    </DndProvider>
+  );
 }
