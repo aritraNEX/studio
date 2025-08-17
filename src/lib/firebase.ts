@@ -4,7 +4,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore, enableMultiTabIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getPerformance } from "firebase/performance";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaV3Provider, AppCheck } from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -24,11 +24,13 @@ const storage = getStorage(app);
 
 // Initialize Performance Monitoring and App Check
 let perf;
+let appCheck: AppCheck | undefined;
+
 if (typeof window !== 'undefined') {
   perf = getPerformance(app);
 
   // Initialize App Check
-  initializeAppCheck(app, {
+  appCheck = initializeAppCheck(app, {
     provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!),
     isTokenAutoRefreshEnabled: true
   });
@@ -43,4 +45,4 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export { app, auth, db, storage, perf };
+export { app, auth, db, storage, perf, appCheck };

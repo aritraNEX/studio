@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithPhoneNumber, sendPasswordResetEmail, RecaptchaVerifier, type ConfirmationResult, type UserCredential, type User, updateProfile } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, appCheck } from '@/lib/firebase';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -75,6 +75,7 @@ export default function LoginPage() {
   const { language, setLanguage, t } = useLanguage();
   
   useEffect(() => {
+    // This empty div is where the invisible reCAPTCHA will be rendered.
     if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
