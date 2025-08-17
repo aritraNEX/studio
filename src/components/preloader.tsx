@@ -1,11 +1,10 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 const messages = [
-    "Initializing Vesper...",
+    "Setting up your interface...",
     "Analyzing Data Streams...",
     "Decrypting Response Matrix...",
     "Optimizing Neural Pathways...",
