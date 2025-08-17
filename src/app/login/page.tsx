@@ -2,9 +2,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithPhoneNumber, sendPasswordResetEmail, RecaptchaVerifier, type ConfirmationResult, type UserCredential, type User, updateProfile } from 'firebase/auth';
-import { auth, db, appCheck } from '@/lib/firebase';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithPhoneNumber, sendPasswordResetEmail, RecaptchaVerifier, type ConfirmationResult, type User, updateProfile } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,7 +46,6 @@ async function createUserDocument(user: User) {
     const userRef = doc(db, 'users', user.uid);
     const docSnap = await getDoc(userRef);
 
-    // Only create document if it doesn't exist
     if (!docSnap.exists()) {
         await setDoc(userRef, { 
             uid: user.uid,
@@ -73,9 +72,10 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect') || '/?welcome=true';
   
   useEffect(() => {
-    // This empty div is where the invisible reCAPTCHA will be rendered.
     if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
@@ -85,9 +85,11 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleSuccessfulAuth = async (user: User, isNewUser: boolean = false) => {
+  const handleSuccessfulAuth = async (userCredential: UserCredential) => {
+    const { user, _tokenResponse } = userCredential;
+    const isNewUser = _tokenResponse?.isNewUser || false;
+
     if (isNewUser) {
-        // If it's a new user from email/password, ensure displayName is set
         if (!user.displayName && signupEmail) {
             const nameFromEmail = signupEmail.split('@')[0];
             await updateProfile(user, { displayName: nameFromEmail });
@@ -95,14 +97,14 @@ export default function LoginPage() {
     }
     await createUserDocument(user);
     toast({ title: isNewUser ? 'Sign up successful!' : 'Login successful!' });
-    router.push('/?welcome=true');
+    router.push(redirectUrl);
   };
 
   const handleLogin = async () => {
     setIsPending(true);
     try {
-      const { user } = await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
-      await handleSuccessfulAuth(user);
+      const userCredential = await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      await handleSuccessfulAuth(userCredential);
     } catch (error: any) {
       let description = error.message;
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
@@ -121,8 +123,8 @@ export default function LoginPage() {
   const handleSignUp = async () => {
     setIsPending(true);
     try {
-      const { user } = await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
-      await handleSuccessfulAuth(user, true);
+      const userCredential = await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
+      await handleSuccessfulAuth(userCredential);
     } catch (error: any) {
       let description = error.message;
       if (error.code === 'auth/email-already-in-use') {
@@ -161,8 +163,8 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     try {
         auth.languageCode = 'en'; 
-        const { user } = await signInWithPopup(auth, provider);
-        await handleSuccessfulAuth(user);
+        const userCredential = await signInWithPopup(auth, provider);
+        await handleSuccessfulAuth(userCredential);
     } catch (error: any) {
          toast({
             variant: 'destructive',
@@ -194,8 +196,8 @@ export default function LoginPage() {
     if (!confirmationResult) return;
     setIsPending(true);
     try {
-        const { user } = await confirmationResult.confirm(otp);
-        await handleSuccessfulAuth(user);
+        const userCredential = await confirmationResult.confirm(otp);
+        await handleSuccessfulAuth(userCredential);
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Invalid OTP', description: 'The OTP you entered is incorrect. Please try again.' });
     } finally {

@@ -66,6 +66,14 @@ export default function WorkspacePage() {
   }, [user, router, activeWorkspace]);
 
   useEffect(() => {
+    // This effect ensures that when the list of workspaces updates (e.g., after creation),
+    // and no workspace is currently active, the first one from the new list is selected.
+    if (!activeWorkspace && workspaces.length > 0) {
+      setActiveWorkspace(workspaces[0]);
+    }
+  }, [workspaces, activeWorkspace]);
+
+  useEffect(() => {
     if (activeWorkspace) {
         const tasksQuery = query(
             collection(db, 'workspaces', activeWorkspace.id, 'tasks')

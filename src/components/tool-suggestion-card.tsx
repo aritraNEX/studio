@@ -4,22 +4,28 @@
 import { useEffect, useState } from "react";
 import Link from 'next/link';
 import { useAuth } from "@/contexts/auth-context";
-import { useToolSuggestions } from "@/contexts/tool-suggestion-context";
 import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
 import * as LucideIcons from "lucide-react";
 import { Lightbulb, Loader2 } from "lucide-react";
+import allToolsData from '@/data/all-tools.json';
 
 interface Project {
   operation: string;
 }
 
+interface Tool {
+    id: string;
+    name: string;
+    description: string;
+    icon: keyof typeof LucideIcons;
+    category: string;
+}
+
 export default function ToolSuggestionCard() {
   const { user } = useAuth();
-  const { getSuggestions } = useToolSuggestions();
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,7 +42,7 @@ export default function ToolSuggestionCard() {
           projectsRef, 
           where("userId", "==", user.uid), 
           orderBy("createdAt", "desc"),
-          limit(5) // Look at last 5 projects for recent activity
+          limit(5)
         );
 
         const querySnapshot = await getDocs(q);
@@ -45,12 +51,18 @@ export default function ToolSuggestionCard() {
           recentProjects.push(doc.data() as Project);
         });
 
-        const usedTools = recentProjects.map(p => p.operation);
-        // Correctly use the 'operation' field for the current category.
-        const currentCategory = recentProjects[0]?.operation || 'writing';
+        const usedToolIds = recentProjects.map(p => p.operation);
+        const recentCategory = recentProjects[0]?.operation || 'writing';
 
-        const finalSuggestions = getSuggestions(usedTools, currentCategory);
-        setSuggestions(finalSuggestions);
+        const availableTools = allToolsData.filter(tool => !usedToolIds.includes(tool.id));
+        
+        const scoredTools = availableTools.map(tool => ({
+            ...tool,
+            score: tool.category.toLowerCase() === recentCategory ? 2 : 1 // Simple scoring
+        }));
+
+        const finalSuggestions = scoredTools.sort((a,b) => b.score - a.score).slice(0, 3);
+        setSuggestions(finalSuggestions as Tool[]);
 
       } catch (error) {
         console.error("Error fetching suggestions:", error);
@@ -60,13 +72,11 @@ export default function ToolSuggestionCard() {
     };
 
     fetchRecentActivityAndSuggest();
-  }, [user, getSuggestions]);
+  }, [user]);
 
-  const getIconByName = (iconName: string): React.ElementType => {
-    // A helper to dynamically get the icon component from lucide-react
+  const getIconByName = (iconName: keyof typeof LucideIcons): React.ElementType => {
     if (!iconName) return Lightbulb;
-    const iconKey = iconName.charAt(0).toUpperCase() + iconName.slice(1);
-    return (LucideIcons as any)[iconKey] || Lightbulb;
+    return LucideIcons[iconName] || Lightbulb;
   }
 
   if (loading) {
@@ -84,7 +94,7 @@ export default function ToolSuggestionCard() {
   }
 
   if (suggestions.length === 0) {
-    return null; // Don't show the card if there are no suggestions
+    return null;
   }
 
   return (
@@ -96,9 +106,9 @@ export default function ToolSuggestionCard() {
         <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {suggestions.map((tool) => {
-                    const Icon = getIconByName(tool.icon || tool.toolId);
+                    const Icon = getIconByName(tool.icon);
                     return (
-                        <Link href={`/${tool.toolId}`} key={tool.toolId} className="group">
+                        <Link href={`/${tool.id}`} key={tool.id} className="group">
                              <div className="p-4 bg-background/60 rounded-lg border hover:border-primary/50 hover:bg-primary/5 transition-all h-full flex flex-col">
                                 <div className="flex items-center gap-3 mb-2">
                                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">

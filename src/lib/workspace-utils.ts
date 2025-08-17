@@ -7,6 +7,7 @@ import {
   updateDoc,
   setDoc,
   getDocs,
+  getDoc,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { User } from 'firebase/auth';
