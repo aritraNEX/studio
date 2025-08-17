@@ -10,6 +10,7 @@ import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
+import { IMember } from '@/lib/workspace-utils';
 
 interface Invite {
   workspaceId: string;
@@ -60,21 +61,25 @@ export default function InvitePage() {
       setIsJoining(true);
       const batch = writeBatch(db);
       
-      // 1. Add user to the workspace's members map
-      const workspaceRef = doc(db, 'workspaces', invite.workspaceId);
-      const newMember = {
+      const newMember: IMember = {
           uid: user.uid,
           email: user.email,
           displayName: user.displayName,
           photoURL: user.photoURL,
           role: 'Member',
       };
+      
+      // 1. Add user to the workspace's members subcollection
+      const memberRef = doc(db, 'workspaces', invite.workspaceId, 'members', user.uid);
+      batch.set(memberRef, newMember);
+
+      // 2. Update the memberUids map on the main workspace doc for queries
+      const workspaceRef = doc(db, 'workspaces', invite.workspaceId);
       batch.update(workspaceRef, {
-        [`members.${user.uid}`]: newMember,
-        'memberUids': { [user.uid]: true } // Use a map for security rules
+        [`memberUids.${user.uid}`]: true
       });
 
-      // 2. Delete the one-time invite
+      // 3. Delete the one-time invite
       const inviteRef = doc(db, 'invites', inviteId);
       batch.delete(inviteRef);
 

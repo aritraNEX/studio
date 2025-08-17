@@ -33,10 +33,10 @@ const statusConfig = {
 }
 
 
-export function KanbanColumn({ status, tasks }: KanbanColumnProps) {
+export function KanbanColumn({ status, tasks, workspaceId }: KanbanColumnProps) {
     const [{ isOver }, drop] = useDrop(() => ({
         accept: 'task',
-        drop: (item: { id: string }) => updateTaskStatus(item.id, status),
+        drop: (item: { id: string }) => updateTaskStatus(workspaceId, item.id, status),
         collect: (monitor) => ({
           isOver: !!monitor.isOver(),
         }),
@@ -66,4 +66,3 @@ export function KanbanColumn({ status, tasks }: KanbanColumnProps) {
     </div>
   );
 }
-

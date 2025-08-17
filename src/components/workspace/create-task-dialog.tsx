@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2, Plus, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from "date-fns"
 
@@ -22,19 +22,18 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { IMember, createTask } from '@/lib/workspace-utils';
+import { IMember, createTask, getWorkspaceMembers } from '@/lib/workspace-utils';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
 
 
 interface CreateTaskDialogProps {
   workspaceId: string;
-  members: Record<string, IMember>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function CreateTaskDialog({ workspaceId, members, open, onOpenChange }: CreateTaskDialogProps) {
+export function CreateTaskDialog({ workspaceId, open, onOpenChange }: CreateTaskDialogProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -43,7 +42,14 @@ export function CreateTaskDialog({ workspaceId, members, open, onOpenChange }: C
   const [dueDate, setDueDate] = useState<Date>();
   const [assigneeUid, setAssigneeUid] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [members, setMembers] = useState<IMember[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (open && workspaceId) {
+        getWorkspaceMembers(workspaceId).then(setMembers);
+    }
+  }, [open, workspaceId]);
 
   const handleCreateTask = async () => {
     if (!title) {
@@ -52,6 +58,7 @@ export function CreateTaskDialog({ workspaceId, members, open, onOpenChange }: C
     }
     setLoading(true);
     try {
+        const selectedAssignee = members.find(m => m.uid === assigneeUid) || null;
         await createTask({
             workspaceId,
             title,
@@ -59,7 +66,7 @@ export function CreateTaskDialog({ workspaceId, members, open, onOpenChange }: C
             status,
             priority,
             dueDate: dueDate ? new Date(dueDate) : undefined,
-            assignee: assigneeUid ? members[assigneeUid] : null,
+            assignee: selectedAssignee,
             createdBy: user!.uid,
         });
         toast({title: "Task created!"});
@@ -129,7 +136,7 @@ export function CreateTaskDialog({ workspaceId, members, open, onOpenChange }: C
                         <SelectTrigger><SelectValue placeholder="Select member"/></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="">Unassigned</SelectItem>
-                            {Object.values(members).map(member => (
+                            {members.map(member => (
                                 <SelectItem key={member.uid} value={member.uid}>
                                     <div className="flex items-center gap-2">
                                         <Avatar className="h-5 w-5"><AvatarImage src={member.photoURL || ''} /><AvatarFallback>{member.displayName?.[0]}</AvatarFallback></Avatar>
@@ -171,4 +178,3 @@ export function CreateTaskDialog({ workspaceId, members, open, onOpenChange }: C
     </Dialog>
   );
 }
-

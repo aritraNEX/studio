@@ -6,16 +6,12 @@ import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
 import {
   collection,
-  doc,
   onSnapshot,
   query,
   where,
-  addDoc,
-  getDocs,
-  writeBatch,
 } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { Loader2, Plus, Users, Settings, Filter, LayoutGrid, List } from 'lucide-react';
+import { Loader2, Plus, Users } from 'lucide-react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
@@ -45,7 +41,7 @@ export default function WorkspacePage() {
 
     const q = query(
       collection(db, 'workspaces'),
-      where('memberUids', 'array-contains', user.uid)
+      where(`memberUids.${user.uid}`, '==', true)
     );
 
     const unsubscribe = onSnapshot(
@@ -71,10 +67,9 @@ export default function WorkspacePage() {
 
   useEffect(() => {
     if (activeWorkspace) {
-      const tasksQuery = query(
-        collection(db, 'tasks'),
-        where('workspaceId', '==', activeWorkspace.id)
-      );
+        const tasksQuery = query(
+            collection(db, 'workspaces', activeWorkspace.id, 'tasks')
+        );
       const unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
         const workspaceTasks = snapshot.docs.map(
           (doc) => ({ id: doc.id, ...doc.data() } as ITask)
@@ -127,7 +122,7 @@ export default function WorkspacePage() {
               onClick={() => setIsMembersDialogOpen(true)}
             >
               <Users className="mr-2 h-4 w-4" />
-              <span>{activeWorkspace.members.length} Members</span>
+              <span>{activeWorkspace.memberUids ? Object.keys(activeWorkspace.memberUids).length : 1} Members</span>
             </Button>
             <Button onClick={() => setIsCreateTaskOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
@@ -168,7 +163,6 @@ export default function WorkspacePage() {
       />
       <CreateTaskDialog
         workspaceId={activeWorkspace.id}
-        members={activeWorkspace.members}
         open={isCreateTaskOpen}
         onOpenChange={setIsCreateTaskOpen}
       />

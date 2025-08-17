@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Copy, Link as LinkIcon, Loader2, Share2, Trash2 } from 'lucide-react';
 import {
   Dialog,
@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
-import { createInvite, IWorkspace } from '@/lib/workspace-utils';
+import { createInvite, IWorkspace, getWorkspaceMembers, IMember } from '@/lib/workspace-utils';
 import { useAuth } from '@/contexts/auth-context';
 
 interface MembersDialogProps {
@@ -29,7 +29,14 @@ export function MembersDialog({ workspace, open, onOpenChange }: MembersDialogPr
   const { user } = useAuth();
   const [inviteLink, setInviteLink] = useState('');
   const [loading, setLoading] = useState(false);
+  const [members, setMembers] = useState<IMember[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (open && workspace.id) {
+        getWorkspaceMembers(workspace.id).then(setMembers);
+    }
+  }, [open, workspace.id]);
 
   const handleGenerateInvite = async () => {
     setLoading(true);
@@ -65,7 +72,7 @@ export function MembersDialog({ workspace, open, onOpenChange }: MembersDialogPr
           <div className="space-y-2">
             <h4 className="font-medium">Current Members</h4>
             <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                {Object.values(workspace.members).map(member => (
+                {members.map(member => (
                     <div key={member.uid} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8">
@@ -78,7 +85,7 @@ export function MembersDialog({ workspace, open, onOpenChange }: MembersDialogPr
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Badge variant={member.role === 'Owner' ? 'default' : 'secondary'}>{member.role}</Badge>
+                            <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>{member.role}</Badge>
                             {isOwner && member.uid !== user?.uid && (
                                 <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
                                     <Trash2 className="h-4 w-4" />
@@ -111,4 +118,3 @@ export function MembersDialog({ workspace, open, onOpenChange }: MembersDialogPr
     </Dialog>
   );
 }
-
