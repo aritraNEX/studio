@@ -46,6 +46,7 @@ const allOperations: Operation[] = ['paraphrase', 'summarize', 'translate', 'sty
 
 interface OperationTabProps {
   operation: Operation;
+  onSendTo?: (text: string, operation: string) => void;
 }
 
 const fileToDataUri = (file: File): Promise<string> => {
@@ -58,7 +59,7 @@ const fileToDataUri = (file: File): Promise<string> => {
 };
 
 
-export function OperationTab({ operation }: OperationTabProps) {
+export function OperationTab({ operation, onSendTo }: OperationTabProps) {
   const searchParams = useSearchParams();
   const projectId = searchParams.get('projectId');
   const [inputText, setInputText] = useState<string>("");
@@ -668,11 +669,11 @@ export function OperationTab({ operation }: OperationTabProps) {
           )}
         </div>
         
-        {generatedText && (
+        {generatedText && onSendTo && (
           <div className="flex flex-col gap-4 mt-4 p-4 border rounded-lg bg-muted/50 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row items-center gap-4">
                 <Button 
-                    onClick={() => router.push('/tts')}
+                    onClick={() => onSendTo(generatedText, 'tts')}
                     className="w-full sm:w-auto"
                 >
                     <AudioLines className="mr-2 h-5 w-5" />

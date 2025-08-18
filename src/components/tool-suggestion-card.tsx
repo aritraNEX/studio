@@ -37,10 +37,9 @@ export default function ToolSuggestionCard() {
     const fetchRecentActivityAndSuggest = async () => {
       setLoading(true);
       try {
-        const projectsRef = collection(db, "projects");
+        const projectsRef = collection(db, "users", user.uid, "projects");
         const q = query(
           projectsRef, 
-          where("userId", "==", user.uid), 
           orderBy("createdAt", "desc"),
           limit(5)
         );
@@ -51,8 +50,8 @@ export default function ToolSuggestionCard() {
           recentProjects.push(doc.data() as Project);
         });
 
-        const usedToolIds = recentProjects.map(p => p.operation);
-        const recentCategory = recentProjects[0]?.operation || 'writing';
+        const usedToolIds = [...new Set(recentProjects.map(p => p.operation))];
+        const recentCategory = recentProjects[0]?.operation ? allToolsData.find(t => t.id === recentProjects[0].operation)?.category : 'writing';
 
         const availableTools = allToolsData.filter(tool => !usedToolIds.includes(tool.id));
         
