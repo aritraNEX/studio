@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
@@ -18,12 +17,12 @@ import { Button } from '@/components/ui/button';
 import { IWorkspace, IMessage, getWorkspaceMessages, sendMessage } from '@/lib/workspace-utils';
 import { CreateWorkspace } from '@/components/workspace/create-workspace';
 import { MembersDialog } from '@/components/workspace/members-dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Textarea } from '../ui/textarea';
-import { ScrollArea } from '../ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useToast } from '../ui/use-toast';
+import { useToast } from "@/hooks/use-toast";
 
 export default function WorkspacePage() {
   const { user } = useAuth();
