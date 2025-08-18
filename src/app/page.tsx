@@ -113,7 +113,7 @@ const allTools = [
     { section: 'high_quality', href: '/batch-paraphrase', icon: FileText, label: 'Batch Paraphrase' },
     { section: 'high_quality', href: '/notepad', icon: Notebook, label: 'Notepad' },
     { section: 'high_quality', href: '/integrations', icon: Puzzle, label: 'Integrations' },
-    { section: 'high_quality', href: '/task-planner', icon: ListTodo, label: 'Task Planner' },
+    { section: 'high_quality', href: '/workspace', icon: ListTodo, label: 'Workspace' },
 ];
 
 export default function DashboardPage() {
@@ -195,7 +195,7 @@ export default function DashboardPage() {
                         <Wand2 className="h-8 w-8 text-primary" />
                         <div>
                             <h3 className="font-semibold">{t('features.workspace')}</h3>
-                            <p className="text-sm text-muted-foreground">Collaborate with your team in a shared workspace.</p>
+                            <p className="text-sm text-muted-foreground">Your personal space for tasks and projects.</p>
                         </div>
                     </Link>
                      <Link href="/integrations" className="flex items-center gap-4 rounded-xl bg-card p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-card/80 text-foreground">

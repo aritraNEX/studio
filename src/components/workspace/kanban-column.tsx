@@ -10,7 +10,7 @@ import { ScrollArea } from '../ui/scroll-area';
 interface KanbanColumnProps {
   status: ITask['status'];
   tasks: ITask[];
-  workspaceId: string;
+  userId: string;
 }
 
 const statusConfig = {
@@ -33,10 +33,10 @@ const statusConfig = {
 }
 
 
-export function KanbanColumn({ status, tasks, workspaceId }: KanbanColumnProps) {
+export function KanbanColumn({ status, tasks, userId }: KanbanColumnProps) {
     const [{ isOver }, drop] = useDrop(() => ({
         accept: 'task',
-        drop: (item: { id: string }) => updateTaskStatus(workspaceId, item.id, status),
+        drop: (item: { id: string }) => updateTaskStatus(userId, item.id, status),
         collect: (monitor) => ({
           isOver: !!monitor.isOver(),
         }),

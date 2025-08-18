@@ -4,11 +4,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { db, perf } from '@/lib/firebase';
 import { trace } from "firebase/performance";
 import { useAuth } from '@/contexts/auth-context';
-import { Loader2, Home, Trash2, Edit, Users, Share2 } from 'lucide-react';
+import { Loader2, Home, Trash2, Edit } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,8 +26,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import TaskSummaryDashboard from '@/components/task-summary-dashboard';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Project {
   id: string;
@@ -86,8 +84,8 @@ export default function DashboardPage() {
     const t = perf ? trace(perf, "load-dashboard-projects") : null;
     t?.start();
 
-    const projectsRef = collection(db, 'projects');
-    const q = query(projectsRef, where("userId", "==", user.uid), orderBy("createdAt", "desc"));
+    const projectsRef = collection(db, 'users', user.uid, 'projects');
+    const q = query(projectsRef, orderBy("createdAt", "desc"));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const userProjects: Project[] = [];
@@ -112,7 +110,8 @@ export default function DashboardPage() {
     if (!user) return;
     
     try {
-        await deleteDoc(doc(db, "projects", projectId));
+        const projectDocRef = doc(db, 'users', user.uid, 'projects', projectId);
+        await deleteDoc(projectDocRef);
         toast({
             title: "Project Deleted",
             description: "The project has been successfully deleted.",

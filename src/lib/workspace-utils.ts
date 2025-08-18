@@ -8,6 +8,7 @@ import {
   setDoc,
   getDocs,
   getDoc,
+  query,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { User } from 'firebase/auth';
@@ -17,21 +18,11 @@ export interface IMember {
   displayName: string | null;
   email: string | null;
   photoURL: string | null;
-  role: 'admin' | 'editor' | 'member';
-}
-
-export interface IWorkspace {
-  id: string;
-  name: string;
-  description: string;
-  ownerId: string;
-  memberUids: Record<string, boolean>; // For array-contains queries
-  createdAt: any;
+  role: 'admin' | 'member';
 }
 
 export interface ITask {
   id: string;
-  workspaceId: string;
   title: string;
   description: string;
   status: 'To-Do' | 'In Progress' | 'Done' | 'Backlog';
@@ -42,73 +33,43 @@ export interface ITask {
   createdBy: string;
 }
 
-// Function to create a new workspace
-export const createWorkspace = async (
-  name: string,
-  description: string,
-  owner: User
-) => {
-  const ownerMember: IMember = {
-    uid: owner.uid,
-    displayName: owner.displayName,
-    email: owner.email,
-    photoURL: owner.photoURL,
-    role: 'admin',
-  };
-
-  const newWorkspace = {
-    name,
-    description,
-    ownerId: owner.uid,
-    memberUids: {
-        [owner.uid]: true,
-    },
-    createdAt: serverTimestamp(),
-  };
-
-  const workspaceRef = await addDoc(collection(db, 'workspaces'), newWorkspace);
-
-  // Add the owner to the members subcollection
-  await setDoc(doc(db, 'workspaces', workspaceRef.id, 'members', owner.uid), ownerMember);
-
-  return { id: workspaceRef.id, ...newWorkspace };
-};
-
-// Function to get all members of a workspace
-export const getWorkspaceMembers = async (workspaceId: string): Promise<IMember[]> => {
-    const membersRef = collection(db, 'workspaces', workspaceId, 'members');
-    const snapshot = await getDocs(membersRef);
-    return snapshot.docs.map(doc => doc.data() as IMember);
+// Function to get all members (now just the user themselves)
+export const getWorkspaceMembers = async (userId: string): Promise<IMember[]> => {
+    const userDocRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+        const userData = userDoc.data();
+        return [{
+            uid: userId,
+            displayName: userData.displayName || 'User',
+            email: userData.email,
+            photoURL: userData.photoURL,
+            role: 'admin'
+        }];
+    }
+    return [];
 }
 
-// Function to create an invitation
-export const createInvite = async (
-    workspaceId: string,
-    workspaceName: string,
-    inviterName: string
-  ) => {
-    const inviteData = {
-      workspaceId,
-      workspaceName,
-      invitedBy: inviterName,
-      createdAt: serverTimestamp(),
-    };
-    const docRef = await addDoc(collection(db, 'invites'), inviteData);
-    return docRef.id;
-  };
-
-// Function to create a task
-export const createTask = async (taskData: Omit<ITask, 'id' | 'createdAt'>) => {
+// Function to create a task under the user's own document
+export const createTask = async (taskData: Omit<ITask, 'id' | 'createdAt'> & { userId: string }) => {
+    const { userId, ...restOfTaskData } = taskData;
     const newTask = {
-        ...taskData,
+        ...restOfTaskData,
         createdAt: serverTimestamp(),
     };
-    const docRef = await addDoc(collection(db, 'workspaces', taskData.workspaceId, 'tasks'), newTask);
+    const docRef = await addDoc(collection(db, 'users', userId, 'tasks'), newTask);
     return { id: docRef.id, ...newTask };
 }
 
-// Function to update a task's status
-export const updateTaskStatus = async (workspaceId: string, taskId: string, newStatus: ITask['status']) => {
-    const taskRef = doc(db, 'workspaces', workspaceId, 'tasks', taskId);
+// Function to update a task's status under the user's own document
+export const updateTaskStatus = async (userId: string, taskId: string, newStatus: ITask['status']) => {
+    const taskRef = doc(db, 'users', userId, 'tasks', taskId);
     await updateDoc(taskRef, { status: newStatus });
 };
+
+// Function to get all tasks for a user
+export const getUserTasks = async (userId: string): Promise<ITask[]> => {
+    const tasksRef = collection(db, 'users', userId, 'tasks');
+    const snapshot = await getDocs(tasksRef);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ITask));
+}

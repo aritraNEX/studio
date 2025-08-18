@@ -101,31 +101,24 @@ export function OperationTab({ operation }: OperationTabProps) {
     if (projectId && user) {
       const fetchProject = async () => {
         setIsParsing(true); // Show loading state while fetching
-        const projectDocRef = doc(db, 'projects', projectId);
+        const projectDocRef = doc(db, 'users', user.uid, 'projects', projectId);
         try {
             const docSnap = await getDoc(projectDocRef);
             if (docSnap.exists()) {
               const project = docSnap.data();
               
-              if (project.userId === user.uid) { // Basic security check
-                 if (project.operation === operation) {
-                    setGeneratedText(project.outputText);
-                    const savedInput = project.inputText;
-                    if (savedInput) {
-                        if (savedInput.startsWith('data:')) {
-                            setFileDataUri(savedInput);
-                            setFileName("Loaded Project Document");
-                            if (savedInput.startsWith('data:image')) {
-                                setLocalPreviewUrl(savedInput);
-                            }
-                        } else {
-                            setInputText(savedInput);
-                        }
-                    }
+              setGeneratedText(project.outputText);
+              const savedInput = project.inputText;
+              if (savedInput) {
+                  if (savedInput.startsWith('data:')) {
+                      setFileDataUri(savedInput);
+                      setFileName("Loaded Project Document");
+                      if (savedInput.startsWith('data:image')) {
+                          setLocalPreviewUrl(savedInput);
+                      }
+                  } else {
+                      setInputText(savedInput);
                   }
-              } else {
-                toast({ variant: 'destructive', title: 'Access Denied.' });
-                router.push('/dashboard');
               }
             } else {
               toast({ variant: 'destructive', title: 'Project not found.' });
@@ -140,7 +133,7 @@ export function OperationTab({ operation }: OperationTabProps) {
       };
       fetchProject();
     }
-  }, [projectId, user, operation, toast, router]);
+  }, [projectId, user, toast, router]);
 
   const handleSaveProject = async () => {
     if (!user) {
@@ -161,9 +154,10 @@ export function OperationTab({ operation }: OperationTabProps) {
         createdAt: serverTimestamp(),
       };
       
-      const docRef = await addDoc(collection(db, 'projects'), projectData);
+      const projectsCollectionRef = collection(db, 'users', user.uid, 'projects');
+      const docRef = await addDoc(projectsCollectionRef, projectData);
 
-      toast({title: "Project Saved!", description: `Your work has been saved with ID: ${docRef.id}`})
+      toast({title: "Project Saved!", description: `Your work has been saved successfully.`})
     } catch (error) {
       console.error("Error saving project: ", error);
       toast({ variant: 'destructive', title: 'Could not save project.' });

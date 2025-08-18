@@ -28,28 +28,33 @@ import { useAuth } from '@/contexts/auth-context';
 
 
 interface CreateTaskDialogProps {
-  workspaceId: string;
+  userId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function CreateTaskDialog({ workspaceId, open, onOpenChange }: CreateTaskDialogProps) {
+export function CreateTaskDialog({ userId, open, onOpenChange }: CreateTaskDialogProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'To-Do' | 'In Progress' | 'Done' | 'Backlog'>('To-Do');
   const [priority, setPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
   const [dueDate, setDueDate] = useState<Date>();
-  const [assigneeUid, setAssigneeUid] = useState<string>('');
+  const [assignee, setAssignee] = useState<IMember | null>(null);
   const [loading, setLoading] = useState(false);
-  const [members, setMembers] = useState<IMember[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (open && workspaceId) {
-        getWorkspaceMembers(workspaceId).then(setMembers);
+    if (user) {
+        setAssignee({
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+            role: 'admin'
+        });
     }
-  }, [open, workspaceId]);
+  }, [user]);
 
   const handleCreateTask = async () => {
     if (!title) {
@@ -58,15 +63,14 @@ export function CreateTaskDialog({ workspaceId, open, onOpenChange }: CreateTask
     }
     setLoading(true);
     try {
-        const selectedAssignee = members.find(m => m.uid === assigneeUid) || null;
         await createTask({
-            workspaceId,
+            userId: userId,
             title,
             description,
             status,
             priority,
             dueDate: dueDate ? new Date(dueDate) : undefined,
-            assignee: selectedAssignee,
+            assignee: assignee,
             createdBy: user!.uid,
         });
         toast({title: "Task created!"});
@@ -77,7 +81,6 @@ export function CreateTaskDialog({ workspaceId, open, onOpenChange }: CreateTask
         setStatus('To-Do');
         setPriority('Medium');
         setDueDate(undefined);
-        setAssigneeUid('');
     } catch(e) {
         console.error("Failed to create task", e);
         toast({variant: 'destructive', title: 'Failed to create task'});
@@ -92,7 +95,7 @@ export function CreateTaskDialog({ workspaceId, open, onOpenChange }: CreateTask
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
           <DialogDescription>
-            Add a new task to your workspace plan.
+            Add a new task to your personal workspace.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -132,20 +135,7 @@ export function CreateTaskDialog({ workspaceId, open, onOpenChange }: CreateTask
              <div className="grid grid-cols-2 gap-4">
                  <div className="grid gap-2">
                     <Label htmlFor="assignee">Assign to</Label>
-                    <Select value={assigneeUid} onValueChange={setAssigneeUid}>
-                        <SelectTrigger><SelectValue placeholder="Select member"/></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="">Unassigned</SelectItem>
-                            {members.map(member => (
-                                <SelectItem key={member.uid} value={member.uid}>
-                                    <div className="flex items-center gap-2">
-                                        <Avatar className="h-5 w-5"><AvatarImage src={member.photoURL || ''} /><AvatarFallback>{member.displayName?.[0]}</AvatarFallback></Avatar>
-                                        {member.displayName}
-                                    </div>
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                     <Input id="assignee" value={user?.displayName || 'Me'} disabled />
                  </div>
                  <div className="grid gap-2">
                     <Label htmlFor="dueDate">Due Date</Label>

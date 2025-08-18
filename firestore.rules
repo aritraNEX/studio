@@ -4,43 +4,16 @@ service cloud.firestore {
     
     // --- USERS ---
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // --- INVITES ---
-    match /invites/{inviteId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow delete: if request.auth != null; // Allow deletion after use
-    }
+      // User can read/update/delete only their own document
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      
+      // User can create their own document
+      allow create: if request.auth != null && request.auth.uid == userId;
 
-    // --- WORKSPACES ---
-    match /workspaces/{workspaceId} {
-      // Check for membership using the memberUids map for list queries.
-      // This is the key fix.
-      allow read: if request.auth.uid in resource.data.memberUids;
-      allow write: if isWorkspaceAdmin(workspaceId);
-
-      // Members subcollection
-      match /members/{memberId} {
-        allow read: if isWorkspaceMember(workspaceId);
-        allow write: if isWorkspaceAdmin(workspaceId); // Only admins can change roles/remove members
-      }
-
-      // Tasks subcollection
-      match /tasks/{taskId} {
-        allow read, write: if isWorkspaceMember(workspaceId); // Any member can create/read/update tasks
+      // Allow access to subcollections for the owner
+      match /{subcollection}/{docId} {
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
       }
     }
-  }
-
-  // --- Helper Functions ---
-  function isWorkspaceMember(workspaceId) {
-    // This function checks the memberUids map on the parent workspace document.
-    return get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.memberUids[request.auth.uid] == true;
-  }
-  
-  function isWorkspaceAdmin(workspaceId) {
-    return get(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid)).data.role == "admin";
   }
 }
