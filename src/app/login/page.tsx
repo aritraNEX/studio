@@ -43,7 +43,7 @@ const countryCodes = [
 
 async function createUserDocument(user: User) {
     if (!user) return;
-    const userRef = doc(db, 'users', user.uid);
+    const userRef = doc(db, 'NEW users', user.uid);
     const docSnap = await getDoc(userRef);
 
     if (!docSnap.exists()) {
@@ -76,8 +76,8 @@ export default function LoginPage() {
   const redirectUrl = searchParams.get('redirect') || '/?welcome=true';
   
   useEffect(() => {
-    if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+    if (typeof window !== 'undefined' && !(window as any).recaptchaVerifier) {
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
         'callback': () => {},
         'expired-callback': () => {}
@@ -85,9 +85,9 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleSuccessfulAuth = async (userCredential: UserCredential) => {
-    const { user, _tokenResponse } = userCredential;
-    const isNewUser = _tokenResponse?.isNewUser || false;
+  const handleSuccessfulAuth = async (userCredential: any) => {
+    const { user } = userCredential;
+    const isNewUser = userCredential.additionalUserInfo?.isNewUser || false;
 
     if (isNewUser) {
         if (!user.displayName && signupEmail) {
@@ -179,7 +179,7 @@ export default function LoginPage() {
   const handlePhoneSignIn = async () => {
     setIsPending(true);
     try {
-        const verifier = window.recaptchaVerifier;
+        const verifier = (window as any).recaptchaVerifier;
         const formattedPhone = `${countryCode}${phone}`;
         const result = await signInWithPhoneNumber(auth, formattedPhone, verifier);
         setConfirmationResult(result);
@@ -388,9 +388,4 @@ export default function LoginPage() {
       </Tabs>
     </div>
   );
-}
-declare global {
-  interface Window {
-    recaptchaVerifier: RecaptchaVerifier;
-  }
 }
