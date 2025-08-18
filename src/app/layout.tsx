@@ -11,6 +11,7 @@ import 'katex/dist/katex.min.css';
 import type {ReactNode} from 'react';
 import Preloader from '@/components/preloader';
 import { useState, useEffect } from 'react';
+import { LoadingProvider } from '@/contexts/loading-context';
 
 export default function RootLayout({
   children,
@@ -50,7 +51,9 @@ export default function RootLayout({
           <SoundProvider>
             <LanguageProvider>
               <WorkspaceProvider>
-                {children}
+                <LoadingProvider>
+                    {children}
+                </LoadingProvider>
               </WorkspaceProvider>
             </LanguageProvider>
           </SoundProvider>
