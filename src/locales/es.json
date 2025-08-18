@@ -9,7 +9,6 @@
     "chat_title": "Chatea con Vesper",
     "chat_subtitle": "Tu amigable compañero de IA. ¡Pregúntame lo que sea!",
     "chat_placeholder": "¡Inicia una conversación!",
-    "chat_sub_placeholder": "Puedes hacerme preguntas o subir una imagen.",
     "chat_input_placeholder": "Escribe tu mensaje aquí...",
     "toolkit_button": "Herramientas",
     "integrations_button": "Integraciones",
@@ -57,7 +56,8 @@
         "workspace": "Espacio de trabajo",
         "vesper_ai_studio": "Vesper AI Studio",
         "integrations": "Integraciones",
-        "task_planner": "Planificador de Tareas"
+        "task_planner": "Planificador de Tareas",
+        "task_manager": "Gestor de Tareas"
     },
     "user_menu": {
         "bio": "Biografía",

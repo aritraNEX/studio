@@ -8,8 +8,7 @@
     "high_quality": "High Quality",
     "chat_title": "Chat with Vesper",
     "chat_subtitle": "Your friendly AI companion. Ask me anything!",
-    "chat_placeholder": "Start a conversation!",
-    "chat_sub_placeholder": "You can ask me questions or upload an image.",
+    "chat_placeholder": "¡Inicia una conversación!",
     "chat_input_placeholder": "Type your message here...",
     "toolkit_button": "Toolkit",
     "integrations_button": "Integrations",
@@ -57,7 +56,8 @@
         "workspace": "Workspace",
         "vesper_ai_studio": "Vesper AI Studio",
         "integrations": "Integrations",
-        "task_planner": "Task Planner"
+        "task_planner": "Task Planner",
+        "task_manager": "Task Manager"
     },
     "user_menu": {
         "bio": "Bio",

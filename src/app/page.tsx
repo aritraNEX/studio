@@ -113,7 +113,7 @@ const allTools = [
     { section: 'high_quality', href: '/batch-paraphrase', icon: FileText, label: 'Batch Paraphrase' },
     { section: 'high_quality', href: '/notepad', icon: Notebook, label: 'Notepad' },
     { section: 'high_quality', href: '/integrations', icon: Puzzle, label: 'Integrations' },
-    { section: 'high_quality', href: '/workspace', icon: ListTodo, label: 'Workspace' },
+    { section: 'high_quality', href: '/task-manager', icon: ListTodo, label: 'Task Manager' },
 ];
 
 export default function DashboardPage() {

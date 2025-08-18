@@ -13,10 +13,10 @@ export default function TaskPlannerPage() {
             <div className="flex flex-col items-center justify-center min-h-[30rem] text-center text-muted-foreground p-8 bg-muted/20 rounded-lg">
                 <h2 className="text-2xl font-semibold text-foreground mb-2">This Feature Has Moved!</h2>
                 <p className="max-w-md mb-6">
-                    Task planning and management are now fully integrated into your personal Workspace for a more streamlined experience.
+                    Task planning and management are now located in your personal Task Manager for a more streamlined experience.
                 </p>
                 <Button asChild>
-                    <Link href="/workspace">Go to My Workspace</Link>
+                    <Link href="/task-manager">Go to My Task Manager</Link>
                 </Button>
             </div>
         </ToolPageLayout>

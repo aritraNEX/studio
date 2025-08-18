@@ -1,0 +1,62 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- USERS, PROJECTS, and TASKS ---
+    match /users/{userId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null; // Allow user creation
+
+      // User's personal projects
+      match /projects/{projectId} {
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // User's personal tasks
+      match /tasks/{taskId} {
+         allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // --- NEW USER DATA ---
+    match /NEW users/{userId} {
+       allow read, create: if request.auth != null;
+       allow update: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // --- WORKSPACES and MESSAGES ---
+    match /workspaces/{workspaceId} {
+      // Users can read a workspace if they are a member
+      allow read: if request.auth != null && resource.data.memberUids[request.auth.uid] == true;
+      // Only admins can update the workspace details
+      allow update: if request.auth != null && get(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid)).data.role == 'admin';
+      // Any authenticated user can create a workspace
+      allow create: if request.auth != null;
+
+      // Members subcollection
+      match /members/{memberId} {
+        allow read: if request.auth != null && exists(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid));
+        // Only admins can add/remove members
+        allow write: if request.auth != null && get(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid)).data.role == 'admin';
+      }
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        // Any member of the workspace can read and write messages
+        allow read, write: if request.auth != null && exists(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid));
+      }
+    }
+
+    // --- INVITES ---
+    match /invites/{inviteId} {
+        // Anyone can read an invite document to get workspace info
+        allow read: if true;
+        // Any authenticated user can create an invite
+        allow create: if request.auth != null;
+        // Only allow deleting invites through a write batch when joining a workspace
+        allow delete: if request.auth != null;
+    }
+  }
+}

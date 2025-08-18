@@ -9,6 +9,7 @@ import {
   getDocs,
   getDoc,
   query,
+  orderBy
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { User } from 'firebase/auth';
@@ -31,6 +32,17 @@ export interface ITask {
   assignee?: IMember | null;
   createdAt: any;
   createdBy: string;
+}
+
+export interface IMessage {
+    id: string;
+    text: string;
+    createdAt: any;
+    sender: {
+        uid: string;
+        displayName: string | null;
+        photoURL: string | null;
+    }
 }
 
 export interface IWorkspace {
@@ -89,26 +101,40 @@ export const getWorkspaceMembers = async (workspaceId: string): Promise<IMember[
     return members;
 }
 
-// Function to create a task under the workspace subcollection
-export const createTask = async (taskData: Omit<ITask, 'id' | 'createdAt'> & { workspaceId: string }) => {
-    const { workspaceId, ...restOfTaskData } = taskData;
+// Function to create a task under the USER's subcollection
+export const createTask = async (taskData: Omit<ITask, 'id' | 'createdAt'> & { userId: string }) => {
+    const { userId, ...restOfTaskData } = taskData;
     const newTask = {
         ...restOfTaskData,
         createdAt: serverTimestamp(),
     };
-    const docRef = await addDoc(collection(db, 'workspaces', workspaceId, 'tasks'), newTask);
+    const docRef = await addDoc(collection(db, 'users', userId, 'tasks'), newTask);
     return { id: docRef.id, ...newTask };
 }
 
-// Function to update a task's status under the workspace subcollection
-export const updateTaskStatus = async (workspaceId: string, taskId: string, newStatus: ITask['status']) => {
-    const taskRef = doc(db, 'workspaces', workspaceId, 'tasks', taskId);
+// Function to update a task's status under the USER's subcollection
+export const updateTaskStatus = async (userId: string, taskId: string, newStatus: ITask['status']) => {
+    const taskRef = doc(db, 'users', userId, 'tasks', taskId);
     await updateDoc(taskRef, { status: newStatus });
 };
 
-// Function to get all tasks for a workspace
-export const getWorkspaceTasks = async (workspaceId: string): Promise<ITask[]> => {
-    const tasksRef = collection(db, 'workspaces', workspaceId, 'tasks');
-    const snapshot = await getDocs(tasksRef);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ITask));
-}
+// Function to send a message to a workspace
+export const sendMessage = async (workspaceId: string, text: string, user: User) => {
+    await addDoc(collection(db, 'workspaces', workspaceId, 'messages'), {
+        text,
+        createdAt: serverTimestamp(),
+        sender: {
+            uid: user.uid,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+        }
+    });
+};
+
+// Function to get all messages for a workspace
+export const getWorkspaceMessages = async (workspaceId: string): Promise<IMessage[]> => {
+    const messagesRef = collection(db, 'workspaces', workspaceId, 'messages');
+    const q = query(messagesRef, orderBy('createdAt', 'asc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IMessage));
+};
