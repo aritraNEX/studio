@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { auth, storage, db } from "@/lib/firebase";
 import { signOut, updateProfile } from "firebase/auth";
@@ -33,12 +33,20 @@ import { ScrollArea } from "./ui/scroll-area";
 export default function UserMenu() {
   const { user } = useAuth();
   const router = useRouter();
+  const { language, setLanguage, t } = useLanguage();
+
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
-  const [bio, setBio] = useState(user?.bio ?? "");
+  const [bio, setBio] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { language, setLanguage, t } = useLanguage();
+
+  useEffect(() => {
+    if (user) {
+        setDisplayName(user.displayName ?? "");
+        setBio(user.bio ?? "");
+    }
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut(auth);
@@ -54,8 +62,8 @@ export default function UserMenu() {
     setIsSaving(true);
     try {
         await updateProfile(user, { displayName });
-        const userDocRef = doc(db, 'users', user.uid);
-        await setDoc(userDocRef, { bio }, { merge: true });
+        const userDocRef = doc(db, 'NEW users', user.uid);
+        await setDoc(userDocRef, { bio, language }, { merge: true });
         
         toast({ title: t('user_menu.toast.profile_updated_title') });
     } catch (error: any) {
@@ -77,7 +85,7 @@ export default function UserMenu() {
         const photoURL = await getDownloadURL(snapshot.ref);
         
         await updateProfile(user, { photoURL });
-        const userDocRef = doc(db, 'users', user.uid);
+        const userDocRef = doc(db, 'NEW users', user.uid);
         await setDoc(userDocRef, { photoURL }, { merge: true });
 
         toast({ title: t('user_menu.toast.picture_updated_title') });
@@ -208,5 +216,3 @@ export default function UserMenu() {
     </div>
   );
 }
-
-    

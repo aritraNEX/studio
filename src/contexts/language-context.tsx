@@ -2,6 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { useAuth } from './auth-context';
 import en from '@/locales/en.json';
 import es from '@/locales/es.json';
 
@@ -18,18 +19,25 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth();
   const [language, setLanguageState] = useState<Language>('en');
 
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('vesper-lang') as Language;
-    if (savedLanguage && languages[savedLanguage]) {
-      setLanguageState(savedLanguage);
+    if (user?.language) {
+        setLanguageState(user.language);
+    } else {
+        const savedLanguage = localStorage.getItem('vesper-lang') as Language;
+        if (savedLanguage && languages[savedLanguage]) {
+          setLanguageState(savedLanguage);
+        }
     }
-  }, []);
+  }, [user]);
 
   const setLanguage = (lang: string) => {
-    localStorage.setItem('vesper-lang', lang);
-    setLanguageState(lang as Language);
+    if (languages.hasOwnProperty(lang)) {
+        localStorage.setItem('vesper-lang', lang);
+        setLanguageState(lang as Language);
+    }
   };
 
   const t = useCallback((key: string, options?: { [key: string]: string | number }): string => {

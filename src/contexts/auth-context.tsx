@@ -11,6 +11,7 @@ import { ToolSuggestionProvider } from './tool-suggestion-context';
 // Extend the Firebase User type to include our custom fields
 interface VesperUser extends User {
   bio?: string;
+  language?: 'en' | 'es';
 }
 
 interface AuthContextType {
@@ -34,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (authUser) {
-        const userDocRef = doc(db, 'users', authUser.uid);
+        const userDocRef = doc(db, 'NEW users', authUser.uid);
         docUnsubscribe = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             const firestoreData = docSnap.data();

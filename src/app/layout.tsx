@@ -48,15 +48,15 @@ export default function RootLayout({
       <body className="font-body antialiased">
         {loading && <Preloader onAnimationComplete={() => setLoading(false)} />}
         <AuthProvider>
-          <SoundProvider>
-            <LanguageProvider>
-              <WorkspaceProvider>
-                <LoadingProvider>
-                    {children}
-                </LoadingProvider>
-              </WorkspaceProvider>
-            </LanguageProvider>
-          </SoundProvider>
+          <LanguageProvider>
+            <SoundProvider>
+                <WorkspaceProvider>
+                  <LoadingProvider>
+                      {children}
+                  </LoadingProvider>
+                </WorkspaceProvider>
+            </SoundProvider>
+          </LanguageProvider>
         </AuthProvider>
         <Toaster />
       </body>
