@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
@@ -14,7 +15,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, Users, Send } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { IWorkspace, IMessage, getWorkspaceMessages, sendMessage } from '@/lib/workspace-utils';
+import { IWorkspace, IMessage, sendMessage } from '@/lib/workspace-utils';
 import { CreateWorkspace } from '@/components/workspace/create-workspace';
 import { MembersDialog } from '@/components/workspace/members-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -59,15 +60,18 @@ export default function WorkspacePage() {
             // Refresh active workspace data if it changed
             const updatedActive = userWorkspaces.find(w => w.id === activeWorkspace.id);
             setActiveWorkspace(updatedActive || null);
+        } else if (userWorkspaces.length === 0) {
+            setActiveWorkspace(null);
         }
         setLoading(false);
     }, (error) => {
         console.error("Error fetching workspaces:", error);
+        toast({ variant: 'destructive', title: 'Error fetching workspaces', description: 'Please check your connection and permissions.' });
         setLoading(false);
     });
 
     return () => unsubscribeWorkspaces();
-  }, [user, router, activeWorkspace]);
+  }, [user, router, activeWorkspace, toast]);
 
   useEffect(() => {
     if (activeWorkspace) {
