@@ -23,8 +23,8 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Language>('en');
 
   useEffect(() => {
-    if (user?.language) {
-        setLanguageState(user.language);
+    if (user?.language && languages.hasOwnProperty(user.language)) {
+        setLanguageState(user.language as Language);
     } else {
         const savedLanguage = localStorage.getItem('vesper-lang') as Language;
         if (savedLanguage && languages[savedLanguage]) {
@@ -85,32 +85,12 @@ export const useLanguage = () => {
 export const allLanguageOptions: { code: string, name: string }[] = [
     { "code": "en", "name": "English" },
     { "code": "es", "name": "Español (Spanish)" },
-    { "code": "zh", "name": "中文 (Mandarin)" },
-    { "code": "hi", "name": "हिन्दी (Hindi)" },
-    { "code": "ar", "name": "العربية (Arabic)" },
-    { "code": "bn", "name": "বাংলা (Bengali)" },
-    { "code": "pt", "name": "Português (Portuguese)" },
-    { "code": "ru", "name": "Русский (Russian)" },
-    { "code": "ja", "name": "日本語 (Japanese)" },
-    { "code": "de", "name": "Deutsch (German)" },
     { "code": "fr", "name": "Français (French)" },
-    { "code": "ko", "name": "한국어 (Korean)" },
-    { "code": "tr", "name": "Türkçe (Turkish)" },
+    { "code": "de", "name": "Deutsch (German)" },
+    { "code": "pt", "name": "Português (Portuguese)" },
     { "code": "it", "name": "Italiano (Italian)" },
-    { "code": "nl", "name": "Nederlands (Dutch)" },
-    { "code": "pl", "name": "Polski (Polish)" },
-    { "code": "sv", "name": "Svenska (Swedish)" },
-    { "code": "fi", "name": "Suomi (Finnish)" },
-    { "code": "no", "name": "Norsk (Norwegian)" },
-    { "code": "da", "name": "Dansk (Danish)" },
-    { "code": "cs", "name": "Čeština (Czech)" },
-    { "code": "hu", "name": "Magyar (Hungarian)" },
-    { "code": "ro", "name": "Română (Romanian)" },
-    { "code": "el", "name": "Ελληνικά (Greek)" },
-    { "code": "he", "name": "עברית (Hebrew)" },
-    { "code": "th", "name": "ไทย (Thai)" },
-    { "code": "vi", "name": "Tiếng Việt (Vietnamese)" },
-    { "code": "id", "name": "Bahasa Indonesia (Indonesian)" },
-    { "code": "ms", "name": "Bahasa Melayu (Malay)" },
-    { "code": "fa", "name": "فارسی (Persian)" }
+    { "code": "zh", "name": "中文 (Mandarin)" },
+    { "code": "ja", "name": "日本語 (Japanese)" },
+    { "code": "ru", "name": "Русский (Russian)" },
+    { "code": "hi", "name": "हिन्दी (Hindi)" }
 ];
