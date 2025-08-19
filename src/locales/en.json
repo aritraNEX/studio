@@ -8,7 +8,7 @@
     "high_quality": "High Quality",
     "chat_title": "Chat with Vesper",
     "chat_subtitle": "Your friendly AI companion. Ask me anything!",
-    "chat_placeholder": "¡Inicia una conversación!",
+    "chat_placeholder": "Start a conversation!",
     "chat_input_placeholder": "Type your message here...",
     "toolkit_button": "Toolkit",
     "integrations_button": "Integrations",
@@ -70,6 +70,50 @@
             "picture_updated_title": "Profile picture updated!",
             "upload_failed_title": "Upload Failed",
             "upload_failed_desc": "Could not upload new profile picture."
+        }
+    },
+    "app": {
+        "title": "Vesper",
+        "tagline": "Your collaborative AI workspace."
+    },
+    "status": {
+        "lang": "Language"
+    },
+    "section": {
+        "intro": "Getting Started",
+        "intro.desc": "Pick a language from the dropdown. All labeled text updates instantly, including attributes.",
+        "dynamic": "Dynamic Text & Plurals"
+    },
+    "tool": {
+        "grammar": {
+            "title": "Grammar Checker",
+            "desc": "Fix grammar, style, and tone with AI suggestions."
+        },
+        "summarizer": {
+            "title": "Summarizer",
+            "desc": "Condense long docs into key points."
+        },
+        "workspace": {
+            "title": "Workspace",
+            "desc": "Collaborate with teammates in real-time."
+        }
+    },
+    "action": {
+        "open": "Open",
+        "increment": "+1 Message",
+        "decrement": "-1 Message",
+        "reset": "Reset to Auto"
+    },
+    "tooltip": {
+        "open": "Open this tool"
+    },
+    "greet": {
+        "user": "Welcome back, {{name}}!"
+    },
+    "notif": {
+        "unread": {
+            "one": "You have 1 unread message.",
+            "other": "You have {{count}} unread messages."
         }
     }
 }
